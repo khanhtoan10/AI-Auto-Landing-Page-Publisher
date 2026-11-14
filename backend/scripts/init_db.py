@@ -118,6 +118,22 @@ def init_database():
             """
             cursor.executemany(seed_templates_query, sample_templates)
             print("Seeded 3 sample templates into 'templates' table.")
+            # 5. Tạo bảng deployments (đặt cuối để chạy sau bảng projects)
+            create_deployments_table_query = """
+            CREATE TABLE IF NOT EXISTS deployments (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                project_id INT NOT NULL,
+                commit_sha VARCHAR(100) NOT NULL,
+                status VARCHAR(50) DEFAULT 'Pending',
+                github_pages_url VARCHAR(255),
+                error_message TEXT,
+                start_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                end_time DATETIME,
+                FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """
+            cursor.execute(create_deployments_table_query)
+            print("Table 'deployments' created or already exists.")
             print("Database migration & seeding completed successfully!")
 
     except Exception as e:
