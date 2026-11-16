@@ -6,7 +6,7 @@ from core.database import get_db
 from core.security import get_current_user
 from schemas.project import ProjectCreate
 
-router = APIRouter(prefix="/api/v1/projects", tags=["Projects"])
+router = APIRouter(prefix="/projects", tags=["Projects"])
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
