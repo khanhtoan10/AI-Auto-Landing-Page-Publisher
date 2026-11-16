@@ -5,10 +5,14 @@ from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import pymysql
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from core.config import settings
+from core.database import get_db
 
 security_scheme = HTTPBearer(auto_error=False)
+
 
 def get_db_connection():
     return pymysql.connect(
@@ -22,15 +26,17 @@ def get_db_connection():
         autocommit=True
     )
 
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     expire_minutes = getattr(settings, "ACCESS_TOKEN_EXPIRE_MINUTES", 60)
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=expire_minutes))
     to_encode.update({"exp": expire})
-    
+
     secret_key = getattr(settings, "SECRET_KEY", "super-secret-key-change-in-env")
     algorithm = getattr(settings, "ALGORITHM", "HS256")
     return jwt.encode(to_encode, secret_key, algorithm=algorithm)
+
 
 def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme)
@@ -115,3 +121,48 @@ def get_current_user(
             return user
     finally:
         connection.close()
+
+
+def get_owned_project(
+    project_id: int,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    """
+    Dependency dùng chung cho mọi API thao tác trên project cụ thể (xem, sửa, xóa, generate, deploy):
+    - Trả về 404 nếu project_id không tồn tại.
+    - Trả về 403 nếu người dùng đang đăng nhập không phải chủ sở hữu project.
+    """
+    row = (
+        db.execute(text("SELECT * FROM projects WHERE id = :id"), {"id": project_id})
+        .mappings()
+        .first()
+    )
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "success": False,
+                "error": {
+                    "code": "PROJECT_NOT_FOUND",
+                    "message": "Landing page không tồn tại.",
+                    "details": []
+                }
+            },
+        )
+
+    project = dict(row)
+    if project["user_id"] != current_user["id"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "success": False,
+                "error": {
+                    "code": "FORBIDDEN",
+                    "message": "Bạn không có quyền xem, chỉnh sửa, xóa hoặc triển khai landing page này.",
+                    "details": []
+                }
+            },
+        )
+
+    return project
