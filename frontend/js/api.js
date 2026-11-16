@@ -1,5 +1,6 @@
 // Đổi thành URL Render khi deploy production
 const API_BASE_URL = "http://127.0.0.1:8000";
+window.API_BASE_URL = API_BASE_URL;
 const TOKEN_KEY = "lp_access_token";
 
 function getToken() {
@@ -55,3 +56,8 @@ async function apiRequest(endpoint, options = {}) {
 
   return data;
 }
+
+window.apiRequest = apiRequest;
+window.getToken = getToken;
+window.setToken = setToken;
+window.removeToken = removeToken;

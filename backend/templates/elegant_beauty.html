@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>{{data.headline}} - {{data.brand_name}}</title>
+<!-- Material Symbols & Typography -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-variant": "#d3e4fe",
+            "primary-fixed": "#e2dfff",
+            "on-tertiary": "#ffffff",
+            "surface-container-low": "#eff4ff",
+            "primary": "var(--primary-color, #3525cd)",
+            "secondary-fixed": "#6ffbbe",
+            "on-secondary-fixed-variant": "#005236",
+            "error": "#ba1a1a",
+            "tertiary-container": "#885500",
+            "surface-container-lowest": "#ffffff",
+            "surface-container": "#e5eeff",
+            "background": "#f8f9ff",
+            "on-primary-container": "#dad7ff",
+            "secondary": "#006c49",
+            "on-primary-fixed": "#0f0069",
+            "on-error-container": "#93000a",
+            "outline-variant": "#c7c4d8",
+            "on-secondary-container": "#00714d",
+            "surface-tint": "#4d44e3",
+            "on-surface-variant": "#464555",
+            "tertiary": "#684000",
+            "surface-bright": "#f8f9ff",
+            "tertiary-fixed": "#ffddb8",
+            "on-primary-fixed-variant": "#3323cc",
+            "on-surface": "#0b1c30",
+            "inverse-primary": "#c3c0ff",
+            "outline": "#777587",
+            "on-secondary-fixed": "#002113",
+            "surface": "#f8f9ff",
+            "tertiary-fixed-dim": "#ffb95f",
+            "inverse-on-surface": "#eaf1ff",
+            "on-tertiary-fixed": "#2a1700",
+            "secondary-fixed-dim": "#4edea3",
+            "surface-container-high": "#dce9ff",
+            "on-background": "#0b1c30",
+            "secondary-container": "#6cf8bb",
+            "on-tertiary-fixed-variant": "#653e00",
+            "on-secondary": "#ffffff",
+            "inverse-surface": "#213145",
+            "on-primary": "#ffffff",
+            "primary-fixed-dim": "#c3c0ff",
+            "primary-container": "var(--primary-color, #4f46e5)",
+            "error-container": "#ffdad6",
+            "on-error": "#ffffff",
+            "on-tertiary-container": "#ffd4a4",
+            "surface-dim": "#cbdbf5"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "gutter": "1.5rem",
+            "space-sm": "0.5rem",
+            "margin": "2rem",
+            "space-xs": "0.25rem",
+            "gutter-mobile": "1rem",
+            "space-md": "1rem",
+            "space-xl": "2.5rem",
+            "margin-mobile": "1rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "display": ["Plus Jakarta Sans", "sans-serif"],
+            "headline-lg": ["Plus Jakarta Sans", "sans-serif"],
+            "headline-md": ["Plus Jakarta Sans", "sans-serif"],
+            "headline-sm": ["Plus Jakarta Sans", "sans-serif"],
+            "body-lg": ["Inter", "sans-serif"],
+            "body-md": ["Inter", "sans-serif"],
+            "body-sm": ["Inter", "sans-serif"],
+            "label-md": ["Inter", "sans-serif"],
+            "label-sm": ["Inter", "sans-serif"]
+          },
+          "fontSize": {
+            "display": ["3.5rem", { "lineHeight": "1.15", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+            "headline-lg": ["2.5rem", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-md": ["1.75rem", { "lineHeight": "1.3", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-sm": ["1.25rem", { "lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-lg": ["1.125rem", { "lineHeight": "1.6", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "body-md": ["1rem", { "lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "400" }],
+            "body-sm": ["0.875rem", { "lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "400" }],
+            "label-md": ["0.875rem", { "lineHeight": "1.25", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "label-sm": ["0.75rem", { "lineHeight": "1.2", "letterSpacing": "0.04em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    :root {
+      --primary-color: {{data.primary_color}};
+    }
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      line-height: 1;
+      display: inline-block;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- 1. TopNavBar (Shared Component Integration) -->
+<header class="bg-surface-container-lowest dark:bg-inverse-surface docked full-width top-0 sticky z-50 border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none">
+<div class="flex justify-between items-center w-full px-margin max-w-7xl mx-auto h-16">
+<div class="flex items-center gap-space-lg">
+<a class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary tracking-tight flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-primary" data-icon="token">token</span>
+          {{data.brand_name}}
+        </a>
+<nav class="hidden md:flex items-center gap-space-md ml-4">
+<a class="text-primary dark:text-inverse-primary font-bold border-b-2 border-primary dark:border-inverse-primary pb-1 font-label-md text-label-md" href="#perks">Perks</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors pb-1 font-label-md text-label-md" href="#flash-sale">Flash Sale</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors pb-1 font-label-md text-label-md" href="#features">Features</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors pb-1 font-label-md text-label-md" href="#reviews">Reviews</a>
+</nav>
+</div>
+<div class="flex items-center gap-space-md">
+<a class="hidden sm:flex items-center gap-1 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="tel:18008888">
+<span class="material-symbols-outlined text-sm" data-icon="call">call</span>
+<span>Hotline: 1800 8888</span>
+</a>
+<a class="inline-flex items-center justify-center bg-primary text-on-primary font-label-md text-label-md px-space-md py-2.5 rounded-lg shadow-sm hover:opacity-95 active:scale-[0.98] transition-all" href="#checkout">
+<span class="material-symbols-outlined mr-1.5" data-icon="shopping_bag">shopping_bag</span>
+          {{data.cta_text}}
+        </a>
+</div>
+</div>
+</header>
+<!-- 2. Hero Section -->
+<section class="relative overflow-hidden pt-12 pb-20 bg-gradient-to-b from-surface-container-lowest via-surface to-background border-b border-outline-variant">
+<div class="max-w-7xl mx-auto px-margin">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-center">
+<!-- Hero Details Column -->
+<div class="lg:col-span-7 flex flex-col items-start gap-space-md">
+<!-- Hero Badge -->
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-fixed/50 border border-primary/20 text-on-primary-fixed font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="verified">verified</span>
+<span class="uppercase tracking-wider font-semibold">{{data.hero_badge}}</span>
+</div>
+<!-- Main Headlines -->
+<h1 class="font-display text-display text-on-surface leading-tight tracking-tight">
+            {{data.headline}}
+          </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
+            {{data.subheadline}}
+          </p>
+<!-- Social Proof Quick Strip -->
+<div class="flex flex-wrap items-center gap-space-md py-2 text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-center text-amber-500">
+<span class="material-symbols-outlined text-amber-500" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-amber-500" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-amber-500" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-amber-500" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-amber-500" data-icon="star" data-weight="fill">star</span>
+<span class="ml-1.5 font-bold text-on-surface">4.9/5</span>
+</div>
+<div class="w-1.5 h-1.5 rounded-full bg-outline-variant"></div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-sm" data-icon="local_shipping">local_shipping</span>
+<span>Đã giao thành công <strong class="text-on-surface font-semibold">{{data.sold_count}}</strong> đơn</span>
+</div>
+<div class="w-1.5 h-1.5 rounded-full bg-outline-variant"></div>
+<div class="inline-flex items-center gap-1 text-secondary font-medium">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+<span>Chính Hãng 100%</span>
+</div>
+</div>
+<!-- CTAs -->
+<div class="flex flex-wrap items-center gap-space-md pt-2">
+<a class="h-12 px-space-lg bg-primary hover:opacity-90 text-on-primary rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-all" href="#checkout">
+<span>{{data.cta_text}}</span>
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</a>
+<a class="h-12 px-space-lg bg-surface-container-lowest border border-outline-variant hover:bg-surface text-on-surface rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 active:scale-[0.98] transition-all" href="#features">
+<span class="material-symbols-outlined text-primary" data-icon="play_circle">play_circle</span>
+<span>Xem Demo &amp; Thông Số</span>
+</a>
+</div>
+<!-- Guarantee Badge Mini Strip -->
+<div class="grid grid-cols-3 gap-space-md pt-6 border-t border-outline-variant/60 w-full max-w-xl">
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-primary text-lg" data-icon="verified_user">verified_user</span>
+<span>Bảo hành 24 tháng</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-primary text-lg" data-icon="published_with_changes">published_with_changes</span>
+<span>30 ngày đổi trả</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-primary text-lg" data-icon="bolt">bolt</span>
+<span>Giao nhanh 2h</span>
+</div>
+</div>
+</div>
+<!-- Hero Visual Showcase -->
+<div class="lg:col-span-5 relative">
+<div class="relative mx-auto max-w-md lg:max-w-none">
+<!-- Ambient Glow Backdrop -->
+<div class="absolute -inset-4 bg-gradient-to-tr from-primary/30 to-secondary-container/40 rounded-2xl filter blur-2xl opacity-60"></div>
+<div class="relative bg-surface-container-lowest border border-outline-variant rounded-2xl p-4 shadow-xl overflow-hidden group">
+<!-- Discount Sticker -->
+<div class="absolute top-4 left-4 z-10 bg-error text-on-error font-label-sm text-label-sm px-3 py-1 rounded-full font-bold shadow-md flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="local_fire_department">local_fire_department</span>
+<span>GIẢM {{data.discount_percent}}</span>
+</div>
+<!-- Product Image -->
+<div class="overflow-hidden rounded-xl bg-surface-container aspect-square flex items-center justify-center">
+<img alt="{{data.headline}}" class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out" src="{{ data.image_url or 'https://lh3.googleusercontent.com/aida-public/AB6AXuAwFImOdrJpRmwlB6FWa0MK3vhSu0n-_ve_rqmipt92oPMiHuPL-RMjy2jm_vwHyEpJRAviAcUHizxro8A0PBClAKvi1mKCfRV6vTXqbwwDApYezxO9MxhPCKtBAd_aTNrY5mZPtjsznubROVa7v9KTSHwKq_LfubaRo9ATLjB04NdGr7z3USIHvzq-Seidtxdl0Xw-1PemvkFtJmkuYhPdoE7vDeQ4IN-qAzTk5iE' }}"/>
+</div>
+<!-- Floating Micro Stat Card -->
+<div class="mt-4 p-3 bg-surface-container-low border border-outline-variant/60 rounded-xl flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="award_star">award_star</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface font-semibold">Flagship Edition</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Thế hệ vi xử lý đột phá 2025</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="check">check</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. Product Highlights & Specs Grid -->
+<section class="py-20 bg-surface" id="features">
+<div class="max-w-7xl mx-auto px-margin">
+<!-- Section Header -->
+<div class="max-w-3xl mx-auto text-center mb-16">
+<div class="inline-flex items-center gap-1 text-primary font-label-md text-label-md tracking-wider uppercase mb-2">
+<span class="material-symbols-outlined text-sm" data-icon="tune">tune</span>
+<span>Công Nghệ &amp; Thiết Kế Đột Phá</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface tracking-tight mb-4">
+          {{data.features}}
+        </h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+          {{data.features_description}}
+        </p>
+</div>
+<!-- Bento Grid Feature Breakdown -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-lg">
+<!-- Feature 1: Performance -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-lg shadow-sm hover:shadow-md transition-all">
+<div class="w-12 h-12 rounded-xl bg-primary-fixed text-primary flex items-center justify-center mb-6">
+<span class="material-symbols-outlined" data-icon="speed">speed</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Hiệu Năng Vượt Trội</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">
+            Tối ưu hóa đa nhiệm với kiến trúc chip tân tiến, nâng cao hiệu suất xử lý lên tới 45% đồng thời giảm điện năng tiêu thụ.
+          </p>
+<div class="pt-4 border-t border-outline-variant/60 flex items-center justify-between text-on-surface font-label-md text-label-md">
+<span>Tần số xung nhịp</span>
+<span class="text-primary font-bold">4.2 GHz Ultra</span>
+</div>
+</div>
+<!-- Feature 2: Display / Optics -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-lg shadow-sm hover:shadow-md transition-all">
+<div class="w-12 h-12 rounded-xl bg-secondary-fixed text-secondary flex items-center justify-center mb-6">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Màn Hình Retina OLED</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">
+            Độ phân giải siêu nét với gam màu điện ảnh 100% DCI-P3, bảo vệ mắt tối đa với công nghệ chống ánh sáng xanh kép.
+          </p>
+<div class="pt-4 border-t border-outline-variant/60 flex items-center justify-between text-on-surface font-label-md text-label-md">
+<span>Độ sáng đỉnh</span>
+<span class="text-secondary font-bold">2500 Nits Pro</span>
+</div>
+</div>
+<!-- Feature 3: Battery & Charging -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-lg shadow-sm hover:shadow-md transition-all">
+<div class="w-12 h-12 rounded-xl bg-surface-variant text-on-surface-variant flex items-center justify-center mb-6">
+<span class="material-symbols-outlined" data-icon="battery_charging_full">battery_charging_full</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Năng Lượng Bền Bỉ 48h</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">
+            Công nghệ pin tế bào kép kết hợp sạc thông minh HyperCharge, nạp đầy 80% chỉ trong vòng 20 phút tiện lợi.
+          </p>
+<div class="pt-4 border-t border-outline-variant/60 flex items-center justify-between text-on-surface font-label-md text-label-md">
+<span>Chu kỳ sạc bảo vệ</span>
+<span class="text-primary font-bold">1600 Lần xả</span>
+</div>
+</div>
+</div>
+<!-- Technical Spec Table Strip -->
+<div class="mt-12 bg-surface-container-lowest border border-outline-variant rounded-xl p-space-lg overflow-x-auto" id="perks">
+<h4 class="font-headline-sm text-headline-sm text-on-surface mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="memory">memory</span>
+          Bảng Thông Số Kỹ Thuật Chi Tiết
+        </h4>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/40">
+<p class="font-label-sm text-label-sm text-on-surface-variant">Chất liệu vỏ</p>
+<p class="font-label-md text-label-md text-on-surface font-semibold mt-1">Titanium Grade 5 Hàng Không</p>
+</div>
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/40">
+<p class="font-label-sm text-label-sm text-on-surface-variant">Chuẩn kháng nước</p>
+<p class="font-label-md text-label-md text-on-surface font-semibold mt-1">IP68 (Độ sâu 6 mét 30 phút)</p>
+</div>
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/40">
+<p class="font-label-sm text-label-sm text-on-surface-variant">Kết nối không dây</p>
+<p class="font-label-md text-label-md text-on-surface font-semibold mt-1">Wi-Fi 7 / Bluetooth 5.4 LE</p>
+</div>
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/40">
+<p class="font-label-sm text-label-sm text-on-surface-variant">Trọng lượng siêu nhẹ</p>
+<p class="font-label-md text-label-md text-on-surface font-semibold mt-1">178 gram cân bằng đối xứng</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. Social Proof & Customer Reviews -->
+<section class="py-20 bg-background border-t border-outline-variant" id="reviews">
+<div class="max-w-7xl mx-auto px-margin">
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
+<div>
+<span class="text-primary font-label-md text-label-md tracking-wider uppercase">Đánh Giá Thực Tế</span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-1">
+            Khách Hàng Nói Gì Về {{data.brand_name}}?
+          </h2>
+</div>
+<div class="mt-4 md:mt-0 flex items-center gap-2 text-on-surface font-body-md text-body-md">
+<div class="flex text-amber-500">
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+</div>
+<span class="font-bold">99.4% Hài Lòng Tuyệt Đối</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-lg">
+<!-- Review Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-lg flex flex-col justify-between shadow-sm">
+<div>
+<div class="flex text-amber-500 mb-3">
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface mb-6 italic">
+              "Sản phẩm hoàn thiện vượt xa kỳ vọng! Độ mượt mà khi sử dụng cùng thời lượng pin 2 ngày không cần sạc là điểm ăn tiền nhất. Đóng gói rất cẩn thận và giao đúng hẹn."
+            </p>
+</div>
+<div class="flex items-center gap-3 pt-4 border-t border-outline-variant/60">
+<div class="w-10 h-10 rounded-full bg-primary-fixed text-primary font-bold flex items-center justify-center font-label-md">
+              NH
+            </div>
+<div>
+<p class="font-label-md text-label-md text-on-surface font-semibold">Nguyễn Hoàng Anh</p>
+<p class="font-body-sm text-body-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="verified">verified</span>
+                Đã mua hàng chính hãng
+              </p>
+</div>
+</div>
+</div>
+<!-- Review Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-lg flex flex-col justify-between shadow-sm">
+<div>
+<div class="flex text-amber-500 mb-3">
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface mb-6 italic">
+              "Mức giá giảm {{data.discount_percent}} trong đợt ra mắt này quá hời so với các thiết bị cùng phân khúc. Thiết kế nguyên khối cầm đầm tay, đẳng cấp thực sự."
+            </p>
+</div>
+<div class="flex items-center gap-3 pt-4 border-t border-outline-variant/60">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed text-secondary font-bold flex items-center justify-center font-label-md">
+              TL
+            </div>
+<div>
+<p class="font-label-md text-label-md text-on-surface font-semibold">Trần Thùy Linh</p>
+<p class="font-body-sm text-body-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="verified">verified</span>
+                Đã mua hàng chính hãng
+              </p>
+</div>
+</div>
+</div>
+<!-- Review Card 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-lg flex flex-col justify-between shadow-sm">
+<div>
+<div class="flex text-amber-500 mb-3">
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface mb-6 italic">
+              "Dịch vụ hỗ trợ trực tiếp và chính sách bảo hành 2 năm làm mình rất yên tâm. Sản phẩm đẹp hơn cả trên ảnh demo!"
+            </p>
+</div>
+<div class="flex items-center gap-3 pt-4 border-t border-outline-variant/60">
+<div class="w-10 h-10 rounded-full bg-surface-variant text-on-surface-variant font-bold flex items-center justify-center font-label-md">
+              QM
+            </div>
+<div>
+<p class="font-label-md text-label-md text-on-surface font-semibold">Lê Quang Minh</p>
+<p class="font-body-sm text-body-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="verified">verified</span>
+                Đã mua hàng chính hãng
+              </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. Order & Pre-order Checkout Section -->
+<section class="py-20 bg-surface-container-low border-t border-outline-variant" id="checkout">
+<div class="max-w-7xl mx-auto px-margin">
+<!-- Section Title -->
+<div class="max-w-2xl mx-auto text-center mb-12" id="flash-sale">
+<span class="inline-block px-3 py-1 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold uppercase mb-2">
+          Số lượng có hạn trong đợt mở bán
+        </span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">
+          Đặt Hàng Nhanh - Nhận Ngay Ưu Đãi Độc Quyền
+        </h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">
+          Điền thông tin bên dưới để được nhân viên xác nhận đơn hàng và kích hoạt gói bảo hành vàng lập tức.
+        </p>
+</div>
+<!-- Checkout Container -->
+<div class="max-w-4xl mx-auto bg-surface-container-lowest border border-outline-variant rounded-2xl shadow-xl overflow-hidden grid grid-cols-1 md:grid-cols-12">
+<!-- Order Summary Column -->
+<div class="md:col-span-5 bg-surface-container p-6 lg:p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-outline-variant">
+<div>
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="local_mall">local_mall</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Tóm Tắt Đơn Hàng</h3>
+</div>
+<!-- Product Card -->
+<div class="bg-surface-container-lowest p-3 rounded-xl border border-outline-variant/70 mb-6 flex gap-3 items-center">
+<img alt="{{data.headline}}" class="w-16 h-16 rounded-lg object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDea4fF8Ijdqlejib6o2gUCR6IJ8Vv7Hbzf3-eO9gG6XMw9RQM_p19U-FxUfactBqJrj275JfOteK2_2grUNRGul7KvPe85mnFaG8aVWJM4DA_8GGlYIXcNRqsc1_Ld2u48awEP3QHG3Lm2Aj1vkjUAKwYcrgMhgceyA5LNHrzFJZ_uwtAKxyBkk5Sj0UPTu6b8VtDG1hNDQs99mU_po2YjsXKJacrTWxKxT-W8gIo"/>
+<div>
+<p class="font-label-md text-label-md text-on-surface font-semibold">{{data.brand_name}}</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">{{data.headline}}</p>
+</div>
+</div>
+<!-- Pricing Breakdown -->
+<div class="space-y-3 font-body-sm text-body-sm">
+<div class="flex justify-between items-center text-on-surface-variant">
+<span>Giá niêm yết:</span>
+<span class="line-through text-outline font-medium">{{data.original_price}}</span>
+</div>
+<div class="flex justify-between items-center text-error font-medium">
+<span>Ưu đãi ra mắt:</span>
+<span>-{{data.discount_percent}}</span>
+</div>
+<div class="flex justify-between items-center text-secondary font-medium">
+<span>Phí vận chuyển toàn quốc:</span>
+<span>Miễn phí (0đ)</span>
+</div>
+<div class="pt-4 border-t border-outline-variant flex justify-between items-baseline">
+<span class="font-label-md text-label-md text-on-surface">Giá thanh toán:</span>
+<span class="font-headline-md text-headline-md font-bold text-primary">{{data.sale_price}}</span>
+</div>
+</div>
+</div>
+<!-- Trust Badges -->
+<div class="mt-8 pt-4 border-t border-outline-variant/60 space-y-2">
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-secondary text-base" data-icon="check_circle">check_circle</span>
+<span>Kiểm tra hàng trước khi thanh toán (COD)</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-secondary text-base" data-icon="verified_user">verified_user</span>
+<span>Bảo mật thông tin khách hàng tuyệt đối</span>
+</div>
+</div>
+</div>
+<!-- Form Column -->
+<div class="md:col-span-7 p-6 lg:p-8">
+<form class="space-y-4" onsubmit="event.preventDefault(); alert('Cảm ơn quý khách! Đơn đặt hàng đã được ghi nhận.');">
+<!-- Full Name -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1" for="customer-name">
+                Họ và tên người nhận <span class="text-error">*</span>
+</label>
+<div class="relative">
+<input class="w-full h-11 px-3 pl-10 rounded-lg border border-outline bg-surface-container-lowest text-on-surface font-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none" id="customer-name" placeholder="Ví dụ: Nguyễn Văn A" required="" type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-on-surface-variant text-lg" data-icon="person">person</span>
+</div>
+</div>
+<!-- Phone Number -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1" for="customer-phone">
+                Số điện thoại liên hệ <span class="text-error">*</span>
+</label>
+<div class="relative">
+<input class="w-full h-11 px-3 pl-10 rounded-lg border border-outline bg-surface-container-lowest text-on-surface font-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none" id="customer-phone" placeholder="Ví dụ: 0987 654 321" required="" type="tel"/>
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-on-surface-variant text-lg" data-icon="phone">phone</span>
+</div>
+</div>
+<!-- Address -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1" for="customer-address">
+                Địa chỉ nhận hàng (Số nhà, tên đường, phường/xã) <span class="text-error">*</span>
+</label>
+<div class="relative">
+<input class="w-full h-11 px-3 pl-10 rounded-lg border border-outline bg-surface-container-lowest text-on-surface font-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none" id="customer-address" placeholder="Số nhà, phố, quận/huyện, tỉnh/thành phố..." required="" type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-on-surface-variant text-lg" data-icon="location_on">location_on</span>
+</div>
+</div>
+<!-- Product Option / Variant -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">
+                Chọn phiên bản sản phẩm
+              </label>
+<div class="grid grid-cols-2 gap-3">
+<label class="flex items-center gap-2 p-3 border border-primary bg-primary-fixed/20 rounded-lg cursor-pointer">
+<input checked="" class="text-primary focus:ring-primary" name="variant" type="radio"/>
+<div>
+<p class="font-label-md text-label-md text-on-surface font-semibold">Titan Nguyên Bản</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Bản tiêu chuẩn</p>
+</div>
+</label>
+<label class="flex items-center gap-2 p-3 border border-outline-variant bg-surface-container-lowest rounded-lg cursor-pointer hover:border-primary transition-colors">
+<input class="text-primary focus:ring-primary" name="variant" type="radio"/>
+<div>
+<p class="font-label-md text-label-md text-on-surface font-semibold">Xanh Aurora Pro</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">+ Quà tặng dock sạc</p>
+</div>
+</label>
+</div>
+</div>
+<!-- Submit Button -->
+<button class="w-full h-12 mt-4 bg-primary hover:opacity-95 text-on-primary rounded-lg font-label-md text-label-md font-semibold flex items-center justify-center gap-2 shadow-lg shadow-primary/25 active:scale-[0.98] transition-all" type="submit">
+<span class="material-symbols-outlined" data-icon="shopping_cart_checkout">shopping_cart_checkout</span>
+<span>Xác Nhận {{data.cta_text}} - {{data.sale_price}}</span>
+</button>
+<p class="text-center font-body-sm text-body-sm text-on-surface-variant mt-2">
+              Nhân viên sẽ gọi điện tư vấn và chốt cấu hình trong vòng 10 phút.
+            </p>
+</form>
+</div>
+</div>
+</div>
+</section>
+<!-- 6. Community & Social Connect -->
+<section class="py-16 bg-surface-container-lowest border-t border-outline-variant">
+<div class="max-w-7xl mx-auto px-margin text-center">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">
+        Kết Nối Cùng Cộng Đồng {{data.brand_name}}
+      </h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xl mx-auto mb-8">
+        Cập nhật ưu đãi sớm nhất, chia sẻ trải nghiệm công nghệ và nhận quà tri ân độc quyền từ các kênh truyền thông chính thức.
+      </p>
+<div class="flex flex-wrap justify-center items-center gap-4">
+<!-- Facebook -->
+<a class="flex items-center gap-2.5 px-6 py-3 rounded-lg border border-outline-variant bg-surface hover:bg-surface-container hover:border-primary transition-all text-on-surface font-label-md text-label-md" href="{{data.social_facebook}}" rel="noopener noreferrer" target="_blank">
+<span class="material-symbols-outlined text-primary" data-icon="public">public</span>
+<span>Facebook</span>
+</a>
+<!-- TikTok -->
+<a class="flex items-center gap-2.5 px-6 py-3 rounded-lg border border-outline-variant bg-surface hover:bg-surface-container hover:border-primary transition-all text-on-surface font-label-md text-label-md" href="{{data.social_tiktok}}" rel="noopener noreferrer" target="_blank">
+<span class="material-symbols-outlined text-primary" data-icon="videocam">videocam</span>
+<span>TikTok</span>
+</a>
+<!-- Zalo -->
+<a class="flex items-center gap-2.5 px-6 py-3 rounded-lg border border-outline-variant bg-surface hover:bg-surface-container hover:border-primary transition-all text-on-surface font-label-md text-label-md" href="{{data.social_zalo}}" rel="noopener noreferrer" target="_blank">
+<span class="material-symbols-outlined text-primary" data-icon="chat">chat</span>
+<span>Zalo Official</span>
+</a>
+<!-- Instagram -->
+<a class="flex items-center gap-2.5 px-6 py-3 rounded-lg border border-outline-variant bg-surface hover:bg-surface-container hover:border-primary transition-all text-on-surface font-label-md text-label-md" href="{{data.social_instagram}}" rel="noopener noreferrer" target="_blank">
+<span class="material-symbols-outlined text-primary" data-icon="photo_camera">photo_camera</span>
+<span>Instagram</span>
+</a>
+</div>
+</div>
+</section>
+<!-- 7. Footer (Shared Component Integration) -->
+<footer class="bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant dark:border-outline full-width">
+<div class="w-full max-w-7xl mx-auto px-margin py-space-xl flex flex-col md:flex-row justify-between items-center gap-space-md">
+<div class="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface dark:text-inverse-on-surface">
+          {{data.brand_name}}
+        </span>
+<p class="font-body-sm text-body-sm text-on-surface-variant dark:text-surface-variant">
+          © 2025 {{data.brand_name}}. All rights reserved. 100% Guaranteed Satisfaction.
+        </p>
+</div>
+<nav class="flex flex-wrap items-center justify-center gap-4 font-label-sm text-label-sm">
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 hover:underline" href="#">Terms of Service</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 hover:underline" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 hover:underline" href="#">Return Policy</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 hover:underline" href="#">Guarantee &amp; Warranty</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 hover:underline" href="#">Contact Support</a>
+</nav>
+</div>
+</footer>
+</body></html>
