@@ -283,7 +283,7 @@
 </div>
 <!-- Product Showcase Image -->
 <div class="relative w-full aspect-square rounded-lg bg-stone-50 flex items-center justify-center overflow-hidden mb-4 border border-brand-50">
-<img alt="Hình ảnh sản phẩm {{data.brand_name}}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAY9cKYAVeIuim8vi64tG4uIvgp3v7llns0Ln-JZ6aWzG0msviB0qjF96q2xEJ7QrLxKX7uMkkGcgMS7-vpNsqM-Dt7mqsbO3pFIp88e0x_nLB4iFjVP0MhA3XGEQMK24-LFIm7XUh-sYvMCzVD4iXloAj4sco6_F3t0cn8QbnEkPyVtXpanOyeLl7kLJBDchmNnG_l3qMVts6Ku4MsqUGRTg_fTclgg8K5fVCmsI"/>
+<img alt="Hình ảnh sản phẩm {{data.brand_name}}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="{{ data.image_url or 'https://lh3.googleusercontent.com/aida-public/AB6AXuAAY9cKYAVeIuim8vi64tG4uIvgp3v7llns0Ln-JZ6aWzG0msviB0qjF96q2xEJ7QrLxKX7uMkkGcgMS7-vpNsqM-Dt7mqsbO3pFIp88e0x_nLB4iFjVP0MhA3XGEQMK24-LFIm7XUh-sYvMCzVD4iXloAj4sco6_F3t0cn8QbnEkPyVtXpanOyeLl7kLJBDchmNnG_l3qMVts6Ku4MsqUGRTg_fTclgg8K5fVCmsI' }}"/>
 </div>
 <!-- Quick Thumbnail Preview Gallery -->
 <div class="grid grid-cols-4 gap-2 mb-4">
