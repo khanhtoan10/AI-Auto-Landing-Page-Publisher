@@ -25,13 +25,11 @@ const FIELDS = [
   { name: "color_theme", label: "Tông màu", type: "color" },
   { name: "facebook_url", label: "Link Facebook", type: "text" },
   { name: "tiktok_url", label: "Link TikTok", type: "text" },
-  { name: "zalo_url", label: "Link Zalo", type: "text" },
   { name: "instagram_url", label: "Link Instagram", type: "text" },
 ];
 const SOCIAL = {
   facebook_url: ["facebook.com", "fb.com"],
   tiktok_url: ["tiktok.com"],
-  zalo_url: ["zalo.me"],
   instagram_url: ["instagram.com"],
 };
 const INPUT = "w-full px-3 py-2 rounded-lg border border-slate-300 text-sm";
@@ -40,9 +38,9 @@ const form = document.getElementById("f");
 form.innerHTML =
   `<label class="block text-sm font-semibold">Mẫu giao diện *
     <select id="template_id" class="${INPUT} mt-1">
-        <option value="1">Modern Tech Gadget</option>
-        <option value="2">Elegant Beauty &amp; Care</option>
-        <option value="3">Trust Consulting &amp; Course</option>
+        <option value="1">Mẫu Bán Hàng (Sales)</option>
+        <option value="2">Mẫu Marketing Sản Phẩm</option>
+        <option value="3">Mẫu Sự Kiện (Event)</option>
     </select></label>` +
   FIELDS.map(f => {
     const el = f.type === "textarea"
@@ -72,7 +70,7 @@ function validate(v) {
   if (v.product_description.length > 5000) e.product_description = "Tối đa 5000 ký tự.";
   if (v.price !== "" && (isNaN(Number(v.price)) || Number(v.price) < 0)) e.price = "Giá phải là số không âm.";
   if (!/^#[0-9a-fA-F]{6}$/.test(v.color_theme)) e.color_theme = "Tông màu phải dạng #RRGGBB.";
-  for (const k of ["image_url", "facebook_url", "tiktok_url", "zalo_url", "instagram_url"]) {
+  for (const k of ["image_url", "facebook_url", "tiktok_url", "instagram_url"]) {
     const m = checkUrl(k, v[k]);
     if (m) e[k] = m;
   }
@@ -99,7 +97,7 @@ form.addEventListener("submit", async (ev) => {
   const btn = document.getElementById("btn");
   btn.disabled = true;
   try {
-    const res = await apiRequest("/api/v1/projects", { method: "POST", body: JSON.stringify(body) });
+    const res = await apiRequest("/projects", { method: "POST", body: JSON.stringify(body) });
     msg.className = "mt-4 text-sm text-emerald-700";
     msg.textContent = "Tạo chiến dịch thành công, mã: " + res.data.id;
     form.reset();
