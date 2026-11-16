@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 from datetime import datetime, timezone
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
 
 from core.database import Base
+
+if TYPE_CHECKING:
+    from models.project import Project
 
 STATUS_PENDING = "pending"
 STATUS_SUCCESS = "success"

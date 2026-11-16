@@ -1,6 +1,8 @@
+const AUTH_ROOT_PREFIX = window.location.pathname.includes("/pages/") ? "../" : "";
+
 // Nếu đã đăng nhập (có token) mà vẫn mở login.html -> chuyển thẳng sang index.html
 if (window.location.pathname.endsWith("login.html") && getToken()) {
-  window.location.href = "index.html";
+  window.location.href = `${AUTH_ROOT_PREFIX}index.html`;
 }
 
 function switchAuthTab(tab) {
@@ -74,7 +76,7 @@ function checkPasswordStrength(password) {
 }
 
 let toastTimeout;
-function showToast(type, title, message) {
+function showAuthToast(type, title, message) {
   const toast = document.getElementById("globalToast");
   const icon = document.getElementById("toastIcon");
   const titleEl = document.getElementById("toastTitle");
@@ -108,7 +110,7 @@ function dismissToast() {
 }
 
 function notifyNotice(msg) {
-  showToast("info", "Thông Báo", msg);
+  showAuthToast("info", "Thông Báo", msg);
 }
 
 function clearErrors() {
@@ -134,8 +136,6 @@ function setFieldError(fieldId, errorId, message) {
 function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
-
-
 
 // 1. XỬ LÝ ĐĂNG NHẬP -> GỌI POST /auth/login
 async function handleLoginSubmit(e) {
@@ -177,14 +177,13 @@ async function handleLoginSubmit(e) {
     const token = res?.data?.access_token;
     if (!token) throw new Error("Không nhận được JWT Token từ máy chủ.");
 
-    // Lưu token vào localStorage & chuyển sang trang Dashboard (index.html)
     setToken(token);
-    showToast("success", "Đăng nhập thành công", "Đang chuyển hướng vào bảng điều khiển...");
+    showAuthToast("success", "Đăng nhập thành công", "Đang chuyển hướng vào bảng điều khiển...");
     setTimeout(() => {
-      window.location.href = "index.html";
+      window.location.href = `${AUTH_ROOT_PREFIX}index.html`;
     }, 500);
   } catch (err) {
-    showToast("error", "Đăng nhập thất bại", err.message);
+    showAuthToast("error", "Đăng nhập thất bại", err.message);
     setFieldError("loginPassword", "errLoginPassword", err.message);
   } finally {
     btn.disabled = false;
@@ -249,10 +248,10 @@ async function handleRegisterSubmit(e) {
     document.getElementById("formRegister").reset();
     switchAuthTab("login");
     document.getElementById("loginIdentifier").value = email;
-    showToast("success", "Đăng ký thành công", "Tài khoản đã được tạo! Vui lòng đăng nhập.");
+    showAuthToast("success", "Đăng ký thành công", "Tài khoản đã được tạo! Vui lòng đăng nhập.");
   } catch (err) {
     setFieldError("regEmail", "errRegEmail", err.message);
-    showToast("error", "Đăng ký không thành công", err.message);
+    showAuthToast("error", "Đăng ký không thành công", err.message);
   } finally {
     btn.disabled = false;
     btnText.textContent = "Đăng ký tài khoản";
@@ -260,21 +259,20 @@ async function handleRegisterSubmit(e) {
   }
 }
 
-// 3. BẢO VỆ TRANG DASHBOARD (Chưa đăng nhập -> đá về login.html)
+// 3. BẢO VỆ TRANG DASHBOARD (Chưa đăng nhập -> đá về login.html ở thư mục gốc)
 async function requireAuth() {
   const token = getToken();
   if (!token) {
-    window.location.href = "login.html";
+    window.location.href = `${AUTH_ROOT_PREFIX}login.html`;
     return null;
   }
 
   try {
-    // Gọi GET /auth/me (tự gắn Authorization: Bearer <token> qua apiRequest)
     const res = await apiRequest("/auth/me", { method: "GET" });
     return res.data;
   } catch (err) {
     removeToken();
-    window.location.href = "login.html";
+    window.location.href = `${AUTH_ROOT_PREFIX}login.html`;
     return null;
   }
 }
@@ -282,5 +280,5 @@ async function requireAuth() {
 // 4. ĐĂNG XUẤT -> XÓA TOKEN & CHUYỂN VỀ TRANG ĐĂNG NHẬP
 function handleLogout() {
   removeToken();
-  window.location.href = "login.html";
+  window.location.href = `${AUTH_ROOT_PREFIX}login.html`;
 }

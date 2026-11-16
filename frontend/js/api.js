@@ -17,7 +17,7 @@ function removeToken() {
 /**
  * Hàm gọi API dùng chung cho toàn bộ Frontend:
  * - Tự động đính kèm Header Authorization: Bearer <token>
- * - Tự động đăng xuất & chuyển về login.html nếu Backend trả về 401 (token sai/hết hạn)
+ * - Tự động đăng xuất & chuyển về login.html nếu Backend trả về 401
  */
 async function apiRequest(endpoint, options = {}) {
   const token = getToken();
@@ -40,12 +40,12 @@ async function apiRequest(endpoint, options = {}) {
   // Nếu gọi các API cần xác thực mà bị 401 -> xóa token và chuyển về trang đăng nhập
   if (response.status === 401 && !endpoint.includes("/auth/login")) {
     removeToken();
-    window.location.href = "login.html";
+    const prefix = window.location.pathname.includes("/pages/") ? "../" : "";
+    window.location.href = `${prefix}login.html`;
     throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
   }
 
   if (!response.ok) {
-    // Bóc tách message lỗi chuẩn từ FastAPI (hỗ trợ cả string lẫn object error.message)
     const errorMsg =
       data?.detail?.error?.message ||
       (typeof data?.detail === "string" ? data.detail : null) ||
