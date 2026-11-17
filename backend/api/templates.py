@@ -1,8 +1,9 @@
 """API Router quản lý Template (Landing Page Templates).
 
-Cung cấp hai endpoint:
-  - GET /templates       : Lấy danh sách toàn bộ template
-  - GET /templates/{id}  : Lấy chi tiết một template theo ID
+Cung cấp các endpoint:
+  - GET /templates              : Lấy danh sách toàn bộ template
+  - GET /templates/{id}         : Lấy chi tiết một template theo ID
+  - GET /templates/{id}/preview : Xem trước nội dung HTML thực tế của template
 """
 
 import logging
@@ -176,4 +177,3 @@ async def preview_template(
                 "data": None,
             },
         )
-
