@@ -12,6 +12,26 @@ SOCIAL_DOMAINS = {
 }
 
 
+def _validate_url(value: Optional[str], field_name: str) -> Optional[str]:
+    if value is None or value == "":
+        return value or None
+    parsed = urlparse(value)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        raise ValueError("Link phai bat dau bang http:// hoac https://")
+    domains = SOCIAL_DOMAINS.get(field_name)
+    if domains and not any(
+        parsed.hostname == d or parsed.hostname.endswith("." + d) for d in domains
+    ):
+        raise ValueError("Link khong dung ten mien " + domains[0])
+    return value
+
+
+def _validate_color(value: Optional[str]) -> Optional[str]:
+    if value is not None and not re.fullmatch(r"#[0-9a-fA-F]{6}", value):
+        raise ValueError("Tong mau phai dang hex, vi du #1A2B3C")
+    return value
+
+
 class ProjectCreate(BaseModel):
     template_id: int
     campaign_name: str = Field(min_length=1, max_length=255)
@@ -35,24 +55,12 @@ class ProjectCreate(BaseModel):
     @field_validator("color_theme")
     @classmethod
     def valid_color(cls, v):
-        if v is not None and not re.fullmatch(r"#[0-9a-fA-F]{6}", v):
-            raise ValueError("Tong mau phai dang hex, vi du #1A2B3C")
-        return v
+        return _validate_color(v)
 
     @field_validator("image_url", "facebook_url", "tiktok_url", "instagram_url")
     @classmethod
     def valid_url(cls, v, info):
-        if v is None:
-            return v
-        parsed = urlparse(v)
-        if parsed.scheme not in ("http", "https") or not parsed.hostname:
-            raise ValueError("Link phai bat dau bang http:// hoac https://")
-        domains = SOCIAL_DOMAINS.get(info.field_name)
-        if domains and not any(
-            parsed.hostname == d or parsed.hostname.endswith("." + d) for d in domains
-        ):
-            raise ValueError("Link khong dung ten mien " + domains[0])
-        return v
+        return _validate_url(v, info.field_name)
 
 
 class ProjectUpdate(BaseModel):
@@ -66,7 +74,19 @@ class ProjectUpdate(BaseModel):
     facebook_url: Optional[str] = Field(default=None, max_length=500)
     tiktok_url: Optional[str] = Field(default=None, max_length=500)
     instagram_url: Optional[str] = Field(default=None, max_length=500)
+    repo_url: Optional[str] = Field(default=None, max_length=500)
+    github_pages_url: Optional[str] = Field(default=None, max_length=500)
     raw_json_data: Optional[Any] = None
+    change_summary: Optional[str] = Field(
+        default=None,
+        max_length=255,
+        description="Ghi chú thay đổi, lưu vào project_versions.change_summary",
+    )
+    commit_message: Optional[str] = Field(
+        default=None,
+        max_length=255,
+        description="Commit message khi push lên GitHub (tùy chọn)",
+    )
 
     @field_validator("campaign_name", "product_name")
     @classmethod
@@ -81,21 +101,41 @@ class ProjectUpdate(BaseModel):
     @field_validator("color_theme")
     @classmethod
     def valid_color(cls, v):
-        if v is not None and not re.fullmatch(r"#[0-9a-fA-F]{6}", v):
-            raise ValueError("Tong mau phai dang hex, vi du #1A2B3C")
-        return v
+        return _validate_color(v)
 
-    @field_validator("image_url", "facebook_url", "tiktok_url", "instagram_url")
+    @field_validator(
+        "image_url",
+        "facebook_url",
+        "tiktok_url",
+        "instagram_url",
+        "repo_url",
+        "github_pages_url",
+    )
     @classmethod
     def valid_url(cls, v, info):
-        if v is None:
-            return v
-        parsed = urlparse(v)
-        if parsed.scheme not in ("http", "https") or not parsed.hostname:
-            raise ValueError("Link phai bat dau bang http:// hoac https://")
-        domains = SOCIAL_DOMAINS.get(info.field_name)
-        if domains and not any(
-            parsed.hostname == d or parsed.hostname.endswith("." + d) for d in domains
-        ):
-            raise ValueError("Link khong dung ten mien " + domains[0])
-        return v
+        return _validate_url(v, info.field_name)
+
+
+class ProjectPreviewResponse(BaseModel):
+    """Kết quả render xem trước, không lưu vào DB."""
+
+    success: bool = True
+    rendered_html: str
+    product_name: str
+    price: Optional[float] = None
+
+
+class ProjectUpdateResponse(BaseModel):
+    """Kết quả cập nhật landing page: DB -> render -> push GitHub -> lưu version."""
+
+    success: bool = True
+    message: str
+    data: dict[str, Any]
+    project: dict[str, Any]
+    commit_sha: Optional[str] = None
+    version_id: Optional[int] = None
+    version_number: Optional[int] = None
+    rendered_html: str
+    github_pages_url: Optional[str] = None
+    repo_url: Optional[str] = None
+    warnings: list[str] = Field(default_factory=list)
