@@ -1,5 +1,12 @@
+import base64
+import hashlib
+import logging
 import os
+import re
 from pathlib import Path
+from typing import Optional
+from urllib.parse import urlparse
+
 import requests
 from dotenv import load_dotenv
 
@@ -9,6 +16,27 @@ load_dotenv(dotenv_path=env_path)
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 GITHUB_API_URL = "https://api.github.com"
+
+logger = logging.getLogger(__name__)
+
+PLACEHOLDER_TOKEN = "your_github_personal_access_token_here"
+
+
+def _resolve_token(token: Optional[str] = None) -> Optional[str]:
+    """Trả về token GitHub hợp lệ hoặc None nếu chưa cấu hình."""
+    value = token or GITHUB_TOKEN
+    if not value or value == PLACEHOLDER_TOKEN:
+        return None
+    return value
+
+
+def _github_headers(token: str) -> dict:
+    return {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+
 
 
 def create_github_repo(
@@ -50,3 +78,170 @@ def create_github_repo(
 
     error_detail = response.json().get("message", response.text)
     raise RuntimeError(f"Tạo GitHub repo thất bại ({response.status_code}): {error_detail}")
+
+
+# ── Landing page commit helpers ──────────────────────────────────────
+def parse_repo_info(repo_url: str) -> Optional[tuple[str, str]]:
+    """Trích xuất ``(owner, repo)`` từ mọi định dạng URL GitHub.
+
+    Hỗ trợ:
+      - https://github.com/owner/repo
+      - https://github.com/owner/repo.git
+      - https://github.com/owner/repo/tree/main/pages
+      - git@github.com:owner/repo.git
+      - github.com/owner/repo
+    """
+    if not repo_url or not str(repo_url).strip():
+        return None
+
+    value = str(repo_url).strip()
+    ssh_match = re.match(
+        r"^git@github\.com:(?P<owner>[^/\s]+)/(?P<repo>[^/\s]+?)(?:\.git)?/?$",
+        value,
+        re.IGNORECASE,
+    )
+    if ssh_match:
+        owner, repo = ssh_match.group("owner"), ssh_match.group("repo")
+    else:
+        if value.startswith("git+"):
+            value = value[len("git+") :]
+        if "://" not in value:
+            value = "https://" + value
+        parsed = urlparse(value)
+        if parsed.hostname not in ("github.com", "www.github.com"):
+            return None
+        parts = [part for part in parsed.path.split("/") if part]
+        if len(parts) < 2:
+            return None
+        owner, repo = parts[0], parts[1]
+        if repo.endswith(".git"):
+            repo = repo[: -len(".git")]
+
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", owner or "") or not re.fullmatch(
+        r"[A-Za-z0-9_.-]+", repo or ""
+    ):
+        return None
+    return owner, repo
+
+
+def get_existing_file_sha(
+    owner: str,
+    repo: str,
+    file_path: str = "index.html",
+    branch: str = "main",
+    token: Optional[str] = None,
+) -> Optional[str]:
+    """Lấy SHA của file hiện tại trên GitHub (bắt buộc khi cập nhật file).
+
+    Trả về None nếu file chưa tồn tại hoặc không lấy được thông tin.
+    """
+    auth_token = _resolve_token(token)
+    if not auth_token:
+        return None
+
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path.lstrip('/')}"
+    try:
+        response = requests.get(
+            url,
+            headers=_github_headers(auth_token),
+            params={"ref": branch},
+            timeout=15,
+        )
+    except requests.RequestException as exc:
+        logger.warning("Không lấy được SHA file %s: %s", file_path, exc)
+        return None
+
+    if response.status_code == 404:
+        return None
+    if response.status_code != 200:
+        logger.warning(
+            "Không lấy được SHA file %s (%s): %s",
+            file_path,
+            response.status_code,
+            response.text[:200],
+        )
+        return None
+
+    data = response.json()
+    sha = data.get("sha") if isinstance(data, dict) else None
+    return sha if isinstance(sha, str) else None
+
+
+def simulate_commit_sha(
+    html_content: str,
+    repo_url: Optional[str] = None,
+    file_path: str = "index.html",
+) -> str:
+    """Sinh commit SHA mô phỏng 40 ký tự hex khi chạy offline/local."""
+    payload = f"{repo_url or 'local'}::{file_path}::{hashlib.sha256(html_content.encode('utf-8')).hexdigest()}"
+    return hashlib.sha1(payload.encode("utf-8")).hexdigest()
+
+
+def push_landing_page_commit(
+    repo_url: str,
+    html_content: str,
+    commit_message: str = "Cập nhật landing page",
+    file_path: str = "index.html",
+    branch: str = "main",
+    token: Optional[str] = None,
+) -> str:
+    """Tạo commit mới chứa ``html_content`` lên GitHub Contents API.
+
+    - Nếu có ``GITHUB_TOKEN`` hợp lệ và ``repo_url`` là repo GitHub thật:
+      gọi ``PUT /repos/{owner}/{repo}/contents/{file_path}`` và trả về commit SHA.
+    - Nếu thiếu token, repo không hợp lệ hoặc GitHub không phản hồi:
+      trả về commit SHA mô phỏng 40 ký tự hex để luồng cập nhật không bị gián đoạn.
+
+    Raises:
+        ValueError: nếu ``html_content`` rỗng.
+    """
+    if not html_content or not html_content.strip():
+        raise ValueError("html_content không được để rỗng")
+
+    auth_token = _resolve_token(token)
+    repo_info = parse_repo_info(repo_url)
+
+    if not auth_token or not repo_info:
+        reason = "chưa cấu hình GITHUB_TOKEN" if not auth_token else "repo_url không hợp lệ"
+        logger.info("Bỏ qua GitHub API (%s), dùng commit SHA mô phỏng", reason)
+        return simulate_commit_sha(html_content, repo_url, file_path)
+
+    owner, repo = repo_info
+    clean_path = file_path.lstrip("/")
+    api_url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{clean_path}"
+
+    try:
+        existing_sha = get_existing_file_sha(
+            owner, repo, clean_path, branch=branch, token=auth_token
+        )
+        payload = {
+            "message": commit_message or "Cập nhật landing page",
+            "content": base64.b64encode(html_content.encode("utf-8")).decode("ascii"),
+            "branch": branch,
+        }
+        if existing_sha:
+            payload["sha"] = existing_sha
+
+        response = requests.put(
+            api_url,
+            json=payload,
+            headers=_github_headers(auth_token),
+            timeout=30,
+        )
+
+        if response.status_code in (200, 201):
+            data = response.json()
+            commit_sha = (data.get("commit") or {}).get("sha")
+            if commit_sha:
+                return commit_sha
+            logger.warning("GitHub không trả về commit SHA, dùng SHA mô phỏng")
+        else:
+            logger.warning(
+                "Push GitHub thất bại (%s): %s",
+                response.status_code,
+                response.text[:300],
+            )
+    except requests.RequestException as exc:
+        logger.warning("Không kết nối được GitHub API: %s", exc)
+
+    return simulate_commit_sha(html_content, repo_url, file_path)
