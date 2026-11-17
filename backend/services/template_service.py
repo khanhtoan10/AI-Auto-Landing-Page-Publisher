@@ -1,9 +1,18 @@
-"""Service render mã nguồn HTML hoàn chỉnh cho Landing Page.
+"""Service xử lý nghiệp vụ liên quan đến Template.
 
-Luồng sử dụng (xem ``backend/api/projects.py``):
-    rendered_html = render_landing_page(project_dict)
+File này gồm 2 nhóm chức năng:
 
-Chiến lược render:
+1. Đọc dữ liệu Template từ database (bảng ``templates``) qua SQLAlchemy Session
+   - ``get_all_templates``    : danh sách toàn bộ template
+   - ``get_template_by_id``   : lấy 1 template theo ID
+   - ``serialize_template``   : chuyển ORM Model -> Pydantic Schema
+
+2. Render mã nguồn HTML hoàn chỉnh cho Landing Page
+   - ``render_landing_page``  : dùng bởi ``backend/api/projects.py`` (PUT /projects/{id}
+     và POST /projects/{id}/preview) để render lại toàn bộ HTML sau khi người dùng
+     chỉnh sửa text, giá, link social, màu chủ đạo, link ảnh.
+
+Chiến lược render (nhóm 2):
 1. Nếu dự án chỉ định một template Jinja2 hợp lệ trong ``backend/templates/``
    (qua ``raw_json_data.template_file`` hoặc tham số ``template_path``),
    render template đó với bộ dữ liệu chuẩn hoá.
@@ -19,9 +28,51 @@ import re
 from decimal import Decimal, InvalidOperation
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from models.template import Template
+from schemas.template import TemplateItem
+
+
+def serialize_template(template: Template) -> TemplateItem:
+    """Chuyển đổi ORM Model Template thành Pydantic Schema TemplateItem.
+    
+    Ánh xạ cột thumbnail_url từ database sang trường thumbnail theo đúng API contract.
+    Loại bỏ các trường nội bộ không cần thiết như file_path và created_at.
+    """
+    return TemplateItem(
+        id=template.id,
+        name=template.name,
+        description=template.description,
+        thumbnail=template.thumbnail_url,
+        placeholders=template.placeholders,
+    )
+
+
+def get_all_templates(db: Session) -> List[TemplateItem]:
+    """Lấy danh sách tất cả các Template từ database.
+    
+    Trả về danh sách đối tượng TemplateItem đã được serialize và parse placeholders.
+    """
+    stmt = select(Template).order_by(Template.id.asc())
+    templates = db.scalars(stmt).all()
+    return [serialize_template(t) for t in templates]
+
+
+def get_template_by_id(db: Session, template_id: int) -> Optional[TemplateItem]:
+    """Truy vấn một Template theo ID.
+    
+    Trả về TemplateItem nếu tìm thấy, hoặc None nếu không tồn tại trong database.
+    """
+    template = db.get(Template, template_id)
+    if template is None:
+        return None
+    return serialize_template(template)
+
 
 logger = logging.getLogger(__name__)
 

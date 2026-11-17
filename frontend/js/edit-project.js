@@ -2,14 +2,14 @@
  * [FE] Form chỉnh sửa landing page + Live Preview Studio.
  *
  * Luồng nghiệp vụ:
- *   1. GET  /api/v1/projects/{id}          -> điền dữ liệu cũ vào form.
- *   2. POST /api/v1/projects/{id}/preview  -> render iframe (debounce 300ms).
- *   3. PUT  /api/v1/projects/{id}          -> lưu DB + push GitHub + tạo version mới.
+ *   1. GET  /projects/{id}          -> điền dữ liệu cũ vào form.
+ *   2. POST /projects/{id}/preview  -> render iframe (debounce 300ms).
+ *   3. PUT  /projects/{id}          -> lưu DB + push GitHub + tạo version mới.
  */
 (function () {
   'use strict';
 
-  const API_PREFIX = '/api/v1';
+  const API_PREFIX = '';
   const DEFAULT_COLOR = '#4F46E5';
   const DEFAULT_CHANGE_SUMMARY = 'Cập nhật landing page: text, giá, link social';
   const THEME_COLORS = {
@@ -127,7 +127,7 @@
 
   async function loadVersionBadge(projectId) {
     try {
-      const versions = await apiRequest(`${API_PREFIX}/projects/${projectId}/versions`);
+      const versions = await apiRequest(`/api/v1/projects/${projectId}/versions`);
       const list = Array.isArray(versions) ? versions : versions?.data || [];
       if (list.length && list[0].version_number) {
         setVersionBadge(list[0].version_number);
