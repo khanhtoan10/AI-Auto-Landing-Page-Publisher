@@ -3,7 +3,9 @@ from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
 
-# Tải biến môi trường từ file .env
+# Tải biến môi trường từ file .env trong thư mục backend hoặc thư mục gốc
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 load_dotenv()
 
 class Settings:

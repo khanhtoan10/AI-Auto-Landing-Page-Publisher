@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tạo chiến dịch</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+<main class="max-w-xl mx-auto p-6">
+  <h1 class="text-xl font-bold text-slate-800 mb-4">Tạo chiến dịch mới</h1>
+  <form id="f" novalidate class="space-y-4 bg-white p-5 rounded-xl border border-slate-200"></form>
+  <div id="msg" class="mt-4 text-sm"></div>
+</main>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+const FIELDS = [
+  { name: "campaign_name", label: "Tên chiến dịch *", type: "text" },
+  { name: "product_name", label: "Tên sản phẩm *", type: "text" },
+  { name: "product_description", label: "Mô tả ngắn", type: "textarea" },
+  { name: "price", label: "Giá (VND)", type: "number" },
+  { name: "image_url", label: "Link ảnh sản phẩm", type: "text" },
+  { name: "color_theme", label: "Tông màu", type: "color" },
+  { name: "facebook_url", label: "Link Facebook", type: "text" },
+  { name: "tiktok_url", label: "Link TikTok", type: "text" },
+  { name: "instagram_url", label: "Link Instagram", type: "text" },
+];
+const SOCIAL = {
+  facebook_url: ["facebook.com", "fb.com"],
+  tiktok_url: ["tiktok.com"],
+  instagram_url: ["instagram.com"],
+};
+const INPUT = "w-full px-3 py-2 rounded-lg border border-slate-300 text-sm";
+
+const form = document.getElementById("f");
+form.innerHTML =
+  `<label class="block text-sm font-semibold">Mẫu giao diện *
+    <select id="template_id" class="${INPUT} mt-1">
+        <option value="1">Mẫu Bán Hàng (Sales)</option>
+        <option value="2">Mẫu Marketing Sản Phẩm</option>
+        <option value="3">Mẫu Sự Kiện (Event)</option>
+    </select></label>` +
+  FIELDS.map(f => {
+    const el = f.type === "textarea"
+      ? `<textarea id="${f.name}" rows="3" class="${INPUT} mt-1"></textarea>`
+      : `<input id="${f.name}" type="${f.type}" ${f.type === "color" ? 'value="#4f46e5"' : ""} class="${INPUT} mt-1">`;
+    return `<div><label class="block text-sm font-semibold">${f.label}${el}</label>
+      <p id="err_${f.name}" class="text-xs text-rose-600 mt-1"></p></div>`;
+  }).join("") +
+  `<button id="btn" type="submit" class="px-5 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-bold">Tạo chiến dịch</button>`;
+
+function checkUrl(name, v) {
+  if (!v) return "";
+  let u;
+  try { u = new URL(v); } catch { return "Link không hợp lệ."; }
+  if (u.protocol !== "http:" && u.protocol !== "https:") return "Link phải bắt đầu bằng http:// hoặc https://";
+  const d = SOCIAL[name];
+  if (d && !d.some(x => u.hostname === x || u.hostname.endsWith("." + x))) return "Link phải thuộc " + d[0];
+  return "";
+}
+
+function validate(v) {
+  const e = {};
+  if (!v.campaign_name) e.campaign_name = "Vui lòng nhập tên chiến dịch.";
+  else if (v.campaign_name.length > 255) e.campaign_name = "Tối đa 255 ký tự.";
+  if (!v.product_name) e.product_name = "Vui lòng nhập tên sản phẩm.";
+  else if (v.product_name.length > 255) e.product_name = "Tối đa 255 ký tự.";
+  if (v.product_description.length > 5000) e.product_description = "Tối đa 5000 ký tự.";
+  if (v.price !== "" && (isNaN(Number(v.price)) || Number(v.price) < 0)) e.price = "Giá phải là số không âm.";
+  if (!/^#[0-9a-fA-F]{6}$/.test(v.color_theme)) e.color_theme = "Tông màu phải dạng #RRGGBB.";
+  for (const k of ["image_url", "facebook_url", "tiktok_url", "instagram_url"]) {
+    const m = checkUrl(k, v[k]);
+    if (m) e[k] = m;
+  }
+  return e;
+}
+
+form.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const msg = document.getElementById("msg");
+  msg.textContent = "";
+  const v = {};
+  FIELDS.forEach(f => v[f.name] = document.getElementById(f.name).value.trim());
+  FIELDS.forEach(f => document.getElementById("err_" + f.name).textContent = "");
+
+  const errs = validate(v);
+  for (const k in errs) document.getElementById("err_" + k).textContent = errs[k];
+  if (Object.keys(errs).length) return;
+
+  const body = { template_id: Number(document.getElementById("template_id").value) };
+  FIELDS.forEach(f => {
+    if (v[f.name] !== "") body[f.name] = f.name === "price" ? Number(v[f.name]) : v[f.name];
+  });
+
+  const btn = document.getElementById("btn");
+  btn.disabled = true;
+  try {
+    const res = await apiRequest("/projects", { method: "POST", body: JSON.stringify(body) });
+    msg.className = "mt-4 text-sm text-emerald-700";
+    msg.textContent = "Tạo chiến dịch thành công, mã: " + res.data.id;
+    form.reset();
+    setTimeout(() => { window.location.href = "projects.html"; }, 1200);
+  } catch (err) {
+    msg.className = "mt-4 text-sm text-rose-600";
+    msg.textContent = err.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+requireAuth();
+</script>
+</body>
+</html>
