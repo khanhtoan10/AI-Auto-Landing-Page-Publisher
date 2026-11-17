@@ -18,6 +18,16 @@ class TemplateItem(BaseModel):
         description="Đường dẫn ảnh đại diện",
         examples=["/uploads/templates/modern-business.png"],
     )
+    thumbnail_url: Optional[str] = Field(
+        None,
+        description="Đường dẫn ảnh đại diện (alias tương thích)",
+        examples=["/static/thumbnails/modern_tech.jpg"],
+    )
+    file_path: Optional[str] = Field(
+        None,
+        description="Đường dẫn file template gốc",
+        examples=["templates/modern_tech.html"],
+    )
     placeholders: List[str] = Field(
         default_factory=list,
         description="Danh sách các placeholder mà Template hỗ trợ",

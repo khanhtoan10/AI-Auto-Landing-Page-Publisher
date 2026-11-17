@@ -263,7 +263,7 @@
 <span>Công Nghệ &amp; Thiết Kế Đột Phá</span>
 </div>
 <h2 class="font-headline-lg text-headline-lg text-on-surface tracking-tight mb-4">
-          {{data.features}}
+          {{ data.features | join(' • ') if data.features is iterable and data.features is not string else data.features }}
         </h2>
 <p class="font-body-lg text-body-lg text-on-surface-variant">
           {{data.features_description}}
