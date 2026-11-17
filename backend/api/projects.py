@@ -1,13 +1,21 @@
 import json
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.security import get_current_user, get_owned_project
+from models import STATUS_SUCCESS
 from schemas.project import ProjectCreate, ProjectUpdate
+from services.generation_service import ProjectNotFoundError, generate_content_for_project
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
+logger = logging.getLogger(__name__)
+
+
+def _error_detail(code: str, message: str) -> dict:
+    return {"success": False, "error": {"code": code, "message": message, "details": []}}
 
 
 @router.get("")
@@ -128,4 +136,47 @@ async def deploy_project_guard(
         "success": True,
         "message": "Xác thực quyền sở hữu hợp lệ để triển khai landing page.",
         "data": {"project_id": project["id"], "status": project["status"]},
+    }
+
+
+@router.post("/{project_id}/generate", status_code=status.HTTP_201_CREATED)
+def generate_project_content(
+    project: dict = Depends(get_owned_project),
+    db: Session = Depends(get_db),
+):
+    """Sinh nội dung landing page bằng Gemini API và lưu kết quả JSON vào Database."""
+    try:
+        generation = generate_content_for_project(db=db, project_id=project["id"])
+    except ProjectNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=_error_detail("PROJECT_NOT_FOUND", "Landing page không tồn tại."),
+        )
+    except Exception:
+        logger.exception("Lỗi khi sinh/lưu nội dung cho project %s", project["id"])
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_error_detail("DATABASE_ERROR", "Lỗi hệ thống khi lưu dữ liệu sinh nội dung."),
+        )
+
+    if generation.status != STATUS_SUCCESS or generation.response_json is None:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=_error_detail(
+                "GEMINI_ERROR",
+                "Không thể sinh nội dung từ Gemini API. Vui lòng thử lại sau.",
+            ),
+        )
+
+    return {
+        "success": True,
+        "data": {
+            "id": generation.id,
+            "project_id": generation.project_id,
+            "status": generation.status,
+            "raw_json_data": generation.response_json,
+            "response_json": generation.response_json,
+            "created_at": generation.created_at.isoformat() if generation.created_at else None,
+        },
     }
