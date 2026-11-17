@@ -59,13 +59,13 @@ def init_database():
             cursor.executemany(seed_users_query, sample_users)
             print("Seeded sample users into 'users' table.")
 
-            # 4. Tạo bảng templates
+            # 4. Tạo bảng templates khớp 100% với model Template
             create_templates_table_query = """
             CREATE TABLE IF NOT EXISTS templates (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(100) NOT NULL UNIQUE,
                 description TEXT NULL,
-                thumbnail_url VARCHAR(255) NOT NULL,
+                thumbnail_url VARCHAR(255) NULL,
                 file_path VARCHAR(255) NOT NULL,
                 placeholders JSON NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -74,47 +74,45 @@ def init_database():
             cursor.execute(create_templates_table_query)
             print("Table 'templates' created or already exists.")
 
-            # 5. Seed 3 mẫu template chuẩn theo đặc tả
+            # 5. Seed 3 mẫu template chuẩn (id=1: sales.html, id=2: marketing.html, id=3: event.html)
+            standard_placeholders = json.dumps([
+                "headline",
+                "subheadline",
+                "features",
+                "cta_text",
+                "primary_color",
+                "image_url",
+            ])
+
             sample_templates = [
                 (
-                    "Modern Tech Gadget",
-                    "Giao diện Dark-mode hiện đại, tập trung làm nổi bật tính năng sản phẩm công nghệ bằng các khối lưới (Grid) tinh tế.",
-                    "/static/thumbnails/modern_tech.jpg",
-                    "templates/modern_tech.html",
-                    json.dumps([
-                        "brand_name", "headline", "subheadline", "hero_image_url", "primary_color",
-                        "feature_1_title", "feature_1_desc",
-                        "feature_2_title", "feature_2_desc",
-                        "feature_3_title", "feature_3_desc",
-                        "cta_text", "social_facebook", "social_zalo", "social_tiktok",
-                    ]),
+                    1,
+                    "Sales Landing Page",
+                    "Mẫu landing page tối ưu chuyển đổi bán hàng và chốt đơn trực tiếp.",
+                    "/static/thumbnails/sales.jpg",
+                    "sales.html",
+                    standard_placeholders,
                 ),
                 (
-                    "Elegant Beauty & Care",
-                    "Phong cách thanh lịch, tông màu pastel với bố cục ảnh lớn, tôn vinh hình ảnh và trải nghiệm cảm xúc của khách hàng.",
-                    "/static/thumbnails/elegant_beauty.jpg",
-                    "templates/elegant_beauty.html",
-                    json.dumps([
-                        "headline", "subheadline", "hero_image_url", "primary_color",
-                        "ingredients_list", "benefits_text", "original_price", "discounted_price",
-                        "cta_text", "social_facebook", "social_instagram", "hotline_number",
-                    ]),
+                    2,
+                    "Marketing Landing Page",
+                    "Mẫu landing page quảng bá sản phẩm, thương hiệu và thu hút khách hàng tiềm năng.",
+                    "/static/thumbnails/marketing.jpg",
+                    "marketing.html",
+                    standard_placeholders,
                 ),
                 (
-                    "Trust Consulting & Course",
-                    "Giao diện chuyên nghiệp, tập trung vào nội dung thuyết phục, có khu vực riêng cho cam kết chất lượng và tiểu sử chuyên gia.",
-                    "/static/thumbnails/trust_consulting.jpg",
-                    "templates/trust_consulting.html",
-                    json.dumps([
-                        "headline", "subheadline", "hero_image_url", "primary_color",
-                        "target_audience_text", "course_module_1", "course_module_2", "course_module_3",
-                        "expert_name", "expert_bio", "cta_text", "social_facebook", "social_zalo",
-                    ]),
+                    3,
+                    "Event Landing Page",
+                    "Mẫu landing page giới thiệu sự kiện, hội thảo và đăng ký tham gia.",
+                    "/static/thumbnails/event.jpg",
+                    "event.html",
+                    standard_placeholders,
                 ),
             ]
             seed_templates_query = """
-            REPLACE INTO templates (name, description, thumbnail_url, file_path, placeholders)
-            VALUES (%s, %s, %s, %s, %s);
+            INSERT IGNORE INTO templates (id, name, description, thumbnail_url, file_path, placeholders)
+            VALUES (%s, %s, %s, %s, %s, %s);
             """
             cursor.executemany(seed_templates_query, sample_templates)
             print("Seeded 3 sample templates into 'templates' table.")
@@ -147,7 +145,7 @@ def init_database():
             cursor.execute(create_projects_table_query)
             print("Table 'projects' created or already exists.")
 
-            # 7. Tạo bảng project_versions (lưu lịch sử phiên bản Landing Page)
+            # 7. Tạo bảng project_versions
             create_project_versions_table_query = """
             CREATE TABLE IF NOT EXISTS project_versions (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -170,7 +168,7 @@ def init_database():
             cursor.execute(create_project_versions_table_query)
             print("Table 'project_versions' created or already exists.")
 
-            # 8. Tạo bảng deployments (lưu lịch sử triển khai GitHub Pages)
+            # 8. Tạo bảng deployments
             create_deployments_table_query = """
             CREATE TABLE IF NOT EXISTS deployments (
                 id INT AUTO_INCREMENT PRIMARY KEY,

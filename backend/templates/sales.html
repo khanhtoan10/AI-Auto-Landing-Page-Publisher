@@ -387,7 +387,7 @@
           Cam Kết Chất Lượng Độc Quyền
         </h2>
 <p class="font-body-md text-body-md text-stone-600 mt-2">
-          {{data.features}} - Được thiết kế để người mua an tâm tuyệt đối từ đơn hàng đầu tiên.
+          {{ data.features | join(' • ') if data.features is iterable and data.features is not string else data.features }}
         </p>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
