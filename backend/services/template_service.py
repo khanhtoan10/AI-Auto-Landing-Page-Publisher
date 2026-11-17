@@ -588,6 +588,7 @@ FALLBACK_TEMPLATE = """<!DOCTYPE html>
   {% endif %}
 
   <!-- 6. Footer -->
+  {% include "partials/cta_buttons.html" %}
   <footer class="bg-slate-900 text-slate-300">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
       <div>
@@ -666,4 +667,8 @@ def render_template_preview(db: Session, template_id: int) -> Optional[str]:
             {"title": "?u ??i ??c Quy?n", "description": "Giao h?ng nhanh to?n qu?c v? b?o h?nh ch?nh h?ng."},
         ],
     }
-    return render_landing_page(sample_project, template_path=template_item.file_path)
+    raw_path = (template_item.file_path or "").replace("\\", "/").lstrip("/")
+    for prefix in ("backend/templates/", "templates/"):
+        if raw_path.startswith(prefix):
+            raw_path = raw_path[len(prefix):]
+    return render_landing_page(sample_project, template_path=raw_path or None)
