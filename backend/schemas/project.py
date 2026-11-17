@@ -12,7 +12,11 @@ from services.cta_service import (
     normalize_tiktok_shop,
     normalize_zalo,
 )
-
+SOCIAL_DOMAINS = {
+    "facebook_url": ("facebook.com", "fb.com"),
+    "tiktok_url": ("tiktok.com",),
+    "instagram_url": ("instagram.com",),
+}
 
 def _validate_url(value: Optional[str], field_name: str) -> Optional[str]:
     if value is None or value == "":
