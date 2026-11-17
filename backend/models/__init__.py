@@ -14,7 +14,12 @@ from models.generation import (  # noqa: E402
     STATUS_SUCCESS,
     Generation,
 )
+<<<<<<< HEAD
 from models.project import Project  # noqa: E402
+=======
+from models.project import Project
+from models.template import Template
+>>>>>>> origin/main
 
 configure_mappers()
 
@@ -25,4 +30,10 @@ __all__ = [
     "STATUS_SUCCESS",
     "Generation",
     "Project",
+<<<<<<< HEAD
 ]
+=======
+    "Template",
+]
+
+>>>>>>> origin/main
