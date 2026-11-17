@@ -332,6 +332,18 @@ def build_template_data(project: dict) -> dict[str, Any]:
                 raw.get("social_instagram"),
             )
         ),
+        "messenger_link": _first(project.get("messenger_link"), raw.get("messenger_link")),
+        "tiktok_shop_link": _first(project.get("tiktok_shop_link"), raw.get("tiktok_shop_link")),
+        "zalo_link": _first(project.get("zalo_link"), raw.get("zalo_link")),
+        "instagram_link": _first(project.get("instagram_link"), raw.get("instagram_link")),
+        "hotline": _first(project.get("hotline"), raw.get("hotline")),
+        "cta": build_cta_context({
+            "messenger_link": project.get("messenger_link") if project.get("messenger_link") is not None else raw.get("messenger_link"),
+            "tiktok_shop_link": project.get("tiktok_shop_link") if project.get("tiktok_shop_link") is not None else raw.get("tiktok_shop_link"),
+            "zalo_link": project.get("zalo_link") if project.get("zalo_link") is not None else raw.get("zalo_link"),
+            "instagram_link": project.get("instagram_link") if project.get("instagram_link") is not None else raw.get("instagram_link"),
+            "hotline": project.get("hotline") if project.get("hotline") is not None else raw.get("hotline"),
+        }),
         "year": 2025,
     }
 
@@ -618,8 +630,40 @@ def render_landing_page(project: dict, template_path: Optional[str] = None) -> s
     if template_name:
         try:
             template = _ENV.get_template(template_name)
-            return template.render(data=data, title=data["brand_name"])
+            return template.render(data=data, cta=data.get("cta"), title=data["brand_name"])
         except Exception:  # pragma: no cover - template do người dùng cung cấp
             logger.exception("Khong the render template '%s', dung template mac dinh", template_name)
 
-    return _fallback_template().render(data=data)
+    return _fallback_template().render(data=data, cta=data.get("cta"))
+
+from services.cta_service import build_cta_context
+
+
+def render_template_preview(db: Session, template_id: int) -> Optional[str]:
+    template_item = get_template_by_id(db, template_id)
+    if template_item is None:
+        return None
+
+    sample_project = {
+        "campaign_name": f"Chi?n D?ch M?u - {template_item.name}",
+        "brand_name": "NovaBrand Vietnam",
+        "product_name": "S?n Ph?m Ti?u Bi?u 2026",
+        "product_description": template_item.description or "Gi?i ph?p t?i ?u n?ng t?m tr?i nghi?m kh?ch h?ng hi?n ??i.",
+        "price": 1290000,
+        "original_price": 1890000,
+        "discount_percent": 32,
+        "cta_text": "??ng K? Ngay",
+        "cta_url": "#cta-contact",
+        "primary_color": "#2563EB",
+        "messenger_link": "https://m.me/novabrand.vn",
+        "tiktok_shop_link": "https://www.tiktok.com/@novabrand.vn",
+        "zalo_link": "https://zalo.me/0901234567",
+        "instagram_link": "https://www.instagram.com/novabrand.vn",
+        "hotline": "0901 234 567",
+        "features": [
+            {"title": "Ch?t L??ng V??t Tr?i", "description": "Thi?t k? tinh t?, ??p ?ng ti?u chu?n kh?t khe nh?t."},
+            {"title": "H? Tr? 24/7", "description": "??i ng? t? v?n t?n t?m qua ?a k?nh tr?c tuy?n."},
+            {"title": "?u ??i ??c Quy?n", "description": "Giao h?ng nhanh to?n qu?c v? b?o h?nh ch?nh h?ng."},
+        ],
+    }
+    return render_landing_page(sample_project, template_path=template_item.file_path)
