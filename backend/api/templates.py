@@ -1,13 +1,14 @@
 """API Router quản lý Template (Landing Page Templates).
 
-Cung cấp hai endpoint:
-  - GET /templates       : Lấy danh sách toàn bộ template
-  - GET /templates/{id}  : Lấy chi tiết một template theo ID
+Cung cấp các endpoint:
+  - GET /templates              : Lấy danh sách toàn bộ template
+  - GET /templates/{id}         : Lấy chi tiết một template theo ID
+  - GET /templates/{id}/preview : Xem trước nội dung HTML thực tế của template
 """
 
 import logging
 from fastapi import APIRouter, Depends, Path, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.orm import Session
 
 from core.database import get_db
@@ -16,7 +17,11 @@ from schemas.template import (
     TemplateDetailResponse,
     TemplateListResponse,
 )
-from services.template_service import get_all_templates, get_template_by_id
+from services.template_service import (
+    get_all_templates,
+    get_template_by_id,
+    render_template_preview,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +113,62 @@ async def get_template(
         )
     except Exception as exc:
         logger.error(f"Lỗi khi lấy chi tiết template {id}: {exc}", exc_info=True)
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "success": False,
+                "message": "Lỗi hệ thống hoặc lỗi truy vấn cơ sở dữ liệu",
+                "data": None,
+            },
+        )
+
+
+@router.get(
+    "/{id}/preview",
+    response_class=HTMLResponse,
+    summary="Xem trước nội dung HTML của Template",
+    description="Render nội dung HTML thực tế của template với dữ liệu trực quan, phục vụ hiển thị trong iframe sandbox an toàn.",
+    responses={
+        200: {
+            "description": "Nội dung HTML thực tế của template",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Không tìm thấy Template theo ID",
+        },
+        422: {
+            "description": "ID không hợp lệ",
+        },
+        500: {
+            "model": ErrorResponse,
+            "description": "Lỗi hệ thống khi render preview",
+        },
+    },
+)
+async def preview_template(
+    id: int = Path(..., gt=0, description="ID của Template cần xem trước", examples=[1]),
+    db: Session = Depends(get_db),
+):
+    """Render HTML thực tế của một Template để hiển thị trực tiếp trong iframe."""
+    try:
+        html_content = render_template_preview(db, id)
+        if html_content is None:
+            return JSONResponse(
+                status_code=status.HTTP_404_NOT_FOUND,
+                content={
+                    "success": False,
+                    "message": "Không tìm thấy template",
+                    "data": None,
+                },
+            )
+        return HTMLResponse(
+            content=html_content,
+            headers={
+                "X-Frame-Options": "SAMEORIGIN",
+            },
+        )
+    except Exception as exc:
+        logger.error(f"Lỗi khi render preview template {id}: {exc}", exc_info=True)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
