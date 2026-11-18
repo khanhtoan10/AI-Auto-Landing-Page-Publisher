@@ -4,7 +4,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -84,18 +84,56 @@ def _fetch_project(db: Session, project_id: int) -> Any:
 # ── Endpoints ────────────────────────────────────────────────────────
 @router.get("")
 async def list_my_projects(
+    page: int = 1,
+    page_size: int = 10,
+    status_filter: str | None = Query(default=None, alias="status"),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """Danh sach project cua nguoi dang nhap, phan trang + loc status."""
+    if page < 1:
+        page = 1
+    if page_size < 1:
+        page_size = 1
+    elif page_size > 100:
+        page_size = 100
+
+    offset = (page - 1) * page_size
+
+    where = "user_id = :user_id"
+    params: dict = {"user_id": current_user["id"]}
+
+    if status_filter:
+        where += " AND status = :status"
+        params["status"] = status_filter
+
+    count_row = db.execute(
+        text(f"SELECT COUNT(*) AS cnt FROM projects WHERE {where}"),
+        params,
+    ).mappings().first()
+    total = int(count_row["cnt"]) if count_row else 0
+
     rows = (
         db.execute(
-            text("SELECT * FROM projects WHERE user_id = :user_id ORDER BY updated_at DESC"),
-            {"user_id": current_user["id"]},
+            text(
+                f"SELECT * FROM projects WHERE {where} "
+                "ORDER BY updated_at DESC LIMIT :limit OFFSET :offset"
+            ),
+            {**params, "limit": page_size, "offset": offset},
         )
         .mappings()
         .all()
     )
-    return {"success": True, "data": [_serialize_project(row) for row in rows]}
+
+    return {
+        "success": True,
+        "data": {
+            "items": [_serialize_project(row) for row in rows],
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+        },
+    }
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -137,9 +175,27 @@ async def create_project(
 
 @router.get("/{project_id}")
 async def get_project_detail(
-    project: dict = Depends(get_owned_project),
+    project_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    return {"success": True, "data": _serialize_project(project)}
+    """Chi tiet project. Tra 404 neu khong ton tai HOAC thuoc nguoi khac."""
+    row = (
+        db.execute(
+            text(
+                "SELECT * FROM projects WHERE id = :id AND user_id = :user_id"
+            ),
+            {"id": project_id, "user_id": current_user["id"]},
+        )
+        .mappings()
+        .first()
+    )
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Landing page khong ton tai.",
+        )
+    return {"success": True, "data": _serialize_project(row)}
 
 
 @router.post("/{project_id}/preview")
