@@ -382,3 +382,80 @@ def push_landing_page_commit(
         logger.warning("Không kết nối được GitHub API: %s", exc)
 
     return simulate_commit_sha(html_content, repo_url, file_path)
+
+
+# ── Delete repository helpers ────────────────────────────────────────
+def delete_github_repo(
+    repo_url: str,
+    token: Optional[str] = None,
+) -> dict:
+    """Xóa repository GitHub tương ứng với ``repo_url``.
+
+    Trả về dict trạng thái thay vì raise với các trường hợp không cần chặn
+    nghiệp vụ xóa mềm (chưa cấu hình token, repo đã bị xóa trước đó).
+
+    Raises:
+        ValueError: ``repo_url`` rỗng hoặc không phải URL GitHub hợp lệ.
+        RuntimeError: GitHub API trả về lỗi không mong muốn.
+    """
+    repo_info = parse_repo_info(repo_url)
+    if repo_info is None:
+        raise ValueError("repo_url không hợp lệ hoặc không phải repository GitHub")
+
+    owner, repo = repo_info
+    auth_token = _resolve_token(token)
+    if not auth_token:
+        logger.warning(
+            "Bỏ qua xóa GitHub repo %s/%s: chưa cấu hình GITHUB_TOKEN",
+            owner,
+            repo,
+        )
+        return {
+            "owner": owner,
+            "repo": repo,
+            "deleted": False,
+            "status": "skipped",
+            "reason": "GITHUB_TOKEN chưa được cấu hình hợp lệ trong backend/.env",
+        }
+
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}"
+    try:
+        response = requests.delete(
+            url,
+            headers=_github_headers(auth_token),
+            timeout=30,
+        )
+    except requests.RequestException as exc:
+        raise RuntimeError(f"Không kết nối được GitHub API để xóa repo: {exc}") from exc
+
+    if response.status_code == 204:
+        logger.info("Đã xóa GitHub repository %s/%s", owner, repo)
+        return {
+            "owner": owner,
+            "repo": repo,
+            "deleted": True,
+            "status": "deleted",
+            "reason": None,
+        }
+
+    if response.status_code == 404:
+        logger.info("GitHub repository %s/%s không tồn tại hoặc đã bị xóa", owner, repo)
+        return {
+            "owner": owner,
+            "repo": repo,
+            "deleted": False,
+            "status": "not_found",
+            "reason": "Repository không tồn tại hoặc đã bị xóa trước đó.",
+        }
+
+    try:
+        error_detail = response.json().get("message", response.text)
+    except ValueError:
+        error_detail = response.text
+    raise RuntimeError(
+        f"Xóa GitHub repo {owner}/{repo} thất bại ({response.status_code}): {error_detail}"
+    )
+
+
+# Alias ngắn gọn cho các module khác dễ gọi.
+delete_repository = delete_github_repo
