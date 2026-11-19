@@ -9,24 +9,27 @@
 
 {% set cta_obj = cta if cta is defined and cta else (data.cta if data is defined and data.cta is defined else None) %}
 
-{# Nếu đã có đối tượng cta được chuẩn hóa thì ưu tiên dùng cta_obj #}
 {% if cta_obj %}
+  {% set fb_link = data.social_facebook if data is defined and data.social_facebook else None %}
   {% set m_link = cta_obj.messenger_link %}
   {% set tt_link = cta_obj.tiktok_shop_link %}
   {% set z_link = cta_obj.zalo_link %}
   {% set ig_link = cta_obj.instagram_link %}
+  {% set yt_link = data.social_youtube if data is defined and data.social_youtube else None %}
   {% set hl_display = cta_obj.hotline %}
   {% set hl_href = cta_obj.hotline_href %}
 {% else %}
+  {% set fb_link = data.social_facebook.strip() if data is defined and data.social_facebook and data.social_facebook.strip() else None %}
   {% set m_link = data.messenger_link.strip() if data is defined and data.messenger_link and data.messenger_link.strip() else None %}
   {% set tt_link = data.tiktok_shop_link.strip() if data is defined and data.tiktok_shop_link and data.tiktok_shop_link.strip() else None %}
   {% set z_link = data.zalo_link.strip() if data is defined and data.zalo_link and data.zalo_link.strip() else None %}
   {% set ig_link = data.instagram_link.strip() if data is defined and data.instagram_link and data.instagram_link.strip() else None %}
+  {% set yt_link = data.social_youtube.strip() if data is defined and data.social_youtube and data.social_youtube.strip() else None %}
   {% set hl_display = data.hotline.strip() if data is defined and data.hotline and data.hotline.strip() else None %}
-  {% set hl_href = 'tel:' ~ hl_display if hl_display else None %}
+  {% set hl_href = data.hotline_href if data is defined and data.hotline_href else ('tel:' ~ hl_display if hl_display else None) %}
 {% endif %}
 
-{% set has_cta = (m_link or tt_link or z_link or ig_link or hl_display) %}
+{% set has_cta = (fb_link or m_link or tt_link or z_link or ig_link or yt_link or hl_display) %}
 
 {% if has_cta %}
 <div class="cta-dynamic-section w-full py-6 sm:py-8 my-6">
@@ -116,6 +119,36 @@
           <path d="M6.62 10.79a15.053 15.053 0 0 0 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
         </svg>
         <span>Hotline: {{ hl_display }}</span>
+      </a>
+      {% endif %}
+
+      {# Facebook #}
+      {% if fb_link %}
+      <a 
+        href="{{ fb_link }}" 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        class="cta-btn cta-facebook group inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 active:scale-95"
+      >
+        <svg class="w-5 h-5 fill-current shrink-0" viewBox="0 0 24 24">
+          <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/>
+        </svg>
+        <span>Facebook</span>
+      </a>
+      {% endif %}
+
+      {# YouTube #}
+      {% if yt_link %}
+      <a 
+        href="{{ yt_link }}" 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        class="cta-btn cta-youtube group inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-[#FF0000] hover:bg-[#cc0000] text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 active:scale-95"
+      >
+        <svg class="w-5 h-5 fill-current shrink-0" viewBox="0 0 24 24">
+          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+        </svg>
+        <span>YouTube</span>
       </a>
       {% endif %}
 

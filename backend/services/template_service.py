@@ -255,6 +255,36 @@ def _normalize_features(raw_features: Any) -> list[dict[str, str]]:
         ]
     return items
 
+def _safe_http_url(value: Any) -> str:
+    """Chỉ giữ URL http:// hoặc https:// hợp lệ, loại bỏ javascript:/data:."""
+    text = _first(value)
+    if not text or any(ch in text for ch in ("\x00", "\r", "\n", "\t", " ", '"', "'", "<", ">")):
+        return ""
+    lower = text.lower()
+    if not (lower.startswith("http://") or lower.startswith("https://")):
+        return ""
+    return text
+
+
+def _safe_image_url(value: Any) -> str:
+    """Giữ URL ảnh http/https hoặc đường dẫn ảnh nội bộ an toàn."""
+    http_url = _safe_http_url(value)
+    if http_url:
+        return http_url
+    text = _first(value).replace("\\", "/")
+    if not text or text.startswith("//") or ":" in text or ".." in text.split("/"):
+        return ""
+    if not re.fullmatch(r"[A-Za-z0-9._~/%+\-]+", text):
+        return ""
+    return text
+
+
+def _safe_hotline(value: Any) -> str:
+    text = _first(value)
+    if not text or not re.fullmatch(r"[\d\s\.\-\+\(\)]+", text):
+        return ""
+    digits = re.sub(r"\D", "", text)
+    return text if 7 <= len(digits) <= 15 else ""
 
 def build_template_data(project: dict) -> dict[str, Any]:
     """Chuẩn hoá dữ liệu project thành bộ biến cho template."""
@@ -291,6 +321,16 @@ def build_template_data(project: dict) -> dict[str, Any]:
 
     features = _normalize_features(raw.get("features"))
 
+    safe_fb = _safe_http_url(_first(project.get("facebook_url"), raw.get("facebook_url"), raw.get("social_facebook")))
+    safe_tt = _safe_http_url(_first(project.get("tiktok_url"), raw.get("tiktok_url"), raw.get("social_tiktok")))
+    safe_tt_shop = _safe_http_url(_first(project.get("tiktok_shop_link"), raw.get("tiktok_shop_link")))
+    safe_ig = _safe_http_url(_first(project.get("instagram_link"), project.get("instagram_url"), raw.get("instagram_link"), raw.get("instagram_url"), raw.get("social_instagram")))
+    safe_zalo = _safe_http_url(_first(project.get("zalo_link"), raw.get("zalo_link"), raw.get("social_zalo")))
+    safe_yt = _safe_http_url(_first(project.get("youtube_url"), raw.get("youtube_url"), raw.get("social_youtube")))
+    safe_msg = _safe_http_url(_first(project.get("messenger_link"), raw.get("messenger_link")))
+    safe_hotline = _safe_hotline(_first(project.get("hotline"), raw.get("hotline")))
+    safe_hotline_href = f"tel:{re.sub(r'[^\d\+]', '', safe_hotline)}" if safe_hotline else ""
+
     return {
         "id": project.get("id"),
         "brand_name": brand_name,
@@ -309,42 +349,41 @@ def build_template_data(project: dict) -> dict[str, Any]:
         "primary_color": primary_color,
         "brand_dark": _shade(primary_color, -0.35),
         "brand_soft": _shade(primary_color, 0.88),
-        "image_url": _first(project.get("image_url"), raw.get("image_url"), raw.get("hero_image_url")),
+        "image_url": _safe_image_url(_first(project.get("image_url"), raw.get("image_url"), raw.get("hero_image_url"))),
         "features": _first(raw.get("features_heading"), "Vì sao nên chọn chúng tôi?"),
         "features_description": _first(
             raw.get("features_description"),
             "Những giá trị khác biệt chỉ có tại sản phẩm lần này.",
         ),
         "feature_items": features,
-        "social_facebook": _first(project.get("facebook_url"), raw.get("social_facebook")),
-        "social_tiktok": _first(project.get("tiktok_url"), raw.get("social_tiktok")),
-        "social_instagram": _first(project.get("instagram_url"), raw.get("social_instagram")),
-        "social_zalo": _first(raw.get("social_zalo")),
-        "repo_url": _first(project.get("repo_url")),
-        "github_pages_url": _first(project.get("github_pages_url")),
-        "has_social": any(
-            _first(
-                project.get("facebook_url"),
-                project.get("tiktok_url"),
-                project.get("instagram_url"),
-                raw.get("social_facebook"),
-                raw.get("social_tiktok"),
-                raw.get("social_instagram"),
-            )
-        ),
-        "messenger_link": _first(project.get("messenger_link"), raw.get("messenger_link")),
-        "tiktok_shop_link": _first(project.get("tiktok_shop_link"), raw.get("tiktok_shop_link")),
-        "zalo_link": _first(project.get("zalo_link"), raw.get("zalo_link")),
-        "instagram_link": _first(project.get("instagram_link"), raw.get("instagram_link")),
-        "hotline": _first(project.get("hotline"), raw.get("hotline")),
+        "social_facebook": safe_fb,
+        "facebook_url": safe_fb,
+        "social_tiktok": safe_tt or safe_tt_shop,
+        "tiktok_url": safe_tt or safe_tt_shop,
+        "social_instagram": safe_ig,
+        "instagram_url": safe_ig,
+        "social_zalo": safe_zalo,
+        "social_youtube": safe_yt,
+        "youtube_url": safe_yt,
+        "repo_url": _safe_http_url(project.get("repo_url")),
+        "github_pages_url": _safe_http_url(project.get("github_pages_url")),
+        "has_social": any((safe_fb, safe_tt, safe_tt_shop, safe_ig, safe_zalo, safe_yt, safe_msg)),
+        "messenger_link": safe_msg,
+        "tiktok_shop_link": safe_tt_shop or safe_tt,
+        "zalo_link": safe_zalo,
+        "instagram_link": safe_ig,
+        "hotline": safe_hotline,
+        "hotline_href": safe_hotline_href,
         "cta": build_cta_context({
-            "messenger_link": project.get("messenger_link") if project.get("messenger_link") is not None else raw.get("messenger_link"),
-            "tiktok_shop_link": project.get("tiktok_shop_link") if project.get("tiktok_shop_link") is not None else raw.get("tiktok_shop_link"),
-            "zalo_link": project.get("zalo_link") if project.get("zalo_link") is not None else raw.get("zalo_link"),
-            "instagram_link": project.get("instagram_link") if project.get("instagram_link") is not None else raw.get("instagram_link"),
-            "hotline": project.get("hotline") if project.get("hotline") is not None else raw.get("hotline"),
+            "facebook_url": safe_fb,
+            "messenger_link": safe_msg,
+            "tiktok_shop_link": safe_tt_shop or safe_tt,
+            "zalo_link": safe_zalo,
+            "instagram_link": safe_ig,
+            "youtube_url": safe_yt,
+            "hotline": safe_hotline,
         }),
-        "year": 2025,
+        "year": 2026,
     }
 
 
