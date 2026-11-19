@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full bg-slate-50">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lịch sử phiên bản - AI Auto Landing Page Publisher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/common.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="h-full bg-slate-50 text-slate-800 antialiased flex overflow-hidden">
+
+  <!-- Overlay làm tối nền khi mở Sidebar trên Mobile -->
+  <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden lg:hidden transition-opacity duration-300"></div>
+
+  <!-- Sidebar điều hướng bên trái -->
+  <aside id="app-sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-72 h-full transform -translate-x-full lg:translate-x-0 transition-transform duration-300 shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col"></aside>
+
+  <!-- Khung nội dung chính -->
+  <div class="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+
+    <!-- Top Header -->
+    <div id="app-header"></div>
+
+    <main id="app-content" class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 custom-scrollbar animate-fadeIn">
+      <div class="max-w-5xl mx-auto space-y-6">
+
+        <!-- Banner dự án -->
+        <section class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-7 shadow-xl shadow-indigo-950/10 border border-slate-800">
+          <div class="absolute -right-12 -bottom-16 w-72 h-72 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none"></div>
+          <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+            <div class="space-y-2 min-w-0">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-[11px] font-semibold">
+                <i class="fa-solid fa-clock-rotate-left text-amber-300"></i>
+                <span>Lịch sử phiên bản • Append-only</span>
+              </div>
+              <h2 id="version-project-title" class="text-xl sm:text-2xl font-extrabold tracking-tight truncate">Đang tải dự án...</h2>
+              <p class="text-slate-300 text-xs sm:text-sm leading-relaxed max-w-2xl">
+                Mỗi lần lưu hoặc khôi phục, hệ thống tạo một snapshot mới. Bạn có thể xem lại nội dung cũ và khôi phục bất kỳ phiên bản nào.
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+              <a id="btn-back-edit" href="projects.html" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition">
+                <i class="fa-solid fa-pen-to-square"></i>
+                <span>Chỉnh sửa dự án</span>
+              </a>
+              <a href="projects.html" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-bold transition">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Danh sách dự án</span>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <!-- Thẻ thống kê nhanh -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div class="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tổng phiên bản</span>
+              <span class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center"><i class="fa-solid fa-code-branch text-xs"></i></span>
+            </div>
+            <p id="stat-total-versions" class="mt-2 text-2xl font-extrabold text-slate-900">—</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Phiên bản mới nhất</span>
+              <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-star text-xs"></i></span>
+            </div>
+            <p id="stat-latest-version" class="mt-2 text-2xl font-extrabold text-slate-900">—</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Cập nhật gần nhất</span>
+              <span class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center"><i class="fa-regular fa-clock text-xs"></i></span>
+            </div>
+            <p id="stat-latest-time" class="mt-2 text-sm font-bold text-slate-900">—</p>
+          </div>
+        </div>
+
+        <!-- Lỗi tải dữ liệu -->
+        <div id="version-error" class="hidden rounded-2xl border border-rose-200 bg-rose-50 p-5 flex items-start gap-4">
+          <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-sm font-bold text-rose-800">Không thể tải lịch sử phiên bản</h3>
+            <p id="version-error-message" class="text-xs text-rose-700 mt-1 leading-relaxed">Vui lòng kiểm tra lại đường dẫn và backend FastAPI.</p>
+            <div class="flex flex-wrap items-center gap-2 mt-3">
+              <button type="button" id="btn-retry-versions" class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition">
+                <i class="fa-solid fa-rotate-right mr-1.5"></i>Thử lại
+              </button>
+              <a href="projects.html" class="px-3.5 py-2 rounded-xl bg-white border border-rose-200 text-rose-700 text-xs font-bold hover:bg-rose-100 transition">Về danh sách dự án</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Danh sách phiên bản -->
+        <section class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900">Các phiên bản đã lưu</h3>
+              <p class="text-xs text-slate-400 mt-0.5">Sắp xếp mới nhất trước. Nhấn “Khôi phục” để tạo phiên bản mới từ snapshot cũ.</p>
+            </div>
+            <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full">
+              <i class="fa-solid fa-shield-halved text-indigo-500"></i>
+              <span>Chỉ chủ sở hữu</span>
+            </span>
+          </div>
+
+          <!-- Loading skeleton -->
+          <div id="version-loading" class="p-5 space-y-3">
+            <div class="h-16 rounded-xl bg-slate-100 animate-pulse"></div>
+            <div class="h-16 rounded-xl bg-slate-100 animate-pulse"></div>
+            <div class="h-16 rounded-xl bg-slate-100 animate-pulse"></div>
+          </div>
+
+          <!-- Empty state -->
+          <div id="version-empty" class="hidden p-10 text-center">
+            <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-xl mx-auto">
+              <i class="fa-solid fa-code-branch"></i>
+            </div>
+            <h4 class="mt-3 text-sm font-bold text-slate-700">Chưa có phiên bản nào</h4>
+            <p class="mt-1 text-xs text-slate-500">Hãy chỉnh sửa và lưu landing page để tạo snapshot đầu tiên.</p>
+            <a id="btn-empty-edit" href="projects.html" class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition">
+              <i class="fa-solid fa-pen-to-square"></i>
+              <span>Đi tới chỉnh sửa</span>
+            </a>
+          </div>
+
+          <!-- Các item được render bởi JS -->
+          <div id="version-list" class="hidden divide-y divide-slate-100"></div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL XÁC NHẬN KHÔI PHỤC -->
+  <div id="restore-modal" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true" aria-labelledby="restore-modal-title">
+    <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" data-close-restore-modal></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+      <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-fadeIn">
+        <div class="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-5 text-white relative">
+          <button type="button" data-close-restore-modal class="absolute top-3 right-3 w-8 h-8 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+            </div>
+            <div class="min-w-0">
+              <h3 id="restore-modal-title" class="text-base font-extrabold">Khôi phục phiên bản?</h3>
+              <p class="text-[11px] text-amber-50 font-medium">Lịch sử cũ sẽ được giữ nguyên.</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-6 space-y-5">
+          <p class="text-sm text-slate-600 leading-relaxed">
+            Hệ thống sẽ tạo một phiên bản mới bằng nội dung của
+            <strong id="restore-version-label" class="text-slate-900">phiên bản này</strong>.
+            Phiên bản hiện tại không bị xóa khỏi lịch sử.
+          </p>
+          <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-800 leading-relaxed">
+            <i class="fa-solid fa-circle-info mr-1.5"></i>
+            Bản khôi phục sẽ có số phiên bản mới và ghi chú “Khôi phục từ phiên bản …”.
+          </div>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <button type="button" id="btn-cancel-restore" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-bold transition">
+              Hủy
+            </button>
+            <button type="button" id="btn-confirm-restore" class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 disabled:cursor-not-allowed text-white text-sm font-bold shadow-lg shadow-amber-500/20 transition">
+              <i id="restore-spinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+              <i id="restore-icon" class="fa-solid fa-clock-rotate-left"></i>
+              <span id="restore-btn-text">Khôi phục ngay</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CHI TIẾT PHIÊN BẢN -->
+  <div id="version-detail-modal" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
+    <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" data-close-detail-modal></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+      <div class="w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-fadeIn">
+        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <h3 id="detail-modal-title" class="text-sm font-extrabold text-slate-900 truncate">Chi tiết phiên bản</h3>
+            <p id="detail-modal-meta" class="text-[11px] text-slate-400 mt-0.5 truncate">—</p>
+          </div>
+          <button type="button" data-close-detail-modal class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition shrink-0">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
+        <div class="p-5 space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Phiên bản</p>
+              <p id="detail-version-number" class="text-lg font-extrabold text-indigo-600 mt-0.5">—</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 min-w-0">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Commit SHA</p>
+              <p id="detail-commit-sha" class="text-xs font-mono font-bold text-slate-700 mt-1 truncate">—</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 min-w-0">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Thời gian tạo</p>
+              <p id="detail-created-at" class="text-xs font-bold text-slate-700 mt-1">—</p>
+            </div>
+          </div>
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Ghi chú thay đổi</p>
+            <p id="detail-change-summary" class="text-sm text-slate-600 leading-relaxed">—</p>
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Bản xem trước HTML</p>
+              <span class="text-[10px] text-slate-400">Snapshot lưu trong project_versions</span>
+            </div>
+            <div class="rounded-xl border border-slate-200 overflow-hidden bg-slate-100">
+              <iframe id="detail-preview-frame" title="Xem trước phiên bản" class="w-full h-[320px] block border-0 bg-white"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <button type="button" data-close-detail-modal class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold transition">
+              Đóng
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/version-history.js"></script>
+  <script src="../js/layout.js"></script>
+</body>
+</html>
