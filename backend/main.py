@@ -53,7 +53,9 @@ async def home(request: Request):
         context={"title": "AI Publisher Dashboard"},
     )
 
-
+STATIC_DIR = BASE_DIR / "static"
+STATIC_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 # Phục vụ trực tiếp giao diện frontend từ backend (ví dụ /pages/edit-project.html?id=1).
 # Mount được khai báo sau cùng để không che các route API phía trên.
 if FRONTEND_DIR.is_dir():
