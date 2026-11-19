@@ -89,7 +89,11 @@ async def list_my_projects(
 ):
     rows = (
         db.execute(
-            text("SELECT * FROM projects WHERE user_id = :user_id ORDER BY updated_at DESC"),
+            text(
+                "SELECT * FROM projects "
+                "WHERE user_id = :user_id AND deleted_at IS NULL "
+                "ORDER BY updated_at DESC"
+            ),
             {"user_id": current_user["id"]},
         )
         .mappings()
@@ -264,9 +268,57 @@ async def delete_project(
     project: dict = Depends(get_owned_project),
     db: Session = Depends(get_db),
 ):
-    db.execute(text("DELETE FROM projects WHERE id = :id"), {"id": project["id"]})
+    """[BE] API xóa landing page.
+
+    - Chỉ chủ sở hữu mới được xóa (đã chặn bởi ``get_owned_project``).
+    - Gọi GitHub API xóa repository tương ứng nếu project có ``repo_url``.
+    - Xóa mềm trong DB bằng cách set ``deleted_at`` + ``status = 'deleted'``
+      để bảo toàn lịch sử phiên bản và dữ liệu liên quan.
+    """
+    warnings: list[str] = []
+    repo_url = (project.get("repo_url") or "").strip()
+    github_status = "skipped"
+    github_deleted = False
+
+    if repo_url:
+        try:
+            result = github_service.delete_github_repo(repo_url)
+            github_status = result.get("status") or "skipped"
+            github_deleted = bool(result.get("deleted"))
+            if github_status == "not_found":
+                warnings.append(result.get("reason") or "GitHub repository đã không còn tồn tại.")
+            elif github_status == "skipped":
+                warnings.append(result.get("reason") or "Bỏ qua bước xóa GitHub repository.")
+        except Exception as exc:  # pragma: no cover - lỗi mạng/hạ tầng/token
+            logger.exception("Xóa GitHub repo thất bại cho project %s", project["id"])
+            github_status = "failed"
+            warnings.append(f"Không xóa được GitHub repository: {exc}")
+    else:
+        warnings.append("Dự án chưa có repo_url nên bỏ qua bước xóa GitHub repository.")
+
+    db.execute(
+        text(
+            """
+            UPDATE projects
+            SET deleted_at = NOW(), status = 'deleted', updated_at = NOW()
+            WHERE id = :id AND deleted_at IS NULL
+            """
+        ),
+        {"id": project["id"]},
+    )
     db.commit()
-    return {"success": True, "message": "Đã xóa landing page thành công."}
+
+    return {
+        "success": True,
+        "message": "Đã xóa landing page thành công.",
+        "data": {
+            "project_id": project["id"],
+            "deleted": True,
+            "github_repo_deleted": github_deleted,
+            "github_status": github_status,
+        },
+        "warnings": warnings,
+    }
 
 
 @router.post("/{project_id}/deploy")
