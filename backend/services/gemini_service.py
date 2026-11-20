@@ -17,7 +17,7 @@ from core.config import settings  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.5-flash-lite"
 GEMINI_API_URL = (
     f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 )
@@ -188,7 +188,7 @@ def _extract_text_from_gemini_response(response_payload: dict[str, Any]) -> str:
     return combined_text
 
 
-def generate_landing_page_json(user_prompt: str, timeout: int = 30) -> dict[str, Any]:
+def generate_landing_page_json(user_prompt: str, timeout: int = 60) -> dict[str, Any]:
     """
     Gửi prompt tới Gemini API, nhận kết quả và trả về dict JSON đã được kiểm tra hợp lệ.
 

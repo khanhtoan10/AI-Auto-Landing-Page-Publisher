@@ -1,12 +1,10 @@
+# Ở đầu file backend/api/projects.py (đã giải quyết conflict Git):
 import json
 import logging
-<<<<<<< HEAD
-=======
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
->>>>>>> origin/main
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -15,14 +13,9 @@ from core.database import get_db
 from core.security import get_current_user, get_owned_project
 from models import STATUS_SUCCESS
 from schemas.project import ProjectCreate, ProjectUpdate
-<<<<<<< HEAD
-from services.generation_service import ProjectNotFoundError, generate_content_for_project
-=======
 from services import github_service, template_service
+from services.generation_service import ProjectNotFoundError, generate_content_for_project
 from services.version_service import create_version
-
-logger = logging.getLogger(__name__)
->>>>>>> origin/main
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 logger = logging.getLogger(__name__)
@@ -295,7 +288,7 @@ async def deploy_project_guard(
         "message": "Xác thực quyền sở hữu hợp lệ để triển khai landing page.",
         "data": {"project_id": project["id"], "status": project["status"]},
     }
-<<<<<<< HEAD
+
 
 
 @router.post("/{project_id}/generate", status_code=status.HTTP_201_CREATED)
@@ -303,7 +296,7 @@ def generate_project_content(
     project: dict = Depends(get_owned_project),
     db: Session = Depends(get_db),
 ):
-    """Sinh nội dung landing page bằng Gemini API và lưu kết quả JSON vào Database."""
+    """Sinh nội dung landing page bằng Gemini API, lưu JSON vào DB và render HTML hoàn chỉnh."""
     try:
         generation = generate_content_for_project(db=db, project_id=project["id"])
     except ProjectNotFoundError:
@@ -328,16 +321,22 @@ def generate_project_content(
             ),
         )
 
+    # Lấy dữ liệu project mới nhất (đã cập nhật raw_json_data) và render HTML thực tế
+    refreshed_row = _fetch_project(db, project["id"])
+    project_dict = _serialize_project(refreshed_row)
+    rendered_html = template_service.render_landing_page(project_dict)
+
     return {
         "success": True,
+        "rendered_html": rendered_html,
         "data": {
             "id": generation.id,
             "project_id": generation.project_id,
             "status": generation.status,
             "raw_json_data": generation.response_json,
             "response_json": generation.response_json,
+            "rendered_html": rendered_html,
             "created_at": generation.created_at.isoformat() if generation.created_at else None,
         },
     }
-=======
->>>>>>> origin/main
+
