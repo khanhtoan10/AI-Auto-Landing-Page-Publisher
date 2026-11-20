@@ -134,7 +134,10 @@ def get_owned_project(
     - Trả về 403 nếu người dùng đang đăng nhập không phải chủ sở hữu project.
     """
     row = (
-        db.execute(text("SELECT * FROM projects WHERE id = :id"), {"id": project_id})
+        db.execute(
+            text("SELECT * FROM projects WHERE id = :id AND deleted_at IS NULL"),
+            {"id": project_id},
+        )
         .mappings()
         .first()
     )

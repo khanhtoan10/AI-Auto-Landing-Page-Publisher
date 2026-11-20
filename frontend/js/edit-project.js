@@ -30,6 +30,7 @@
     previewTimer: null,
     previewSeq: 0,
     saving: false,
+    deleting: false,
     lastCommitSha: '',
     lastPagesUrl: '',
     device: 'desktop',
@@ -56,7 +57,17 @@
     }
 
     state.projectId = String(id);
+    updateProjectLinks();
     loadProjectData(state.projectId);
+  }
+
+  function updateProjectLinks() {
+    if (!state.projectId) return;
+    const versionHistoryUrl = `version-history.html?id=${encodeURIComponent(state.projectId)}`;
+    const headerLink = $('btn-version-history');
+    if (headerLink) headerLink.href = versionHistoryUrl;
+    const modalLink = $('modal-version-history-link');
+    if (modalLink) modalLink.href = versionHistoryUrl;
   }
 
   function bindEvents() {
@@ -99,10 +110,21 @@
       el.addEventListener('click', closeSuccessModal);
     });
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') closeSuccessModal();
+      if (event.key === 'Escape') {
+        closeSuccessModal();
+        closeDeleteModal();
+      }
     });
 
     $('btn-copy-sha')?.addEventListener('click', copyCommitSha);
+
+    // Xóa dự án có hộp thoại xác nhận
+    $('btn-delete-project')?.addEventListener('click', openDeleteModal);
+    $('btn-cancel-delete')?.addEventListener('click', closeDeleteModal);
+    $('btn-confirm-delete')?.addEventListener('click', confirmDeleteProject);
+    document.querySelectorAll('[data-close-delete-modal]').forEach((el) => {
+      el.addEventListener('click', closeDeleteModal);
+    });
   }
 
   // ── Tải dữ liệu dự án ─────────────────────────────────────────────
@@ -436,6 +458,77 @@
       window.showToast?.('Đã sao chép commit SHA vào clipboard.', 'success', 'Sao chép');
     } catch (error) {
       window.showToast?.('Trình duyệt không cho phép sao chép tự động.', 'warning', 'Sao chép');
+    }
+  }
+
+  // ── Xóa dự án có xác nhận ─────────────────────────────────────────
+  function openDeleteModal() {
+    if (!state.projectId || state.deleting) return;
+    if (!state.original) {
+      window.showToast?.('Dữ liệu dự án chưa tải xong. Vui lòng thử lại.', 'warning', 'Chưa sẵn sàng');
+      return;
+    }
+
+    const nameEl = $('delete-project-name');
+    if (nameEl) {
+      const project = state.original || {};
+      nameEl.textContent = project.product_name || project.campaign_name || 'này';
+    }
+
+    $('delete-modal')?.classList.remove('hidden');
+  }
+
+  function closeDeleteModal() {
+    if (state.deleting) return;
+    $('delete-modal')?.classList.add('hidden');
+  }
+
+  function setDeleting(deleting) {
+    state.deleting = deleting;
+    const button = $('btn-confirm-delete');
+    const spinner = $('delete-spinner');
+    const icon = $('delete-icon');
+    const label = $('delete-btn-text');
+
+    if (button) button.disabled = deleting;
+    spinner?.classList.toggle('hidden', !deleting);
+    icon?.classList.toggle('hidden', deleting);
+    if (label) label.textContent = deleting ? 'Đang xóa dự án...' : 'Xóa vĩnh viễn';
+  }
+
+  async function confirmDeleteProject() {
+    if (!state.projectId || state.deleting) return;
+
+    setDeleting(true);
+    try {
+      const response = await apiRequest(`${API_PREFIX}/projects/${state.projectId}`, {
+        method: 'DELETE',
+      });
+
+      (response.warnings || []).forEach((warning) => {
+        console.warn(warning);
+        window.showToast?.(warning, 'warning', 'Cảnh báo');
+      });
+
+      window.showToast?.(
+        response.message || 'Đã xóa landing page thành công.',
+        'success',
+        'Đã xóa dự án'
+      );
+
+      setDeleting(false);
+      $('delete-modal')?.classList.add('hidden');
+      setTimeout(() => {
+        window.location.href = 'projects.html';
+      }, 900);
+    } catch (error) {
+      console.error('Lỗi xóa landing page:', error);
+      window.showToast?.(
+        error.message || 'Không thể xóa landing page này.',
+        'error',
+        'Xóa thất bại'
+      );
+      setDeleting(false);
     }
   }
 

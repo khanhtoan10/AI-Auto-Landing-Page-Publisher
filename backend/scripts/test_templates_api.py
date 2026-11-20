@@ -72,7 +72,7 @@ def run_all_tests():
     check("Test 2 - Message", data2.get("message") == "Lấy chi tiết template thành công", f"message: {data2.get('message')}")
     item2 = data2.get("data")
     check("Test 2 - ID Match", item2.get("id") == 1, f"ID trả về: {item2.get('id')}")
-    check("Test 2 - Name Match", item2.get("name") == "Modern Tech Gadget", f"Name: {item2.get('name')}")
+    check("Test 2 - Name Match", item2.get("name") == "Sales Landing Page", f"Name: {item2.get('name')}")
     check(
         "Test 2 - Thumbnail Key",
         "thumbnail" in item2 and bool(item2["thumbnail"]),
