@@ -24,11 +24,11 @@
 <body class="h-full font-sans text-slate-800 antialiased flex flex-col justify-between">
   <header class="bg-white border-b border-slate-200 px-6 py-4">
     <div class="max-w-5xl mx-auto flex items-center justify-between">
-      <a href="../index.html" class="flex items-center gap-2.5 text-indigo-600 font-bold text-lg">
+      <a href="projects.html" class="flex items-center gap-2.5 text-indigo-600 font-bold text-lg">
         <i class="fa-solid fa-rocket text-xl"></i>
         <span>AI Landing Publisher</span>
       </a>
-      <a href="../index.html" class="text-sm font-medium text-slate-500 hover:text-slate-800 transition">
+      <a href="projects.html" class="text-sm font-medium text-slate-500 hover:text-slate-800 transition">
         <i class="fa-solid fa-arrow-left mr-1.5"></i>Quay lại danh sách dự án
       </a>
     </div>
@@ -134,7 +134,8 @@
         </div>
 
         <div class="flex flex-wrap items-center justify-end gap-3">
-          <a href="../index.html" class="px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">Về trang quản lý</a>
+          <a href="projects.html" class="px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">Về danh sách dự án</a>
+          <a id="back-edit-btn" href="edit-project.html" class="px-4 py-2.5 rounded-xl border border-indigo-200 bg-indigo-50/60 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition">Chỉnh sửa dự án</a>
           <button id="retry-btn" type="button" class="hidden px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition">
             <i class="fa-solid fa-rotate-right mr-1.5"></i>Thử deploy lại
           </button>
@@ -148,5 +149,12 @@
 
   <footer class="text-center py-4 text-xs text-slate-400">AI Auto Landing Page Publisher &bull; Nhóm 6</footer>
   <script src="../js/deploy.js"></script>
+  <script>
+    const pid = new URLSearchParams(window.location.search).get("project_id") || new URLSearchParams(window.location.search).get("id");
+    if (pid) {
+      const editBtn = document.getElementById("back-edit-btn");
+      if (editBtn) editBtn.href = `edit-project.html?id=${encodeURIComponent(pid)}`;
+    }
+  </script>
 </body>
 </html>
