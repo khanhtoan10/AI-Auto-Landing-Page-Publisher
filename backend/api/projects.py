@@ -16,6 +16,16 @@ from services.version_service import create_version
 
 logger = logging.getLogger(__name__)
 
+import re
+from datetime import datetime
+from pathlib import Path
+
+from services.github_service import (
+    create_github_repo,
+    enable_github_pages,
+    push_landing_page_assets,
+)
+
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
 DEFAULT_CHANGE_SUMMARY = "Cập nhật landing page: text, giá, link social"
@@ -321,16 +331,203 @@ async def delete_project(
     }
 
 
+def _render_project_html(db: Session, project: dict) -> str:
+    """Render nội dung index.html từ snapshot mới nhất hoặc file template + dữ liệu project."""
+    # 1. Ưu tiên lấy html_snapshot mới nhất nếu project đã có version
+    latest_version = db.execute(
+        text(
+            "SELECT html_snapshot FROM project_versions "
+            "WHERE project_id = :pid ORDER BY version_number DESC LIMIT 1"
+        ),
+        {"pid": project["id"]},
+    ).first()
+    if latest_version and latest_version[0]:
+        return latest_version[0]
+
+    # 2. Lấy đường dẫn file template từ bảng templates
+    tpl_row = db.execute(
+        text("SELECT file_path FROM templates WHERE id = :tid"),
+        {"tid": project["template_id"]},
+    ).first()
+
+    raw_data = project.get("raw_json_data") or {}
+    if isinstance(raw_data, str):
+        try:
+            raw_data = json.loads(raw_data)
+        except json.JSONDecodeError:
+            raw_data = {}
+
+    context = {
+        "campaign_name": project.get("campaign_name") or "",
+        "product_name": project.get("product_name") or "",
+        "headline": raw_data.get("headline") or project.get("campaign_name") or project.get("product_name") or "",
+        "subheadline": raw_data.get("subheadline") or project.get("product_description") or "",
+        "product_description": project.get("product_description") or "",
+        "price": str(project.get("price") or ""),
+        "hero_image_url": raw_data.get("hero_image_url") or project.get("image_url") or "",
+        "image_url": project.get("image_url") or "",
+        "primary_color": raw_data.get("primary_color") or project.get("color_theme") or "#4f46e5",
+        "color_theme": project.get("color_theme") or "#4f46e5",
+        "social_facebook": raw_data.get("social_facebook") or project.get("facebook_url") or "#",
+        "social_tiktok": raw_data.get("social_tiktok") or project.get("tiktok_url") or "#",
+        "social_instagram": raw_data.get("social_instagram") or project.get("instagram_url") or "#",
+        **{k: str(v) for k, v in raw_data.items() if v is not None},
+    }
+
+    if tpl_row and tpl_row[0]:
+        backend_dir = Path(__file__).resolve().parent.parent
+        tpl_path = backend_dir / tpl_row[0]
+        if tpl_path.exists():
+            html = tpl_path.read_text(encoding="utf-8")
+            for key, val in context.items():
+                html = html.replace(f"{{{{{key}}}}}", str(val))
+            return html
+
+    # 3. Fallback HTML chuẩn nếu file template chưa tồn tại trên ổ đĩa
+    return f"""<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{context['headline']}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <main class="max-w-3xl mx-auto py-16 px-6 text-center">
+    <h1 class="text-4xl font-bold mb-4">{context['headline']}</h1>
+    <p class="text-lg text-slate-600 mb-6">{context['subheadline']}</p>
+    <p class="text-2xl font-semibold text-indigo-600 mb-8">{context['price']}</p>
+  </main>
+</body>
+</html>"""
+
+
 @router.post("/{project_id}/deploy")
-async def deploy_project_guard(
+def deploy_project(
     project: dict = Depends(get_owned_project),
+    db: Session = Depends(get_db),
 ):
     """
-    Endpoint deploy đã được khóa bằng get_owned_project (chỉ chủ sở hữu mới được deploy).
-    Sẽ nối với github_service khi hoàn thiện luồng xuất bản.
+    POST /projects/{id}/deploy
+    Luồng xuất bản: render -> tạo repo (nếu chưa có) -> push -> bật Pages; ghi từng bước vào deployments.
     """
-    return {
-        "success": True,
-        "message": "Xác thực quyền sở hữu hợp lệ để triển khai landing page.",
-        "data": {"project_id": project["id"], "status": project["status"]},
-    }
+    now = datetime.utcnow()
+    insert_res = db.execute(
+        text(
+            """
+            INSERT INTO deployments (project_id, commit_sha, status, start_time)
+            VALUES (:project_id, :commit_sha, :status, :start_time)
+            """
+        ),
+        {
+            "project_id": project["id"],
+            "commit_sha": "pending",
+            "status": "Rendering",
+            "start_time": now,
+        },
+    )
+    db.commit()
+    deployment_id = insert_res.lastrowid
+
+    try:
+        # Bước 1: Render HTML
+        html_content = _render_project_html(db, project)
+
+        # Bước 2: Tạo repo GitHub (nếu project chưa có repo_url)
+        db.execute(
+            text("UPDATE deployments SET status = :status WHERE id = :id"),
+            {"status": "Creating Repo", "id": deployment_id},
+        )
+        db.commit()
+
+        repo_url = project.get("repo_url")
+        if repo_url:
+            parts = repo_url.rstrip("/").split("/")
+            owner, repo_name = parts[-2], parts[-1]
+        else:
+            slug = re.sub(r"[^a-zA-Z0-9-]+", "-", project.get("campaign_name", "")).strip("-").lower()
+            repo_name = f"lp-{project['id']}-{slug}"[:60].rstrip("-") or f"landing-page-{project['id']}"
+            repo_info = create_github_repo(repo_name=repo_name)
+            owner = repo_info["full_name"].split("/")[0]
+            repo_url = repo_info["html_url"]
+
+            db.execute(
+                text("UPDATE projects SET repo_url = :repo_url WHERE id = :id"),
+                {"repo_url": repo_url, "id": project["id"]},
+            )
+            db.commit()
+
+        # Bước 3: Push index.html lên repository
+        db.execute(
+            text("UPDATE deployments SET status = :status WHERE id = :id"),
+            {"status": "Pushing Code", "id": deployment_id},
+        )
+        db.commit()
+
+        push_result = push_landing_page_assets(
+            owner=owner,
+            repo_name=repo_name,
+            html_content=html_content,
+            images=None,
+        )
+        commit_sha = push_result.get("commit_sha") or "unknown"
+
+        db.execute(
+            text("UPDATE deployments SET commit_sha = :sha, status = :status WHERE id = :id"),
+            {"sha": commit_sha, "status": "Enabling Pages", "id": deployment_id},
+        )
+        db.commit()
+
+        # Bước 4: Bật GitHub Pages và lưu URL vào projects & deployments
+        pages_url = enable_github_pages(owner=owner, repo_name=repo_name)
+        end_time = datetime.utcnow()
+
+        db.execute(
+            text(
+                """
+                UPDATE projects
+                SET github_pages_url = :pages_url, status = 'published'
+                WHERE id = :id
+                """
+            ),
+            {"pages_url": pages_url, "id": project["id"]},
+        )
+        db.execute(
+            text(
+                """
+                UPDATE deployments
+                SET status = 'Success', github_pages_url = :pages_url, end_time = :end_time
+                WHERE id = :id
+                """
+            ),
+            {"pages_url": pages_url, "end_time": end_time, "id": deployment_id},
+        )
+        db.commit()
+
+        return {
+            "success": True,
+            "message": "Deploy landing page thành công!",
+            "data": {
+                "deployment_id": deployment_id,
+                "project_id": project["id"],
+                "repo_url": repo_url,
+                "github_pages_url": pages_url,
+                "commit_sha": commit_sha,
+                "status": "Success",
+            },
+        }
+
+    except Exception as exc:
+        db.rollback()
+        db.execute(
+            text(
+                """
+                UPDATE deployments
+                SET status = 'Failed', error_message = :err, end_time = :end_time
+                WHERE id = :id
+                """
+            ),
+            {"err": str(exc), "end_time": datetime.utcnow(), "id": deployment_id},
+        )
+        db.commit()
+        raise HTTPException(status_code=500, detail=f"Deploy thất bại: {exc}")
