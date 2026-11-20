@@ -8,8 +8,9 @@ Endpoints:
 """
 
 import pymysql
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
+from core.security import get_current_user, get_owned_project
 from schemas.version import (
     VersionCreateRequest,
     VersionDetailResponse,
@@ -36,7 +37,12 @@ router = APIRouter(
     response_model=VersionDetailResponse,
     summary="Lưu phiên bản mới cho dự án",
 )
-async def api_create_version(project_id: int, payload: VersionCreateRequest):
+async def api_create_version(
+    project_id: int,
+    payload: VersionCreateRequest,
+    project: dict = Depends(get_owned_project),
+    current_user: dict = Depends(get_current_user),
+):
     """Tạo một snapshot phiên bản mới (version_number tự tăng).
 
     - **AC1**: Lưu thành công, trả về version vừa tạo.
@@ -46,12 +52,12 @@ async def api_create_version(project_id: int, payload: VersionCreateRequest):
     """
     try:
         version = create_version(
-            project_id=project_id,
+            project_id=project["id"],
             html_snapshot=payload.html_snapshot,
             json_content=payload.json_content,
             commit_sha=payload.commit_sha,
             change_summary=payload.change_summary,
-            created_by=None,  # TODO: lấy từ get_current_user khi merge nhánh auth
+            created_by=current_user.get("id"),
         )
         return version
 
@@ -80,7 +86,10 @@ async def api_create_version(project_id: int, payload: VersionCreateRequest):
     response_model=list[VersionListItemResponse],
     summary="Xem danh sách phiên bản (sắp xếp mới nhất trước)",
 )
-async def api_list_versions(project_id: int):
+async def api_list_versions(
+    project_id: int,
+    project: dict = Depends(get_owned_project),
+):
     """Trả về danh sách version giảm dần theo version_number.
 
     Payload rút gọn – không tải html_snapshot để tối ưu dung lượng.
@@ -88,7 +97,7 @@ async def api_list_versions(project_id: int):
     - **AC1**: Danh sách sắp xếp giảm dần.
     """
     try:
-        versions = list_versions(project_id)
+        versions = list_versions(project["id"])
         return versions
     except ValueError as exc:
         raise HTTPException(
@@ -103,13 +112,17 @@ async def api_list_versions(project_id: int):
     response_model=VersionDetailResponse,
     summary="Xem chi tiết một phiên bản (bao gồm HTML & JSON)",
 )
-async def api_get_version(project_id: int, version_id: int):
+async def api_get_version(
+    project_id: int,
+    version_id: int,
+    project: dict = Depends(get_owned_project),
+):
     """Trả về đầy đủ thông tin version (HTML + JSON).
 
     - **AC2**: Trả về chi tiết version.
     - **AC3**: Trả 404 nếu version không thuộc project.
     """
-    version = get_version_detail(project_id, version_id)
+    version = get_version_detail(project["id"], version_id)
     if version is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -125,7 +138,12 @@ async def api_get_version(project_id: int, version_id: int):
     response_model=VersionRestoreResponse,
     summary="Khôi phục phiên bản cũ (Append-only)",
 )
-async def api_restore_version(project_id: int, version_id: int):
+async def api_restore_version(
+    project_id: int,
+    version_id: int,
+    project: dict = Depends(get_owned_project),
+    current_user: dict = Depends(get_current_user),
+):
     """Khôi phục phiên bản cũ bằng cách tạo version mới copy snapshot.
 
     Lịch sử cũ được giữ nguyên (Append-only). Version mới ghi rõ
@@ -135,7 +153,7 @@ async def api_restore_version(project_id: int, version_id: int):
     - **AC2**: Tạo version mới sao chép nội dung.
     """
     try:
-        old_version = get_version_detail(project_id, version_id)
+        old_version = get_version_detail(project["id"], version_id)
         if old_version is None:
             raise ValueError(
                 f"Version {version_id} không tồn tại hoặc không thuộc project {project_id}"
@@ -144,9 +162,9 @@ async def api_restore_version(project_id: int, version_id: int):
         old_ver_num = old_version["version_number"]
 
         new_version = restore_version(
-            project_id=project_id,
+            project_id=project["id"],
             version_id=version_id,
-            created_by=None,  # TODO: lấy từ get_current_user khi merge nhánh auth
+            created_by=current_user.get("id"),
         )
         return VersionRestoreResponse(
             message=f"Đã khôi phục thành công từ phiên bản {old_ver_num}",
