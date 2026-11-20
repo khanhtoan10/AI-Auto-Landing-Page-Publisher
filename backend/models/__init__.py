@@ -3,9 +3,8 @@ from sqlalchemy.orm import configure_mappers
 
 from core.database import Base
 
-# Đăng ký metadata tham chiếu cho các bảng khóa ngoại của Project (users, templates)
+# Đăng ký metadata tham chiếu cho bảng khóa ngoại users (templates đã có model Template)
 Table("users", Base.metadata, Column("id", Integer, primary_key=True), extend_existing=True)
-Table("templates", Base.metadata, Column("id", Integer, primary_key=True), extend_existing=True)
 
 from models.generation import (  # noqa: E402
     GENERATION_STATUSES,
@@ -14,12 +13,8 @@ from models.generation import (  # noqa: E402
     STATUS_SUCCESS,
     Generation,
 )
-<<<<<<< HEAD
 from models.project import Project  # noqa: E402
-=======
-from models.project import Project
-from models.template import Template
->>>>>>> origin/main
+from models.template import Template  # noqa: E402
 
 configure_mappers()
 
@@ -30,10 +25,5 @@ __all__ = [
     "STATUS_SUCCESS",
     "Generation",
     "Project",
-<<<<<<< HEAD
-]
-=======
     "Template",
 ]
-
->>>>>>> origin/main
