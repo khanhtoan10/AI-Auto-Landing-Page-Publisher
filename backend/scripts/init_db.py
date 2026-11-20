@@ -235,6 +235,24 @@ def init_database():
             """
             cursor.execute(create_deployments_table_query)
             print("Table 'deployments' created or already exists.")
+            # 9. Tạo bảng generations (lưu lịch sử sinh nội dung bằng Gemini)
+            create_generations_table_query = """
+            CREATE TABLE IF NOT EXISTS generations (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                project_id INT NOT NULL,
+                prompt TEXT NOT NULL,
+                response_json JSON NULL,
+                status VARCHAR(20) NOT NULL,
+                error_message TEXT NULL,
+                created_at DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()),
+                INDEX ix_generations_project_id (project_id),
+                CONSTRAINT fk_generations_project_id FOREIGN KEY (project_id)
+                    REFERENCES projects(id) ON DELETE CASCADE,
+                CONSTRAINT chk_generations_status CHECK (status IN ('pending', 'success', 'failed'))
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """
+            cursor.execute(create_generations_table_query)
+            print("Table 'generations' created or already exists.")
             print("Database migration & seeding completed successfully!")
 
     except Exception as e:

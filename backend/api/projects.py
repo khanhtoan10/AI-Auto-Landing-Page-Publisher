@@ -12,8 +12,10 @@ from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.security import get_current_user, get_owned_project
+from models import STATUS_SUCCESS
 from schemas.project import ProjectCreate, ProjectUpdate
 from services import github_service, template_service
+from services.generation_service import ProjectNotFoundError, generate_content_for_project
 from services.github_service import (
     create_github_repo,
     enable_github_pages,
@@ -26,6 +28,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
 DEFAULT_CHANGE_SUMMARY = "Cập nhật landing page: text, giá, link social"
+
+
+def _error_detail(code: str, message: str) -> dict:
+    return {"success": False, "error": {"code": code, "message": message, "details": []}}
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -188,6 +194,49 @@ async def get_project_detail(
     return {"success": True, "data": _serialize_project(project)}
 
 
+@router.post("/{project_id}/generate", status_code=status.HTTP_201_CREATED)
+def generate_project_content(
+    project: dict = Depends(get_owned_project),
+    db: Session = Depends(get_db),
+):
+    """Sinh nội dung landing page bằng Gemini API và lưu kết quả JSON vào Database."""
+    try:
+        generation = generate_content_for_project(db=db, project_id=project["id"])
+    except ProjectNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=_error_detail("PROJECT_NOT_FOUND", "Landing page không tồn tại."),
+        )
+    except Exception:
+        logger.exception("Lỗi khi sinh/lưu nội dung cho project %s", project["id"])
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_error_detail("DATABASE_ERROR", "Lỗi hệ thống khi lưu dữ liệu sinh nội dung."),
+        )
+
+    if generation.status != STATUS_SUCCESS or generation.response_json is None:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=_error_detail(
+                "GEMINI_ERROR",
+                "Không thể sinh nội dung từ Gemini API. Vui lòng thử lại sau.",
+            ),
+        )
+
+    return {
+        "success": True,
+        "data": {
+            "id": generation.id,
+            "project_id": generation.project_id,
+            "status": generation.status,
+            "raw_json_data": generation.response_json,
+            "response_json": generation.response_json,
+            "created_at": generation.created_at.isoformat() if generation.created_at else None,
+        },
+    }
+
+
 @router.post("/{project_id}/preview")
 async def preview_project(
     payload: ProjectUpdate,
@@ -226,7 +275,6 @@ async def update_project(
     update_data, change_summary, commit_message = _split_payload(payload)
 
     if not update_data:
-        # Không có trường nào thay đổi: vẫn render lại để trả về bản xem trước mới nhất.
         logger.info("Payload rỗng cho project %s, chỉ render lại HTML", project["id"])
 
     if "template_id" in update_data and update_data["template_id"] is not None:
@@ -365,7 +413,6 @@ async def delete_project(
 
 def _render_project_html(db: Session, project: dict) -> str:
     """Render nội dung index.html từ snapshot mới nhất hoặc file template + dữ liệu project."""
-    # 1. Ưu tiên lấy html_snapshot mới nhất nếu project đã có version
     latest_version = db.execute(
         text(
             "SELECT html_snapshot FROM project_versions "
@@ -376,7 +423,6 @@ def _render_project_html(db: Session, project: dict) -> str:
     if latest_version and latest_version[0]:
         return latest_version[0]
 
-    # 2. Lấy đường dẫn file template từ bảng templates
     tpl_row = db.execute(
         text("SELECT file_path FROM templates WHERE id = :tid"),
         {"tid": project["template_id"]},
@@ -415,7 +461,6 @@ def _render_project_html(db: Session, project: dict) -> str:
                 html = html.replace(f"{{{{{key}}}}}", str(val))
             return html
 
-    # 3. Fallback HTML chuẩn nếu file template chưa tồn tại trên ổ đĩa
     return f"""<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -462,10 +507,8 @@ def deploy_project(
     deployment_id = insert_res.lastrowid
 
     try:
-        # Bước 1: Render HTML
         html_content = _render_project_html(db, project)
 
-        # Bước 2: Tạo repo GitHub (nếu project chưa có repo_url)
         db.execute(
             text("UPDATE deployments SET status = :status WHERE id = :id"),
             {"status": "Creating Repo", "id": deployment_id},
@@ -489,7 +532,6 @@ def deploy_project(
             )
             db.commit()
 
-        # Bước 3: Push index.html lên repository
         db.execute(
             text("UPDATE deployments SET status = :status WHERE id = :id"),
             {"status": "Pushing Code", "id": deployment_id},
@@ -510,7 +552,6 @@ def deploy_project(
         )
         db.commit()
 
-        # Bước 4: Bật GitHub Pages và lưu URL vào projects & deployments
         pages_url = enable_github_pages(owner=owner, repo_name=repo_name)
         end_time = datetime.utcnow()
 
