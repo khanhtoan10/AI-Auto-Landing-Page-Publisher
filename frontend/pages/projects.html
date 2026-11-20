@@ -1,63 +1,57 @@
 <!DOCTYPE html>
-<html lang="vi" class="h-full bg-slate-50">
+<html lang="vi" class="h-full">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Danh sach du an - AI Auto Landing Page Publisher</title>
+  <title>Danh sách dự án — AI Auto Landing Page Publisher</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="../css/common.css">
-  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="h-full bg-slate-50 text-slate-800 antialiased flex overflow-hidden">
 
-  <!-- Overlay lam toi nen khi mo Sidebar tren Mobile -->
+  <!-- Overlay làm tối nền khi mở Sidebar trên Mobile -->
   <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden lg:hidden transition-opacity duration-300"></div>
 
-  <!-- Sidebar dieu huong ben trai -->
+  <!-- Sidebar điều hướng bên trái -->
   <aside id="app-sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-64 h-full transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shrink-0 bg-white border-r border-slate-200 flex flex-col"></aside>
 
-  <!-- Khung noi dung chinh -->
+  <!-- Khung nội dung chính -->
   <div class="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
-
-    <!-- Top Header -->
-    <div id="app-header"></div>
 
     <!-- Main Content Area -->
     <main id="app-content" class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 animate-fadeIn">
 
-      <!-- Tieu de + Nut tao moi -->
+      <!-- Tiêu đề + Nút tạo mới -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Du an cua toi</h2>
-          <p class="text-sm text-slate-500 mt-1">Quan ly toan bo Landing Page da tao.</p>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Dự án của tôi</h2>
+          <p class="text-sm text-slate-500 mt-1">Quản lý toàn bộ Landing Page đã khởi tạo, xem trước và xuất bản lên GitHub Pages.</p>
         </div>
-        <a href="campaign-new.html" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]">
+        <a href="create.html" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]">
           <i class="fa-solid fa-plus"></i>
-          <span>Tao chien dich moi</span>
+          <span>Tạo chiến dịch mới</span>
         </a>
       </div>
 
-      <!-- Bo loc trang thai -->
+      <!-- Bộ lọc trạng thái -->
       <div class="flex flex-wrap gap-2" id="status-filters">
-        <button data-status="" class="filter-btn active px-4 py-2 rounded-xl text-xs font-bold border transition">Tat ca</button>
-        <button data-status="draft" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold border transition">Nhap</button>
-        <button data-status="deploying" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold border transition">Dang deploy</button>
-        <button data-status="published" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold border transition">Da xuat ban</button>
-        <button data-status="failed" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold border transition">Loi</button>
+        <button data-status="" class="filter-btn active px-4 py-2 rounded-xl text-xs font-bold border transition">Tất cả</button>
+        <button data-status="draft" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold border transition">Nháp</button>
+        <button data-status="deploying" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold border transition">Đang deploy</button>
+        <button data-status="published" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold border transition">Đã xuất bản</button>
+        <button data-status="failed" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold border transition">Lỗi</button>
       </div>
 
-      <!-- Vung hien thi du an -->
+      <!-- Vùng hiển thị dự án -->
       <div id="project-list" class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <!-- Noi dung se duoc render bang JS -->
+        <!-- Nội dung sẽ được render bằng JS -->
       </div>
 
-      <!-- Phan trang -->
+      <!-- Phân trang -->
       <div id="pagination" class="flex items-center justify-center gap-4 text-sm hidden">
         <button id="btn-prev" class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-semibold text-xs transition disabled:opacity-40 disabled:cursor-not-allowed">
-          <i class="fa-solid fa-chevron-left mr-1"></i> Truoc
+          <i class="fa-solid fa-chevron-left mr-1"></i> Trước
         </button>
         <span id="page-info" class="text-xs font-semibold text-slate-500"></span>
         <button id="btn-next" class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-semibold text-xs transition disabled:opacity-40 disabled:cursor-not-allowed">
@@ -73,27 +67,23 @@
     .filter-btn:hover { border-color: #a5b4fc; color: #4338ca; }
     .filter-btn.active { background: #4f46e5; color: white; border-color: #4f46e5; }
   </style>
-
   <script src="../js/api.js"></script>
   <script src="../js/auth.js"></script>
   <script src="../js/layout.js"></script>
   <script>
   (function () {
     "use strict";
-
     var PAGE_SIZE = 10;
     var currentPage = 1;
     var currentFilter = "";
     var allProjects = [];
 
-    // -- Chong XSS: escape HTML --
     function escapeHtml(str) {
       var div = document.createElement("div");
       div.appendChild(document.createTextNode(str));
       return div.innerHTML;
     }
 
-    // -- Dinh dang ngay dd/mm/yyyy HH:mm --
     function formatDate(isoStr) {
       if (!isoStr) return "";
       var d = new Date(isoStr);
@@ -106,42 +96,33 @@
       return dd + "/" + mm + "/" + yyyy + " " + hh + ":" + mi;
     }
 
-    // -- Nhan trang thai co mau --
     function statusBadge(st) {
       var map = {
-        draft:     { label: "Nhap",         bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200" },
-        deploying: { label: "Dang deploy",  bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200" },
-        published: { label: "Da xuat ban",  bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
-        failed:    { label: "Loi",          bg: "bg-rose-50",    text: "text-rose-700",    border: "border-rose-200" },
+        draft:     { label: "Nháp",        bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200" },
+        deploying: { label: "Đang deploy", bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200" },
+        published: { label: "Đã xuất bản", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
+        failed:    { label: "Lỗi",         bg: "bg-rose-50",    text: "text-rose-700",    border: "border-rose-200" },
       };
-      var cfg = map[st];
-      if (!cfg) {
-        cfg = { label: st || "---", bg: "bg-slate-50", text: "text-slate-600", border: "border-slate-200" };
-      }
+      var cfg = map[st] || { label: st || "---", bg: "bg-slate-50", text: "text-slate-600", border: "border-slate-200" };
       return '<span class="text-[10px] px-2.5 py-0.5 rounded-full font-semibold ' +
         cfg.bg + " " + cfg.text + " border " + cfg.border + '">' +
         escapeHtml(cfg.label) + "</span>";
     }
 
-    // -- Loc du lieu theo trang thai (bo qua deleted) --
     function getFiltered() {
       return allProjects.filter(function (p) {
-        if (p.status === "deleted") return false;
-        if (p.deleted_at) return false;
+        if (p.status === "deleted" || p.deleted_at) return false;
         if (currentFilter && p.status !== currentFilter) return false;
         return true;
       });
     }
 
-    // -- Render danh sach --
     function render() {
       var container = document.getElementById("project-list");
       var pagination = document.getElementById("pagination");
       var filtered = getFiltered();
       var totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-
       if (currentPage > totalPages) currentPage = totalPages;
-
       var start = (currentPage - 1) * PAGE_SIZE;
       var pageItems = filtered.slice(start, start + PAGE_SIZE);
 
@@ -154,23 +135,20 @@
         emptyDiv.appendChild(icon);
         var msg = document.createElement("p");
         msg.className = "text-sm text-slate-400 font-semibold";
-        msg.textContent = "Chua co chien dich nao.";
+        msg.textContent = "Chưa có chiến dịch nào.";
         emptyDiv.appendChild(msg);
         container.appendChild(emptyDiv);
         pagination.classList.add("hidden");
         return;
       }
 
-      // Xay dung bang
       var table = document.createElement("table");
       table.className = "w-full text-sm";
 
-      // Header
       var thead = document.createElement("thead");
       thead.className = "bg-slate-50 text-xs text-slate-500 uppercase tracking-wider";
       var headerRow = document.createElement("tr");
-      var headers = ["Ten chien dich", "Thoi gian tao", "Trang thai", "GitHub Pages", "Thao tac"];
-      headers.forEach(function (h) {
+      ["Tên chiến dịch", "Thời gian tạo", "Trạng thái", "GitHub Pages", "Thao tác"].forEach(function (h) {
         var th = document.createElement("th");
         th.className = "px-5 py-3 text-left font-semibold";
         th.textContent = h;
@@ -179,7 +157,6 @@
       thead.appendChild(headerRow);
       table.appendChild(thead);
 
-      // Body
       var tbody = document.createElement("tbody");
       tbody.className = "divide-y divide-slate-100";
 
@@ -187,32 +164,28 @@
         var tr = document.createElement("tr");
         tr.className = "hover:bg-slate-50/80 transition";
 
-        // Ten chien dich
         var tdName = document.createElement("td");
         tdName.className = "px-5 py-3.5 font-semibold text-slate-800";
-        tdName.textContent = p.campaign_name || p.product_name || "(Khong ten)";
+        tdName.textContent = p.campaign_name || p.product_name || "(Không tên)";
         tr.appendChild(tdName);
 
-        // Thoi gian tao
         var tdDate = document.createElement("td");
         tdDate.className = "px-5 py-3.5 text-slate-500 text-xs";
         tdDate.textContent = formatDate(p.created_at);
         tr.appendChild(tdDate);
 
-        // Trang thai
         var tdStatus = document.createElement("td");
         tdStatus.className = "px-5 py-3.5";
         tdStatus.innerHTML = statusBadge(p.status);
         tr.appendChild(tdStatus);
 
-        // GitHub Pages
         var tdGh = document.createElement("td");
         tdGh.className = "px-5 py-3.5 text-xs";
         if (p.github_pages_url) {
           var a = document.createElement("a");
           a.href = p.github_pages_url;
           a.target = "_blank";
-          a.rel = "noopener";
+          a.rel = "noopener noreferrer";
           a.className = "text-indigo-600 hover:text-indigo-700 hover:underline font-medium inline-flex items-center gap-1";
           a.textContent = "Xem trang";
           var extIcon = document.createElement("i");
@@ -222,18 +195,17 @@
         } else {
           var noLink = document.createElement("span");
           noLink.className = "text-slate-400";
-          noLink.textContent = "Chua xuat ban";
+          noLink.textContent = "Chưa xuất bản";
           tdGh.appendChild(noLink);
         }
         tr.appendChild(tdGh);
 
-        // Thao tac
         var tdAction = document.createElement("td");
         tdAction.className = "px-5 py-3.5";
         var editLink = document.createElement("a");
         editLink.href = "edit-project.html?id=" + encodeURIComponent(p.id);
         editLink.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-xs font-semibold transition";
-        editLink.textContent = "Xem truoc";
+        editLink.textContent = "Xem trước";
         var eyeIcon = document.createElement("i");
         eyeIcon.className = "fa-solid fa-eye text-[10px]";
         editLink.prepend(eyeIcon);
@@ -247,43 +219,27 @@
       container.innerHTML = "";
       container.appendChild(table);
 
-      // Phan trang
       if (totalPages <= 1) {
         pagination.classList.add("hidden");
       } else {
         pagination.classList.remove("hidden");
-        var pageInfo = document.getElementById("page-info");
-        pageInfo.textContent = "Trang " + currentPage + " / " + totalPages;
+        document.getElementById("page-info").textContent = "Trang " + currentPage + " / " + totalPages;
         document.getElementById("btn-prev").disabled = (currentPage <= 1);
         document.getElementById("btn-next").disabled = (currentPage >= totalPages);
       }
     }
 
-    // -- Hien thi trang thai dang tai --
     function showLoading() {
       var container = document.getElementById("project-list");
-      container.innerHTML = "";
-      var div = document.createElement("div");
-      div.className = "p-10 text-center";
-      var icon = document.createElement("i");
-      icon.className = "fa-solid fa-spinner fa-spin text-2xl text-indigo-400 mb-3";
-      div.appendChild(icon);
-      var msg = document.createElement("p");
-      msg.className = "text-sm text-slate-400 font-semibold";
-      msg.textContent = "Dang tai du lieu...";
-      div.appendChild(msg);
-      container.appendChild(div);
+      container.innerHTML = '<div class="p-10 text-center"><i class="fa-solid fa-spinner fa-spin text-2xl text-indigo-400 mb-3"></i><p class="text-sm text-slate-400 font-semibold">Đang tải dữ liệu...</p></div>';
     }
 
-    // -- Hien thi loi --
     function showError(message) {
       var container = document.getElementById("project-list");
       container.innerHTML = "";
       var div = document.createElement("div");
       div.className = "p-10 text-center";
-      var icon = document.createElement("i");
-      icon.className = "fa-solid fa-circle-exclamation text-2xl text-rose-400 mb-3";
-      div.appendChild(icon);
+      div.innerHTML = '<i class="fa-solid fa-circle-exclamation text-2xl text-rose-400 mb-3"></i>';
       var msg = document.createElement("p");
       msg.className = "text-sm text-rose-500 font-semibold";
       msg.textContent = message;
@@ -292,21 +248,21 @@
       document.getElementById("pagination").classList.add("hidden");
     }
 
-    // -- Tai du lieu tu API --
     async function loadProjects() {
       showLoading();
       try {
-        var res = await apiRequest("/projects");
-        // Backend tra data la MANG
-        allProjects = Array.isArray(res.data) ? res.data : [];
+        var res = await apiRequest("/projects?page=1&page_size=100");
+        // Tương thích cả format mảng cũ và object phân trang { items, total, ... }
+        allProjects = Array.isArray(res.data)
+          ? res.data
+          : (res.data && Array.isArray(res.data.items) ? res.data.items : []);
         currentPage = 1;
         render();
       } catch (err) {
-        showError("Khong the tai danh sach du an: " + err.message);
+        showError("Không thể tải danh sách dự án: " + err.message);
       }
     }
 
-    // -- Gan su kien bo loc --
     document.getElementById("status-filters").addEventListener("click", function (e) {
       var btn = e.target.closest(".filter-btn");
       if (!btn) return;
@@ -319,7 +275,6 @@
       render();
     });
 
-    // -- Gan su kien phan trang --
     document.getElementById("btn-prev").addEventListener("click", function () {
       if (currentPage > 1) { currentPage--; render(); }
     });
@@ -329,7 +284,6 @@
       if (currentPage < totalPages) { currentPage++; render(); }
     });
 
-    // -- Cho layout.js chay xong (DOMContentLoaded + requireAuth), roi tai du lieu --
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", function () {
         setTimeout(loadProjects, 50);
