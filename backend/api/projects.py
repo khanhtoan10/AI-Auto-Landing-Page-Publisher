@@ -1,12 +1,13 @@
 import json
 import logging
 import re
+import uuid
 from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -477,6 +478,130 @@ def _render_project_html(db: Session, project: dict) -> str:
   </main>
 </body>
 </html>"""
+
+
+MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
+IMAGE_CHUNK_SIZE = 64 * 1024  # 64 KB
+
+
+@router.post("/{project_id}/image")
+async def upload_project_image(
+    file: UploadFile = File(...),
+    project: dict = Depends(get_owned_project),
+    db: Session = Depends(get_db),
+):
+    """
+    POST /projects/{id}/image
+    Upload ảnh sản phẩm cho landing page (multipart/form-data, trường 'file').
+    Giới hạn 5 MB, chỉ chấp nhận JPG, PNG, WebP.
+    """
+    content_type = (file.content_type or "").split(";")[0].lower().strip()
+    if content_type not in ("image/jpeg", "image/png", "image/webp"):
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Định dạng file không được hỗ trợ. Chỉ chấp nhận JPG, PNG, WebP.",
+        )
+
+    first_chunk = await file.read(IMAGE_CHUNK_SIZE)
+    if not first_chunk:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="File rỗng. Vui lòng chọn file ảnh hợp lệ.",
+        )
+
+    detected_ext = None
+    if first_chunk.startswith(b"\xff\xd8\xff"):
+        detected_ext = ".jpg"
+    elif first_chunk.startswith(b"\x89PNG\r\n\x1a\n"):
+        detected_ext = ".png"
+    elif (
+        len(first_chunk) >= 12
+        and first_chunk[:4] == b"RIFF"
+        and first_chunk[8:12] == b"WEBP"
+    ):
+        detected_ext = ".webp"
+
+    expected_ext_map = {
+        "image/jpeg": ".jpg",
+        "image/png": ".png",
+        "image/webp": ".webp",
+    }
+
+    if not detected_ext or detected_ext != expected_ext_map.get(content_type):
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Nội dung file không đúng định dạng ảnh hoặc không khớp với content-type.",
+        )
+
+    uploads_dir = Path(__file__).resolve().parent.parent / "static" / "uploads"
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+
+    filename = f"{uuid.uuid4().hex}{detected_ext}"
+    file_path = uploads_dir / filename
+    total_size = len(first_chunk)
+
+    try:
+        with open(file_path, "wb") as f:
+            f.write(first_chunk)
+            while True:
+                chunk = await file.read(IMAGE_CHUNK_SIZE)
+                if not chunk:
+                    break
+                total_size += len(chunk)
+                if total_size > MAX_IMAGE_SIZE:
+                    raise HTTPException(
+                        status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                        detail="Kích thước file vượt quá giới hạn 5 MB.",
+                    )
+                f.write(chunk)
+    except HTTPException:
+        if file_path.is_file():
+            try:
+                file_path.unlink()
+            except OSError:
+                pass
+        raise
+    except Exception as exc:
+        if file_path.is_file():
+            try:
+                file_path.unlink()
+            except OSError:
+                pass
+        raise HTTPException(status_code=500, detail=f"Lỗi khi lưu file ảnh: {exc}")
+    finally:
+        await file.close()
+
+    new_image_url = f"/static/uploads/{filename}"
+    db.execute(
+        text(
+            """
+            UPDATE projects
+            SET image_url = :image_url, updated_at = NOW()
+            WHERE id = :id
+            """
+        ),
+        {"image_url": new_image_url, "id": project["id"]},
+    )
+    db.commit()
+
+    old_image_url = project.get("image_url") or ""
+    if isinstance(old_image_url, str) and old_image_url.startswith("/static/uploads/"):
+        old_filename = Path(old_image_url).name
+        if old_filename and old_filename != filename:
+            old_file_path = uploads_dir / old_filename
+            if old_file_path.is_file():
+                try:
+                    old_file_path.unlink()
+                except OSError:
+                    pass
+
+    return {
+        "success": True,
+        "data": {
+            "image_url": new_image_url,
+            "size": total_size,
+        },
+    }
 
 
 @router.post("/{project_id}/deploy")
