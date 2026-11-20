@@ -63,10 +63,18 @@
                 <i class="fa-solid fa-arrow-up-right-from-square"></i>
                 <span>Mở website</span>
               </a>
+              <a id="btn-version-history" href="#" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-bold transition">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Lịch sử phiên bản</span>
+              </a>
               <a href="projects.html" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-bold transition">
                 <i class="fa-solid fa-arrow-left"></i>
                 <span>Danh sách dự án</span>
               </a>
+              <button type="button" id="btn-delete-project" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500 border border-rose-400/40 text-rose-200 hover:text-white text-xs font-bold transition">
+                <i class="fa-solid fa-trash-can"></i>
+                <span>Xóa dự án</span>
+              </button>
             </div>
           </div>
         </section>
@@ -370,7 +378,7 @@
               <i class="fa-solid fa-arrow-up-right-from-square"></i>
               <span>Mở website GitHub Pages</span>
             </a>
-            <a href="deployments.html" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-bold transition">
+            <a id="modal-version-history-link" href="#" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-bold transition">
               <i class="fa-solid fa-code-branch"></i>
               <span>Xem lịch sử phiên bản</span>
             </a>
@@ -379,6 +387,63 @@
           <p class="text-[11px] text-slate-400 text-center leading-relaxed">
             Bạn có thể tiếp tục chỉnh sửa và lưu lại — mỗi lần lưu sẽ tạo một phiên bản mới.
           </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL XÁC NHẬN XÓA DỰ ÁN -->
+  <div id="delete-modal" class="fixed inset-0 z-[90] hidden" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+    <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" data-close-delete-modal></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+      <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-fadeIn">
+        <div class="bg-gradient-to-r from-rose-600 to-red-600 px-6 py-5 text-white relative">
+          <button type="button" data-close-delete-modal class="absolute top-3 right-3 w-8 h-8 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+              <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <div class="min-w-0">
+              <h3 id="delete-modal-title" class="text-base font-extrabold">Xóa landing page?</h3>
+              <p class="text-[11px] text-rose-50 font-medium">Hành động này không thể hoàn tác từ giao diện.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <p class="text-sm text-slate-600 leading-relaxed">
+            Bạn sắp xóa dự án
+            <strong id="delete-project-name" class="text-slate-900">này</strong>.
+            Vui lòng kiểm tra kỹ trước khi xác nhận.
+          </p>
+
+          <ul class="space-y-2 text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+            <li class="flex items-start gap-2">
+              <i class="fa-solid fa-circle-info text-indigo-500 mt-0.5"></i>
+              <span>Dự án sẽ được <strong class="text-slate-700">xóa mềm</strong> và biến mất khỏi danh sách dự án.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fa-brands fa-github text-slate-700 mt-0.5"></i>
+              <span>GitHub repository liên kết (nếu có) sẽ bị xóa vĩnh viễn.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fa-solid fa-code-branch text-amber-500 mt-0.5"></i>
+              <span>Lịch sử phiên bản vẫn được lưu trong database để đối soát.</span>
+            </li>
+          </ul>
+
+          <div class="flex flex-col sm:flex-row gap-2">
+            <button type="button" id="btn-cancel-delete" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-bold transition">
+              Hủy, giữ dự án
+            </button>
+            <button type="button" id="btn-confirm-delete" class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 disabled:cursor-not-allowed text-white text-sm font-bold shadow-lg shadow-rose-600/20 transition">
+              <i id="delete-spinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+              <i id="delete-icon" class="fa-solid fa-trash-can"></i>
+              <span id="delete-btn-text">Xóa vĩnh viễn</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

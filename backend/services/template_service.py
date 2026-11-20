@@ -641,31 +641,33 @@ from services.cta_service import build_cta_context
 
 
 def render_template_preview(db: Session, template_id: int) -> Optional[str]:
-    template_item = get_template_by_id(db, template_id)
+    template_item = db.get(Template, template_id)
     if template_item is None:
         return None
-
     sample_project = {
-        "campaign_name": f"Chi?n D?ch M?u - {template_item.name}",
+        "campaign_name": f"Chiến Dịch Mẫu - {template_item.name}",
         "brand_name": "NovaBrand Vietnam",
-        "product_name": "S?n Ph?m Ti?u Bi?u 2026",
-        "product_description": template_item.description or "Gi?i ph?p t?i ?u n?ng t?m tr?i nghi?m kh?ch h?ng hi?n ??i.",
+        "product_name": "Sản Phẩm Tiêu Biểu 2026",
+        "headline": f"Giải Pháp Đột Phá - {template_item.name}",
+        "subheadline": template_item.description or "Nâng tầm trải nghiệm khách hàng và bứt phá doanh số chuyển đổi tự động.",
+        "product_description": template_item.description or "Giải pháp tối ưu nâng tầm trải nghiệm khách hàng hiện đại.",
+        "hero_badge": "Phiên Bản Giới Hạn 2026",
+        "sold_count": "2,480+",
         "price": 1290000,
-        "original_price": 1890000,
-        "discount_percent": 32,
-        "cta_text": "??ng K? Ngay",
+        "original_price": "1.890.000đ",
+        "sale_price": "1.290.000đ",
+        "discount_percent": "32%",
+        "features": "Công Nghệ Tiên Tiến & Hiệu Năng Vượt Trội",
+        "features_description": "Thiết kế tinh tế, tốc độ xử lý vượt bậc cùng chính sách bảo hành chính hãng 24 tháng toàn quốc.",
+        "cta_text": "Đăng Ký Ngay",
         "cta_url": "#cta-contact",
         "primary_color": "#2563EB",
+        "color_theme": "#2563EB",
         "messenger_link": "https://m.me/novabrand.vn",
         "tiktok_shop_link": "https://www.tiktok.com/@novabrand.vn",
         "zalo_link": "https://zalo.me/0901234567",
         "instagram_link": "https://www.instagram.com/novabrand.vn",
         "hotline": "0901 234 567",
-        "features": [
-            {"title": "Ch?t L??ng V??t Tr?i", "description": "Thi?t k? tinh t?, ??p ?ng ti?u chu?n kh?t khe nh?t."},
-            {"title": "H? Tr? 24/7", "description": "??i ng? t? v?n t?n t?m qua ?a k?nh tr?c tuy?n."},
-            {"title": "?u ??i ??c Quy?n", "description": "Giao h?ng nhanh to?n qu?c v? b?o h?nh ch?nh h?ng."},
-        ],
     }
     raw_path = (template_item.file_path or "").replace("\\", "/").lstrip("/")
     for prefix in ("backend/templates/", "templates/"):
