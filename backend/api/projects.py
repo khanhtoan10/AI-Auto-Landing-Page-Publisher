@@ -1,10 +1,12 @@
 import json
 import logging
+import re
 from datetime import date, datetime
 from decimal import Decimal
+from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -12,19 +14,14 @@ from core.database import get_db
 from core.security import get_current_user, get_owned_project
 from schemas.project import ProjectCreate, ProjectUpdate
 from services import github_service, template_service
-from services.version_service import create_version
-
-logger = logging.getLogger(__name__)
-
-import re
-from datetime import datetime
-from pathlib import Path
-
 from services.github_service import (
     create_github_repo,
     enable_github_pages,
     push_landing_page_assets,
 )
+from services.version_service import create_version
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
@@ -94,22 +91,56 @@ def _fetch_project(db: Session, project_id: int) -> Any:
 # ── Endpoints ────────────────────────────────────────────────────────
 @router.get("")
 async def list_my_projects(
+    page: int = 1,
+    page_size: int = 10,
+    status_filter: str | None = Query(default=None, alias="status"),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """Danh sach project cua nguoi dang nhap, phan trang + loc status."""
+    if page < 1:
+        page = 1
+    if page_size < 1:
+        page_size = 1
+    elif page_size > 100:
+        page_size = 100
+
+    offset = (page - 1) * page_size
+
+    where = "user_id = :user_id AND deleted_at IS NULL"
+    params: dict = {"user_id": current_user["id"]}
+
+    if status_filter:
+        where += " AND status = :status"
+        params["status"] = status_filter
+
+    count_row = db.execute(
+        text(f"SELECT COUNT(*) AS cnt FROM projects WHERE {where}"),
+        params,
+    ).mappings().first()
+    total = int(count_row["cnt"]) if count_row else 0
+
     rows = (
         db.execute(
             text(
-                "SELECT * FROM projects "
-                "WHERE user_id = :user_id AND deleted_at IS NULL "
-                "ORDER BY updated_at DESC"
+                f"SELECT * FROM projects WHERE {where} "
+                "ORDER BY updated_at DESC LIMIT :limit OFFSET :offset"
             ),
-            {"user_id": current_user["id"]},
+            {**params, "limit": page_size, "offset": offset},
         )
         .mappings()
         .all()
     )
-    return {"success": True, "data": [_serialize_project(row) for row in rows]}
+
+    return {
+        "success": True,
+        "data": {
+            "items": [_serialize_project(row) for row in rows],
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+        },
+    }
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -153,6 +184,7 @@ async def create_project(
 async def get_project_detail(
     project: dict = Depends(get_owned_project),
 ):
+    """Chi tiet project. Tra 404 neu khong ton tai, da xoa mem HOAC thuoc nguoi khac."""
     return {"success": True, "data": _serialize_project(project)}
 
 
@@ -186,10 +218,10 @@ async def update_project(
 ):
     """[BE] API cập nhật landing page.
 
-    1. Cập nhật text / giá / link social / màu sắc / ảnh vào bảng ``projects``.
-    2. Render lại toàn bộ HTML qua ``template_service.render_landing_page``.
-    3. Push commit mới lên GitHub (fallback SHA mô phỏng khi offline).
-    4. Lưu snapshot Append-only vào ``project_versions`` (version_number tự tăng).
+1. Cập nhật text / giá / link social / màu sắc / ảnh vào bảng ``projects``.
+2. Render lại toàn bộ HTML qua ``template_service.render_landing_page``.
+3. Push commit mới lên GitHub (fallback SHA mô phỏng khi offline).
+4. Lưu snapshot Append-only vào ``project_versions`` (version_number tự tăng).
     """
     update_data, change_summary, commit_message = _split_payload(payload)
 
@@ -280,9 +312,9 @@ async def delete_project(
 ):
     """[BE] API xóa landing page.
 
-    - Chỉ chủ sở hữu mới được xóa (đã chặn bởi ``get_owned_project``).
-    - Gọi GitHub API xóa repository tương ứng nếu project có ``repo_url``.
-    - Xóa mềm trong DB bằng cách set ``deleted_at`` + ``status = 'deleted'``
+- Chỉ chủ sở hữu mới được xóa (đã chặn bởi ``get_owned_project``).
+- Gọi GitHub API xóa repository tương ứng nếu project có ``repo_url``.
+- Xóa mềm trong DB bằng cách set ``deleted_at`` + ``status = 'deleted'``
       để bảo toàn lịch sử phiên bản và dữ liệu liên quan.
     """
     warnings: list[str] = []
