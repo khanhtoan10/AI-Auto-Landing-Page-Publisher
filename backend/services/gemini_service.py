@@ -17,7 +17,7 @@ from core.config import settings  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
-GEMINI_MODEL = "gemini-3.5-flash-lite"
+GEMINI_MODEL = "gemini-2.5-flash"
 GEMINI_API_URL = (
     f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 )
