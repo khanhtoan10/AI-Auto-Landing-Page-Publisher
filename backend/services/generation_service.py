@@ -1,8 +1,4 @@
-"""Lưu lịch sử sinh nội dung. Chưa gọi Gemini.
-
-gemini_service.py hiện chưa có luồng sinh. Service này chỉ ghi database
-để API generate sau này gọi vào, thay vì tự viết client Gemini.
-"""
+"""Service lưu lịch sử sinh nội dung và điều phối gọi Gemini API."""
 
 import copy
 from typing import Any, Callable
@@ -10,7 +6,11 @@ from typing import Any, Callable
 from sqlalchemy.orm import Session
 
 from models import STATUS_FAILED, STATUS_PENDING, STATUS_SUCCESS, Generation, Project
-from services.gemini_service import generate_landing_page_json
+from services.gemini_service import (
+    GeminiResponseError,
+    GeminiServiceError,
+    generate_landing_page_json,
+)
 
 
 class ProjectNotFoundError(Exception):
@@ -21,8 +21,9 @@ class GenerationNotFoundError(Exception):
     pass
 
 
-class InvalidGenerationResultError(Exception):
-    pass
+class InvalidGenerationResultError(GeminiResponseError):
+    user_message = "AI trả về dữ liệu không hợp lệ. Vui lòng thử lại."
+    error_code = "GEMINI_INVALID_RESPONSE"
 
 
 def _require_project(db: Session, project_id: int) -> Project:
@@ -38,6 +39,13 @@ def _require_structured_json(response_json: Any) -> Any:
             "Kết quả sinh nội dung phải là JSON object hoặc array"
         )
     return copy.deepcopy(response_json)
+
+
+def _to_safe_error_message(exc: Exception) -> str:
+    """Chuyển exception thành thông báo thân thiện, không lộ chi tiết nội bộ."""
+    if isinstance(exc, GeminiServiceError):
+        return exc.user_message
+    return "Không thể tạo nội dung lúc này. Vui lòng thử lại sau."
 
 
 def create_pending_generation(db: Session, project_id: int, prompt: str) -> Generation:
@@ -102,10 +110,9 @@ def execute_generation(
 ) -> Generation:
     """Tạo bản ghi pending, gọi hàm sinh, rồi đóng trạng thái success hoặc failed.
 
-    generate_fn là chỗ gắn Gemini sau này. Nếu hàm đó ném lỗi hoặc trả JSON
-    không hợp lệ, bản ghi chuyển sang failed. Nếu lưu DB lỗi thì rollback và
-    ném lỗi lên router, không báo nhầm là lỗi Gemini.
-    raw_json_data của project chỉ đổi khi thành công.
+    Nếu generate_fn ném lỗi hoặc trả JSON không hợp lệ, bản ghi chuyển sang failed
+    với thông báo lỗi thân thiện và đính kèm mã lỗi trên đối tượng Generation trả về.
+    Nếu lưu DB lỗi thì rollback và ném lỗi lên router.
     """
     generation = create_pending_generation(db, project_id, prompt)
 
@@ -114,7 +121,15 @@ def execute_generation(
         payload = _require_structured_json(generate_fn())
     except Exception as exc:
         db.rollback()
-        return mark_generation_failed(db, generation.id, str(exc))
+        safe_message = _to_safe_error_message(exc)
+        error_code = (
+            exc.error_code
+            if isinstance(exc, GeminiServiceError)
+            else "GEMINI_ERROR"
+        )
+        failed_gen = mark_generation_failed(db, generation.id, safe_message)
+        setattr(failed_gen, "_error_code", error_code)
+        return failed_gen
 
     # Giai đoạn 2: lưu DB (lỗi ở đây = lỗi database, không phải lỗi Gemini)
     try:

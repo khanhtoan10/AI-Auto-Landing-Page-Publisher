@@ -296,7 +296,7 @@ def generate_project_content(
     project: dict = Depends(get_owned_project),
     db: Session = Depends(get_db),
 ):
-    """Sinh nội dung landing page bằng Gemini API, lưu JSON vào DB và render HTML hoàn chỉnh."""
+    """Sinh nội dung landing page bằng Gemini API và lưu kết quả JSON vào Database."""
     try:
         generation = generate_content_for_project(db=db, project_id=project["id"])
     except ProjectNotFoundError:
@@ -313,29 +313,31 @@ def generate_project_content(
         )
 
     if generation.status != STATUS_SUCCESS or generation.response_json is None:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=_error_detail(
-                "GEMINI_ERROR",
-                "Không thể sinh nội dung từ Gemini API. Vui lòng thử lại sau.",
-            ),
+        error_code = getattr(generation, "_error_code", None) or "GEMINI_ERROR"
+        status_map = {
+            "GEMINI_QUOTA_EXCEEDED": status.HTTP_429_TOO_MANY_REQUESTS,
+            "GEMINI_TIMEOUT": status.HTTP_504_GATEWAY_TIMEOUT,
+            "GEMINI_CONFIG_ERROR": status.HTTP_503_SERVICE_UNAVAILABLE,
+            "GEMINI_INVALID_RESPONSE": status.HTTP_502_BAD_GATEWAY,
+        }
+        http_status = status_map.get(error_code, status.HTTP_502_BAD_GATEWAY)
+        friendly_message = (
+            generation.error_message
+            or "Không thể tạo nội dung lúc này. Vui lòng thử lại sau."
         )
-
-    # Lấy dữ liệu project mới nhất (đã cập nhật raw_json_data) và render HTML thực tế
-    refreshed_row = _fetch_project(db, project["id"])
-    project_dict = _serialize_project(refreshed_row)
-    rendered_html = template_service.render_landing_page(project_dict)
+        raise HTTPException(
+            status_code=http_status,
+            detail=_error_detail(error_code, friendly_message),
+        )
 
     return {
         "success": True,
-        "rendered_html": rendered_html,
         "data": {
             "id": generation.id,
             "project_id": generation.project_id,
             "status": generation.status,
             "raw_json_data": generation.response_json,
             "response_json": generation.response_json,
-            "rendered_html": rendered_html,
             "created_at": generation.created_at.isoformat() if generation.created_at else None,
         },
     }
