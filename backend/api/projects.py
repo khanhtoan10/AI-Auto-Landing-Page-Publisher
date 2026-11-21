@@ -225,14 +225,20 @@ def generate_project_content(
             ),
         )
 
+    refreshed_row = _fetch_project(db, project["id"])
+    project_dict = _serialize_project(refreshed_row)
+    rendered_html = template_service.render_landing_page(project_dict)
+
     return {
         "success": True,
+        "rendered_html": rendered_html,
         "data": {
             "id": generation.id,
             "project_id": generation.project_id,
             "status": generation.status,
             "raw_json_data": generation.response_json,
             "response_json": generation.response_json,
+            "rendered_html": rendered_html,
             "created_at": generation.created_at.isoformat() if generation.created_at else None,
         },
     }
