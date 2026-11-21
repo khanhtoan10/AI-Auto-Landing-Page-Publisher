@@ -604,7 +604,6 @@ async def upload_project_image(
 
     return {
         "success": True,
-        "rendered_html": rendered_html,
         "data": {
             "image_url": new_image_url,
             "size": total_size,
