@@ -19,12 +19,12 @@ from core.config import settings  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.8-flash"
 GEMINI_API_URL = (
     f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 )
 
-DEFAULT_TIMEOUT_SECONDS = 30
+DEFAULT_TIMEOUT_SECONDS = 60
 MAX_RETRIES = 2  # Tối đa 2 lần thử lại (tổng cộng tối đa 3 lần gọi)
 RETRY_BACKOFF_SECONDS = 1.0
 
