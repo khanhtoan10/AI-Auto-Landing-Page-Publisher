@@ -164,7 +164,7 @@ function renderSidebar() {
         <i class="fa-brands fa-github w-5 text-center text-base"></i>
         <span>Kho mã nguồn</span>
       </a>
-      <a href="http://127.0.0.1:8000/docs" target="_blank" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition">
+      <a href="${window.API_BASE_URL || ''}/docs" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition">
         <i class="fa-solid fa-code w-5 text-center text-base text-emerald-400"></i>
         <span>Swagger FastAPI Docs</span>
       </a>
@@ -289,7 +289,11 @@ function bindShellEvents() {
     setTimeout(() => {
       if (typeof handleLogout === 'function') {
         handleLogout();
+      } else if (typeof removeToken === 'function') {
+        removeToken();
+        window.location.href = `${ROOT_PREFIX}login.html`;
       } else {
+        localStorage.removeItem('lp_access_token');
         localStorage.removeItem('access_token');
         localStorage.removeItem('user_info');
         window.location.href = `${ROOT_PREFIX}login.html`;

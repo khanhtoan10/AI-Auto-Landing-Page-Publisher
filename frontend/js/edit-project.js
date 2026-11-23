@@ -68,6 +68,8 @@
     if (headerLink) headerLink.href = versionHistoryUrl;
     const modalLink = $('modal-version-history-link');
     if (modalLink) modalLink.href = versionHistoryUrl;
+    const deployLink = $('btn-deploy-project');
+    if (deployLink) deployLink.href = `deploy.html?id=${encodeURIComponent(state.projectId)}`;
   }
 
   function bindEvents() {
@@ -171,9 +173,11 @@
       price,
       color_theme: color,
       image_url: project.image_url || '',
-      facebook_url: project.facebook_url || '',
-      tiktok_url: project.tiktok_url || '',
-      instagram_url: project.instagram_url || '',
+      messenger_link: project.messenger_link || project.facebook_url || '',
+      tiktok_shop_link: project.tiktok_shop_link || project.tiktok_url || '',
+      zalo_link: project.zalo_link || '',
+      instagram_link: project.instagram_link || project.instagram_url || '',
+      hotline: project.hotline || '',
       github_pages_url: project.github_pages_url || '',
       repo_url: project.repo_url || '',
       change_summary: '',
@@ -185,9 +189,11 @@
     setValue('product-name', data.product_name);
     setValue('product-description', data.product_description);
     setValue('image-url', data.image_url);
-    setValue('facebook-url', data.facebook_url);
-    setValue('tiktok-url', data.tiktok_url);
-    setValue('instagram-url', data.instagram_url);
+    setValue('messenger-link', data.messenger_link);
+    setValue('tiktok-shop-link', data.tiktok_shop_link);
+    setValue('zalo-link', data.zalo_link);
+    setValue('instagram-link', data.instagram_link);
+    setValue('hotline-input', data.hotline);
     setValue('change-summary', '');
 
     const priceValue = data.price === '' ? '' : String(Number(data.price) || 0);
@@ -542,9 +548,11 @@
       price: priceRaw === '' ? null : Number(priceRaw),
       color_theme: normalizeHex($('color-theme-hex')?.value) || DEFAULT_COLOR,
       image_url: ($('image-url')?.value || '').trim() || null,
-      facebook_url: ($('facebook-url')?.value || '').trim() || null,
-      tiktok_url: ($('tiktok-url')?.value || '').trim() || null,
-      instagram_url: ($('instagram-url')?.value || '').trim() || null,
+      messenger_link: ($('messenger-link')?.value || '').trim() || null,
+      tiktok_shop_link: ($('tiktok-shop-link')?.value || '').trim() || null,
+      zalo_link: ($('zalo-link')?.value || '').trim() || null,
+      instagram_link: ($('instagram-link')?.value || '').trim() || null,
+      hotline: ($('hotline-input')?.value || '').trim() || null,
     };
   }
 

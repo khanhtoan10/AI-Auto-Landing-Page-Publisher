@@ -14,9 +14,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
 from api.auth import router as auth_router
+from api.deployments import router as deployments_router
 from api.health import router as health_router
 from api.projects import router as projects_router
 from api.templates import router as templates_router
@@ -29,7 +29,6 @@ BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = BASE_DIR.parent / "frontend"
 
 app = FastAPI(title=settings.PROJECT_NAME)
-templates = Jinja2Templates(directory=os.path.join(BACKEND_DIR, "templates"))
 
 
 # ── 1. Cấu hình CORS an toàn ─────────────────────────────────────────
@@ -142,19 +141,12 @@ app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(versions_router)
 app.include_router(templates_router)
+app.include_router(deployments_router)
+app.include_router(deployments_router, prefix="/api/v1")
 
 # Projects router hỗ trợ cả 2 tiền tố: /projects/{id} và /api/v1/projects/{id}
 app.include_router(projects_router)
 app.include_router(projects_router, prefix="/api/v1")
-
-
-@app.get("/")
-async def home(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={"title": "AI Publisher Dashboard"},
-    )
 
 
 STATIC_DIR = BASE_DIR / "static"
