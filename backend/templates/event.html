@@ -128,7 +128,7 @@
     }
   </style>
 </head>
-<body class="bg-background text-on-background antialiased selection:bg-primary selection:text-on-primary">
+<body class="bg-background text-on-background antialiased selection:bg-primary selection:text-on-primary overflow-x-hidden">
 <!-- Top Announcement Bar / Countdown Hook -->
 <div class="bg-inverse-surface text-inverse-on-surface py-2.5 px-4 text-center text-xs sm:text-sm font-label-md flex flex-wrap items-center justify-center gap-3">
 <div class="flex items-center gap-1.5">
@@ -147,12 +147,12 @@
 </div>
 <!-- Shared Component: TopNavBar -->
 <header class="bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none docked full-width top-0 sticky z-50">
-<div class="flex justify-between items-center w-full px-margin max-w-7xl mx-auto h-16">
-<div class="flex items-center gap-3">
+<div class="flex justify-between items-center w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto h-16">
+<div class="flex flex-wrap items-center gap-2 sm:gap-3">
 <div class="w-10 h-10 rounded-xl bg-primary-container text-white flex items-center justify-center font-bold text-lg shadow-sm">
 <span class="material-symbols-outlined" data-icon="stars">stars</span>
 </div>
-<a class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary tracking-tight" href="#">
+<a class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary tracking-tight min-w-0 truncate" href="#">
           {{data.brand_name}}
         </a>
 </div>
@@ -179,7 +179,7 @@
 </header>
 <!-- Hero Event Section -->
 <section class="relative pt-12 pb-20 overflow-hidden bg-gradient-to-b from-surface-container-lowest via-background to-surface-container-low border-b border-outline-variant/40" id="about">
-<div class="max-w-7xl mx-auto px-margin">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
 <!-- Text Column -->
 <div class="lg:col-span-7 flex flex-col items-start space-y-6">
@@ -187,10 +187,10 @@
 <span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
             {{data.hero_badge}}
           </div>
-<h1 class="font-display text-display text-on-surface font-extrabold tracking-tight">
+<h1 class="font-display text-2xl sm:text-4xl lg:text-display text-on-surface font-extrabold tracking-tight break-words">
             {{data.headline}}
           </h1>
-<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl break-words">
             {{data.subheadline}}
           </p>
 <!-- Attendance counter badge -->
@@ -228,7 +228,7 @@
             </a>
 </div>
 <!-- Key Metrics -->
-<div class="grid grid-cols-3 gap-6 pt-4 border-t border-outline-variant/50 w-full">
+<div class="grid grid-cols-3 gap-2 sm:gap-6 pt-4 border-t border-outline-variant/50 w-full">
 <div>
 <div class="font-headline-sm text-headline-sm font-bold text-primary">15+</div>
 <div class="font-body-sm text-on-surface-variant">Diễn giả hàng đầu</div>
@@ -273,13 +273,13 @@
 </section>
 <!-- Section: Agenda & Highlights (Features & Bento Matrix) -->
 <section class="py-20 bg-surface" id="agenda">
-<div class="max-w-7xl mx-auto px-margin">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 <div class="text-center max-w-3xl mx-auto mb-14">
 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-fixed text-primary font-label-sm mb-3">
 <span class="material-symbols-outlined text-sm" data-icon="schedule">schedule</span>
           AGENDA &amp; QUYỀN LỢI ĐẶC QUYỀN
         </div>
-<h2 class="font-headline-lg text-headline-lg text-on-surface font-bold">
+<h2 class="font-headline-lg text-xl sm:text-2xl lg:text-headline-lg font-bold text-on-surface">
           Nội Dung Hội Thảo &amp; Giá Trị Nhận Được
         </h2>
 <p class="font-body-md text-on-surface-variant mt-3">
@@ -377,7 +377,7 @@
 </section>
 <!-- Section: Flash Sale / Early Bird Ticket Section -->
 <section class="py-20 bg-surface-container-lowest border-y border-outline-variant" id="early-bird">
-<div class="max-w-7xl mx-auto px-margin">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 <div class="bg-gradient-to-r from-primary to-primary-container rounded-2xl text-white p-8 md:p-12 shadow-xl relative overflow-hidden">
 <div class="absolute -right-16 -bottom-16 w-80 h-80 rounded-full bg-white/5 pointer-events-none blur-2xl"></div>
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
@@ -386,14 +386,14 @@
 <span class="material-symbols-outlined text-sm" data-icon="bolt">bolt</span>
               ƯU ĐÃI FLASH SALE CÓ HẠN
             </div>
-<h2 class="font-headline-lg text-headline-lg text-white font-bold leading-tight mb-3">
+<h2 class="font-headline-lg text-xl sm:text-2xl lg:text-headline-lg text-white font-bold leading-tight mb-3 break-words">
               Giữ Chỗ Vé Sớm - Tiết Kiệm Tới {{data.discount_percent}}
             </h2>
 <p class="text-surface-variant font-body-md max-w-xl mb-6">
               Áp dụng riêng cho 50 lượt đăng ký đầu tiên trong hôm nay. Hưởng toàn quyền lợi VIP summit và phòng nghỉ đối tác.
             </p>
 <!-- Countdown Box -->
-<div class="flex items-center gap-3">
+<div class="flex flex-wrap items-center gap-2 sm:gap-3">
 <span class="text-xs font-label-md tracking-wider uppercase text-surface-container-low">Thời hạn ưu đãi kết thúc trong:</span>
 <div class="flex gap-2 text-center font-mono">
 <div class="bg-inverse-surface/60 px-3 py-1.5 rounded-lg border border-white/10 text-white font-bold text-sm">04h</div>
@@ -450,13 +450,13 @@
 </section>
 <!-- Section: Registration Form Section -->
 <section class="py-20 bg-background" id="register-form">
-<div class="max-w-4xl mx-auto px-margin">
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 <div class="text-center mb-10">
 <div class="inline-flex items-center gap-1.5 text-primary font-label-sm uppercase tracking-wider mb-2">
 <span class="material-symbols-outlined text-base" data-icon="app_registration">app_registration</span>
           ĐĂNG KÝ VÉ CHÍNH THỨC
         </div>
-<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface">
+<h2 class="font-headline-lg text-xl sm:text-2xl lg:text-headline-lg font-bold text-on-surface">
           Đăng Ký Tham Dự {{data.headline}}
         </h2>
 <p class="font-body-md text-on-surface-variant mt-2">
@@ -526,7 +526,7 @@
 </div>
 <!-- Shared Component: Footer -->
 <footer class="bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant dark:border-outline full-width">
-<div class="w-full max-w-7xl mx-auto px-margin py-space-xl flex flex-col md:flex-row justify-between items-center gap-space-md">
+<div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-space-xl flex flex-col md:flex-row justify-between items-center gap-space-md">
 <div class="flex flex-col items-center md:items-start gap-1">
 <div class="font-headline-sm text-headline-sm font-bold text-on-surface dark:text-inverse-on-surface">
           {{data.brand_name}}
