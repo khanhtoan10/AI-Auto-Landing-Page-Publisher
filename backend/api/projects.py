@@ -19,14 +19,44 @@ from services.github_service import (
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
 
-def _render_project_html(project: dict) -> str:
+def _render_project_html(db: Session, project: dict) -> str:
+    template_row = None
+    if project.get("template_id"):
+        template_row = (
+            db.execute(
+                text("SELECT html_content FROM templates WHERE id = :id"),
+                {"id": project["template_id"]},
+            )
+            .mappings()
+            .first()
+        )
+
     campaign_name = project.get("campaign_name") or "Landing Page"
     product_name = project.get("product_name") or campaign_name
     description = project.get("product_description") or ""
     price = project.get("price")
-    price_html = f"<p><strong>Giá:</strong> {price}</p>" if price is not None else ""
+    price_str = f"{price:,.0f}đ" if isinstance(price, (int, float)) else (str(price) if price is not None else "")
     image_url = project.get("image_url") or ""
-    img_html = f'<img src="{image_url}" alt="{product_name}" style="max-width:100%;height:auto;" />' if image_url else ""
+
+    if template_row and template_row.get("html_content"):
+        html = template_row["html_content"]
+        replacements = {
+            "{{campaign_name}}": str(campaign_name),
+            "{{product_name}}": str(product_name),
+            "{{product_description}}": str(description),
+            "{{price}}": price_str,
+            "{{image_url}}": str(image_url),
+        }
+        for key, val in replacements.items():
+            html = html.replace(key, val)
+        return html
+
+    price_html = f"<p><strong>Giá:</strong> {price_str}</p>" if price_str else ""
+    img_html = (
+        f'<img src="{image_url}" alt="{product_name}" style="max-width:100%;height:auto;" />'
+        if image_url
+        else ""
+    )
 
     return f"""<!DOCTYPE html>
 <html lang="vi">
@@ -181,7 +211,7 @@ async def deploy_project(
     deployment_id = insert_res.lastrowid
 
     try:
-        html_content = _render_project_html(project)
+        html_content = _render_project_html(db, project)
 
         db.execute(
             text("UPDATE deployments SET status = :status WHERE id = :id"),
@@ -228,7 +258,6 @@ async def deploy_project(
 
         enable_github_pages(owner=owner, repo_name=repo_name)
 
-        # Đồng bộ trạng thái build GitHub Pages: chỉ đánh dấu Success khi đã build xong
         db.execute(
             text("UPDATE deployments SET status = :status WHERE id = :id"),
             {"status": "Building", "id": deployment_id},
@@ -243,14 +272,14 @@ async def deploy_project(
             text(
                 """
                 UPDATE deployments
-                SET status = 'Success', end_time = :end_time
+                SET status = 'Success', github_pages_url = :url, end_time = :end_time
                 WHERE id = :id
                 """
             ),
-            {"end_time": end_time, "id": deployment_id},
+            {"url": github_pages_url, "end_time": end_time, "id": deployment_id},
         )
         db.execute(
-            text("UPDATE projects SET status = 'published', published_url = :url WHERE id = :id"),
+            text("UPDATE projects SET status = 'published', github_pages_url = :url WHERE id = :id"),
             {"url": github_pages_url, "id": project["id"]},
         )
         db.commit()
@@ -333,11 +362,17 @@ async def get_project_deploy_status(
         if is_built:
             pages_url = build_info.get("html_url") or f"https://{owner}.github.io/{repo_name}/"
             db.execute(
-                text("UPDATE deployments SET status = 'Success', end_time = :now WHERE id = :id"),
-                {"now": datetime.utcnow(), "id": latest_dep["id"]},
+                text(
+                    """
+                    UPDATE deployments
+                    SET status = 'Success', github_pages_url = :url, end_time = :now
+                    WHERE id = :id
+                    """
+                ),
+                {"url": pages_url, "now": datetime.utcnow(), "id": latest_dep["id"]},
             )
             db.execute(
-                text("UPDATE projects SET status = 'published', published_url = :url WHERE id = :id"),
+                text("UPDATE projects SET status = 'published', github_pages_url = :url WHERE id = :id"),
                 {"url": pages_url, "id": project["id"]},
             )
             db.commit()
