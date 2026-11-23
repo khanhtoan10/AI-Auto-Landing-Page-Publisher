@@ -151,6 +151,113 @@ async def list_my_projects(
     }
 
 
+@router.get("/stats")
+async def get_dashboard_stats(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Thống kê tổng quan cho Dashboard (chỉ tính dữ liệu của người dùng hiện tại)."""
+    user_params = {"user_id": current_user["id"]}
+
+    project_row = (
+        db.execute(
+            text(
+                """
+                SELECT
+                    COUNT(*) AS total,
+                    COALESCE(SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END), 0) AS drafts,
+                    COALESCE(SUM(CASE WHEN status = 'deploying' THEN 1 ELSE 0 END), 0) AS deploying,
+                    COALESCE(SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END), 0) AS published,
+                    COALESCE(SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END), 0) AS failed
+                FROM projects
+                WHERE user_id = :user_id AND deleted_at IS NULL
+                """
+            ),
+            user_params,
+        )
+        .mappings()
+        .first()
+    )
+
+    generation_row = (
+        db.execute(
+            text(
+                """
+                SELECT
+                    COUNT(*) AS total,
+                    COALESCE(SUM(CASE WHEN g.status = 'success' THEN 1 ELSE 0 END), 0) AS successful
+                FROM generations g
+                JOIN projects p ON p.id = g.project_id
+                WHERE p.user_id = :user_id AND p.deleted_at IS NULL
+                """
+            ),
+            user_params,
+        )
+        .mappings()
+        .first()
+    )
+
+    deployment_row = (
+        db.execute(
+            text(
+                """
+                SELECT
+                    COUNT(*) AS total,
+                    COALESCE(SUM(CASE WHEN d.status = 'Success' THEN 1 ELSE 0 END), 0) AS successful,
+                    COALESCE(SUM(CASE WHEN d.status = 'Failed' THEN 1 ELSE 0 END), 0) AS failed
+                FROM deployments d
+                JOIN projects p ON p.id = d.project_id
+                WHERE p.user_id = :user_id AND p.deleted_at IS NULL
+                """
+            ),
+            user_params,
+        )
+        .mappings()
+        .first()
+    )
+
+    template_row = db.execute(text("SELECT COUNT(*) AS total FROM templates")).mappings().first()
+
+    recent_rows = (
+        db.execute(
+            text(
+                """
+                SELECT id, campaign_name, product_name, status, github_pages_url,
+                       color_theme, created_at, updated_at
+                FROM projects
+                WHERE user_id = :user_id AND deleted_at IS NULL
+                ORDER BY updated_at DESC
+                LIMIT 5
+                """
+            ),
+            user_params,
+        )
+        .mappings()
+        .all()
+    )
+
+    def _int(row, key: str) -> int:
+        return int(row[key] or 0) if row else 0
+
+    return {
+        "success": True,
+        "data": {
+            "total_projects": _int(project_row, "total"),
+            "draft_projects": _int(project_row, "drafts"),
+            "deploying_projects": _int(project_row, "deploying"),
+            "published_projects": _int(project_row, "published"),
+            "failed_projects": _int(project_row, "failed"),
+            "total_generations": _int(generation_row, "total"),
+            "successful_generations": _int(generation_row, "successful"),
+            "total_deployments": _int(deployment_row, "total"),
+            "successful_deployments": _int(deployment_row, "successful"),
+            "failed_deployments": _int(deployment_row, "failed"),
+            "total_templates": _int(template_row, "total"),
+            "recent_projects": [_json_safe(dict(row)) for row in recent_rows],
+        },
+    }
+
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_project(
     payload: ProjectCreate,
@@ -638,6 +745,12 @@ def deploy_project(
     db.commit()
     deployment_id = insert_res.lastrowid
 
+    db.execute(
+        text("UPDATE projects SET status = 'deploying' WHERE id = :id"),
+        {"id": project["id"]},
+    )
+    db.commit()
+
     try:
         html_content = _render_project_html(db, project)
 
@@ -733,6 +846,10 @@ def deploy_project(
                 """
             ),
             {"err": str(exc), "end_time": datetime.utcnow(), "id": deployment_id},
+        )
+        db.execute(
+            text("UPDATE projects SET status = 'failed' WHERE id = :id"),
+            {"id": project["id"]},
         )
         db.commit()
         raise HTTPException(status_code=500, detail=f"Deploy thất bại: {exc}")
