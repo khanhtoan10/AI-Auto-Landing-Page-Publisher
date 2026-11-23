@@ -1,6 +1,7 @@
 import json
 import re
 from datetime import datetime
+from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -20,61 +21,74 @@ router = APIRouter(prefix="/projects", tags=["Projects"])
 
 
 def _render_project_html(db: Session, project: dict) -> str:
-    template_row = None
-    if project.get("template_id"):
-        template_row = (
-            db.execute(
-                text("SELECT html_content FROM templates WHERE id = :id"),
-                {"id": project["template_id"]},
-            )
-            .mappings()
-            .first()
-        )
+    """Render nội dung index.html từ snapshot mới nhất hoặc file template + dữ liệu project."""
+    # 1. Ưu tiên lấy html_snapshot mới nhất nếu project đã có version
+    latest_version = db.execute(
+        text(
+            "SELECT html_snapshot FROM project_versions "
+            "WHERE project_id = :pid ORDER BY version_number DESC LIMIT 1"
+        ),
+        {"pid": project["id"]},
+    ).first()
+    if latest_version and latest_version[0]:
+        return latest_version[0]
 
-    campaign_name = project.get("campaign_name") or "Landing Page"
-    product_name = project.get("product_name") or campaign_name
-    description = project.get("product_description") or ""
-    price = project.get("price")
-    price_str = f"{price:,.0f}đ" if isinstance(price, (int, float)) else (str(price) if price is not None else "")
-    image_url = project.get("image_url") or ""
+    # 2. Lấy đường dẫn file template từ bảng templates
+    tpl_row = db.execute(
+        text("SELECT file_path FROM templates WHERE id = :tid"),
+        {"tid": project.get("template_id")},
+    ).first()
 
-    if template_row and template_row.get("html_content"):
-        html = template_row["html_content"]
-        replacements = {
-            "{{campaign_name}}": str(campaign_name),
-            "{{product_name}}": str(product_name),
-            "{{product_description}}": str(description),
-            "{{price}}": price_str,
-            "{{image_url}}": str(image_url),
-        }
-        for key, val in replacements.items():
-            html = html.replace(key, val)
-        return html
+    raw_data = project.get("raw_json_data") or {}
+    if isinstance(raw_data, str):
+        try:
+            raw_data = json.loads(raw_data)
+        except json.JSONDecodeError:
+            raw_data = {}
 
-    price_html = f"<p><strong>Giá:</strong> {price_str}</p>" if price_str else ""
-    img_html = (
-        f'<img src="{image_url}" alt="{product_name}" style="max-width:100%;height:auto;" />'
-        if image_url
-        else ""
-    )
+    context = {
+        "campaign_name": project.get("campaign_name") or "",
+        "product_name": project.get("product_name") or "",
+        "headline": raw_data.get("headline") or project.get("campaign_name") or project.get("product_name") or "",
+        "subheadline": raw_data.get("subheadline") or project.get("product_description") or "",
+        "product_description": project.get("product_description") or "",
+        "price": str(project.get("price") or ""),
+        "hero_image_url": raw_data.get("hero_image_url") or project.get("image_url") or "",
+        "image_url": project.get("image_url") or "",
+        "primary_color": raw_data.get("primary_color") or project.get("color_theme") or "#4f46e5",
+        "color_theme": project.get("color_theme") or "#4f46e5",
+        "social_facebook": raw_data.get("social_facebook") or project.get("facebook_url") or "#",
+        "social_tiktok": raw_data.get("social_tiktok") or project.get("tiktok_url") or "#",
+        "social_instagram": raw_data.get("social_instagram") or project.get("instagram_url") or "#",
+        **{k: str(v) for k, v in raw_data.items() if v is not None},
+    }
 
+    if tpl_row and tpl_row[0]:
+        backend_dir = Path(__file__).resolve().parent.parent
+        tpl_path = backend_dir / tpl_row[0]
+        if tpl_path.exists():
+            html = tpl_path.read_text(encoding="utf-8")
+            for key, val in context.items():
+                html = html.replace(f"{{{{{key}}}}}", str(val))
+            return html
+
+    # 3. Fallback HTML chuẩn nếu file template chưa tồn tại trên ổ đĩa
     return f"""<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{campaign_name}</title>
+  <title>{context['headline']}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <main style="max-width:800px;margin:40px auto;font-family:sans-serif;padding:0 16px;">
-    <h1>{product_name}</h1>
-    <p>{description}</p>
-    {price_html}
-    {img_html}
+<body class="bg-slate-50 text-slate-800">
+  <main class="max-w-3xl mx-auto py-16 px-6 text-center">
+    <h1 class="text-4xl font-bold mb-4">{context['headline']}</h1>
+    <p class="text-lg text-slate-600 mb-6">{context['subheadline']}</p>
+    <p class="text-2xl font-semibold text-indigo-600 mb-8">{context['price']}</p>
   </main>
 </body>
-</html>
-"""
+</html>"""
 
 
 @router.get("")
@@ -258,6 +272,7 @@ async def deploy_project(
 
         enable_github_pages(owner=owner, repo_name=repo_name)
 
+        # Đồng bộ trạng thái build GitHub Pages: chỉ đánh dấu Success khi đã build xong
         db.execute(
             text("UPDATE deployments SET status = :status WHERE id = :id"),
             {"status": "Building", "id": deployment_id},
