@@ -109,8 +109,9 @@ function renderSidebar() {
 
   const navItemsHtml = MENU_ITEMS.map((item) => {
     const isActive =
-  currentFile === item.file ||
-  ((currentFile === 'edit-project.html' || currentFile === 'preview.html') && item.file === 'projects.html');
+      currentFile === item.file ||
+      ((currentFile === 'edit-project.html' || currentFile === 'version-history.html') &&
+        item.file === 'projects.html');
     if (isActive) {
       return `
         <a href="${item.href}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 text-white shadow-md shadow-indigo-600/30 transition group">
@@ -198,12 +199,12 @@ function renderHeader(user) {
 
   const currentFile = window.location.pathname.split('/').pop() || 'index.html';
   const activeMenu =
-  MENU_ITEMS.find((m) => m.file === currentFile) ||
-  (currentFile === 'edit-project.html'
-    ? { title: 'Chỉnh sửa Landing Page', breadcrumb: 'Chỉnh sửa Landing Page' }
-    : currentFile === 'preview.html'
-      ? { title: 'Xem trước Landing Page AI', breadcrumb: 'Xem trước Landing Page' }
-      : MENU_ITEMS[0]);
+    MENU_ITEMS.find((m) => m.file === currentFile) ||
+    (currentFile === 'edit-project.html'
+      ? { title: 'Chỉnh sửa Landing Page', breadcrumb: 'Chỉnh sửa Landing Page' }
+      : currentFile === 'version-history.html'
+        ? { title: 'Lịch sử phiên bản', breadcrumb: 'Lịch sử phiên bản' }
+        : MENU_ITEMS[0]);
 
   const displayName = user?.full_name || 'Thành Viên Nhóm 6';
   const displayEmail = user?.email || 'team6@landingai.vn';

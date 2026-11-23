@@ -89,7 +89,7 @@ def init_database():
                     1,
                     "Sales Landing Page",
                     "Mẫu landing page tối ưu chuyển đổi bán hàng và chốt đơn trực tiếp.",
-                    "/static/thumbnails/sales.jpg",
+                    "/static/thumbnails/modern_tech.jpg",
                     "sales.html",
                     standard_placeholders,
                 ),
@@ -97,7 +97,7 @@ def init_database():
                     2,
                     "Marketing Landing Page",
                     "Mẫu landing page quảng bá sản phẩm, thương hiệu và thu hút khách hàng tiềm năng.",
-                    "/static/thumbnails/marketing.jpg",
+                    "/static/thumbnails/elegant_beauty.jpg",
                     "marketing.html",
                     standard_placeholders,
                 ),
@@ -105,7 +105,7 @@ def init_database():
                     3,
                     "Event Landing Page",
                     "Mẫu landing page giới thiệu sự kiện, hội thảo và đăng ký tham gia.",
-                    "/static/thumbnails/event.jpg",
+                    "/static/thumbnails/trust_consulting.jpg",
                     "event.html",
                     standard_placeholders,
                 ),
@@ -129,6 +129,11 @@ def init_database():
                 price DECIMAL(12,2) NULL,
                 image_url VARCHAR(500) NULL,
                 color_theme VARCHAR(50) NULL,
+                messenger_link VARCHAR(500) NULL,
+                tiktok_shop_link VARCHAR(500) NULL,
+                zalo_link VARCHAR(500) NULL,
+                instagram_link VARCHAR(500) NULL,
+                hotline VARCHAR(50) NULL,
                 facebook_url VARCHAR(500) NULL,
                 tiktok_url VARCHAR(500) NULL,
                 instagram_url VARCHAR(500) NULL,
@@ -136,6 +141,7 @@ def init_database():
                 github_pages_url VARCHAR(500) NULL,
                 raw_json_data JSON NULL,
                 status VARCHAR(20) NOT NULL DEFAULT 'draft',
+                deleted_at DATETIME NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 CONSTRAINT fk_projects_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -144,6 +150,50 @@ def init_database():
             """
             cursor.execute(create_projects_table_query)
             print("Table 'projects' created or already exists.")
+
+            # 6.1. Bổ sung cột deleted_at cho database cũ (soft delete landing page)
+            cursor.execute(
+                """
+                SELECT COUNT(*)
+                FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = %s
+                  AND TABLE_NAME = 'projects'
+                  AND COLUMN_NAME = 'deleted_at'
+                """,
+                (settings.DB_NAME,),
+            )
+            if cursor.fetchone()[0] == 0:
+                cursor.execute(
+                    "ALTER TABLE projects ADD COLUMN deleted_at DATETIME NULL AFTER updated_at;"
+                )
+                print("Added missing column 'deleted_at' to 'projects' table.")
+            else:
+                print("Column 'deleted_at' already exists on 'projects' table.")
+
+            # 6.2. Bổ sung các cột CTA động còn thiếu cho database cũ
+            cta_columns = {
+                "messenger_link": "VARCHAR(500) NULL",
+                "tiktok_shop_link": "VARCHAR(500) NULL",
+                "zalo_link": "VARCHAR(500) NULL",
+                "instagram_link": "VARCHAR(500) NULL",
+                "hotline": "VARCHAR(50) NULL",
+            }
+            for column_name, column_type in cta_columns.items():
+                cursor.execute(
+                    """
+                    SELECT COUNT(*)
+                    FROM information_schema.COLUMNS
+                    WHERE TABLE_SCHEMA = %s
+                      AND TABLE_NAME = 'projects'
+                      AND COLUMN_NAME = %s
+                    """,
+                    (settings.DB_NAME, column_name),
+                )
+                if cursor.fetchone()[0] == 0:
+                    cursor.execute(
+                        f"ALTER TABLE projects ADD COLUMN {column_name} {column_type};"
+                    )
+                    print(f"Added missing column '{column_name}' to 'projects' table.")
 
             # 7. Tạo bảng project_versions
             create_project_versions_table_query = """
