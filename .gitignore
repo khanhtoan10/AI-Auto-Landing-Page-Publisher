@@ -6,6 +6,8 @@ __pycache__/
 
 # Environment variables (chứa API key, password DB)
 .env
+.env.*
+!.env.example
 
 # System files
 .DS_Store
