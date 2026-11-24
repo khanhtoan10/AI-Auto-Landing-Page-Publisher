@@ -1,0 +1,17 @@
+{#
+  Component SEO Meta & Open Graph tự động.
+  Biến sử dụng: data.seo_title, data.seo_description, data.og_image, data.og_url
+  Fallback: title, data.brand_name
+  Jinja2 autoescape BẬT - dữ liệu được escape an toàn tránh XSS.
+#}
+<title>{{ data.seo_title or title or data.brand_name or "Landing Page" }}</title>
+<meta name="description" content="{{ data.seo_description or data.subheadline or data.headline or data.brand_name or "Landing Page" }}"/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="{{ data.seo_title or title or data.brand_name or "Landing Page" }}"/>
+<meta property="og:description" content="{{ data.seo_description or data.subheadline or data.headline or data.brand_name or "Landing Page" }}"/>
+{% if data.og_image %}
+<meta property="og:image" content="{{ data.og_image }}"/>
+{% endif %}
+{% if data.og_url %}
+<meta property="og:url" content="{{ data.og_url }}"/>
+{% endif %}

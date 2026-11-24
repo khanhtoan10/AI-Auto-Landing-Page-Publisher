@@ -59,13 +59,13 @@ def init_database():
             cursor.executemany(seed_users_query, sample_users)
             print("Seeded sample users into 'users' table.")
 
-            # 4. Tạo bảng templates
+            # 4. Tạo bảng templates khớp 100% với model Template
             create_templates_table_query = """
             CREATE TABLE IF NOT EXISTS templates (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(100) NOT NULL UNIQUE,
                 description TEXT NULL,
-                thumbnail_url VARCHAR(255) NOT NULL,
+                thumbnail_url VARCHAR(255) NULL,
                 file_path VARCHAR(255) NOT NULL,
                 placeholders JSON NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -74,47 +74,45 @@ def init_database():
             cursor.execute(create_templates_table_query)
             print("Table 'templates' created or already exists.")
 
-            # 5. Seed 3 mẫu template chuẩn theo đặc tả
+            # 5. Seed 3 mẫu template chuẩn (id=1: sales.html, id=2: marketing.html, id=3: event.html)
+            standard_placeholders = json.dumps([
+                "headline",
+                "subheadline",
+                "features",
+                "cta_text",
+                "primary_color",
+                "image_url",
+            ])
+
             sample_templates = [
                 (
-                    "Modern Tech Gadget",
-                    "Giao diện Dark-mode hiện đại, tập trung làm nổi bật tính năng sản phẩm công nghệ bằng các khối lưới (Grid) tinh tế.",
+                    1,
+                    "Sales Landing Page",
+                    "Mẫu landing page tối ưu chuyển đổi bán hàng và chốt đơn trực tiếp.",
                     "/static/thumbnails/modern_tech.jpg",
-                    "templates/modern_tech.html",
-                    json.dumps([
-                        "brand_name", "headline", "subheadline", "hero_image_url", "primary_color",
-                        "feature_1_title", "feature_1_desc",
-                        "feature_2_title", "feature_2_desc",
-                        "feature_3_title", "feature_3_desc",
-                        "cta_text", "social_facebook", "social_zalo", "social_tiktok",
-                    ]),
+                    "sales.html",
+                    standard_placeholders,
                 ),
                 (
-                    "Elegant Beauty & Care",
-                    "Phong cách thanh lịch, tông màu pastel với bố cục ảnh lớn, tôn vinh hình ảnh và trải nghiệm cảm xúc của khách hàng.",
+                    2,
+                    "Marketing Landing Page",
+                    "Mẫu landing page quảng bá sản phẩm, thương hiệu và thu hút khách hàng tiềm năng.",
                     "/static/thumbnails/elegant_beauty.jpg",
-                    "templates/elegant_beauty.html",
-                    json.dumps([
-                        "headline", "subheadline", "hero_image_url", "primary_color",
-                        "ingredients_list", "benefits_text", "original_price", "discounted_price",
-                        "cta_text", "social_facebook", "social_instagram", "hotline_number",
-                    ]),
+                    "marketing.html",
+                    standard_placeholders,
                 ),
                 (
-                    "Trust Consulting & Course",
-                    "Giao diện chuyên nghiệp, tập trung vào nội dung thuyết phục, có khu vực riêng cho cam kết chất lượng và tiểu sử chuyên gia.",
+                    3,
+                    "Event Landing Page",
+                    "Mẫu landing page giới thiệu sự kiện, hội thảo và đăng ký tham gia.",
                     "/static/thumbnails/trust_consulting.jpg",
-                    "templates/trust_consulting.html",
-                    json.dumps([
-                        "headline", "subheadline", "hero_image_url", "primary_color",
-                        "target_audience_text", "course_module_1", "course_module_2", "course_module_3",
-                        "expert_name", "expert_bio", "cta_text", "social_facebook", "social_zalo",
-                    ]),
+                    "event.html",
+                    standard_placeholders,
                 ),
             ]
             seed_templates_query = """
-            REPLACE INTO templates (name, description, thumbnail_url, file_path, placeholders)
-            VALUES (%s, %s, %s, %s, %s);
+            INSERT IGNORE INTO templates (id, name, description, thumbnail_url, file_path, placeholders)
+            VALUES (%s, %s, %s, %s, %s, %s);
             """
             cursor.executemany(seed_templates_query, sample_templates)
             print("Seeded 3 sample templates into 'templates' table.")
@@ -131,6 +129,11 @@ def init_database():
                 price DECIMAL(12,2) NULL,
                 image_url VARCHAR(500) NULL,
                 color_theme VARCHAR(50) NULL,
+                messenger_link VARCHAR(500) NULL,
+                tiktok_shop_link VARCHAR(500) NULL,
+                zalo_link VARCHAR(500) NULL,
+                instagram_link VARCHAR(500) NULL,
+                hotline VARCHAR(50) NULL,
                 facebook_url VARCHAR(500) NULL,
                 tiktok_url VARCHAR(500) NULL,
                 instagram_url VARCHAR(500) NULL,
@@ -138,6 +141,7 @@ def init_database():
                 github_pages_url VARCHAR(500) NULL,
                 raw_json_data JSON NULL,
                 status VARCHAR(20) NOT NULL DEFAULT 'draft',
+                deleted_at DATETIME NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 CONSTRAINT fk_projects_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -147,7 +151,51 @@ def init_database():
             cursor.execute(create_projects_table_query)
             print("Table 'projects' created or already exists.")
 
-            # 7. Tạo bảng project_versions (lưu lịch sử phiên bản Landing Page)
+            # 6.1. Bổ sung cột deleted_at cho database cũ (soft delete landing page)
+            cursor.execute(
+                """
+                SELECT COUNT(*)
+                FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = %s
+                  AND TABLE_NAME = 'projects'
+                  AND COLUMN_NAME = 'deleted_at'
+                """,
+                (settings.DB_NAME,),
+            )
+            if cursor.fetchone()[0] == 0:
+                cursor.execute(
+                    "ALTER TABLE projects ADD COLUMN deleted_at DATETIME NULL AFTER updated_at;"
+                )
+                print("Added missing column 'deleted_at' to 'projects' table.")
+            else:
+                print("Column 'deleted_at' already exists on 'projects' table.")
+
+            # 6.2. Bổ sung các cột CTA động còn thiếu cho database cũ
+            cta_columns = {
+                "messenger_link": "VARCHAR(500) NULL",
+                "tiktok_shop_link": "VARCHAR(500) NULL",
+                "zalo_link": "VARCHAR(500) NULL",
+                "instagram_link": "VARCHAR(500) NULL",
+                "hotline": "VARCHAR(50) NULL",
+            }
+            for column_name, column_type in cta_columns.items():
+                cursor.execute(
+                    """
+                    SELECT COUNT(*)
+                    FROM information_schema.COLUMNS
+                    WHERE TABLE_SCHEMA = %s
+                      AND TABLE_NAME = 'projects'
+                      AND COLUMN_NAME = %s
+                    """,
+                    (settings.DB_NAME, column_name),
+                )
+                if cursor.fetchone()[0] == 0:
+                    cursor.execute(
+                        f"ALTER TABLE projects ADD COLUMN {column_name} {column_type};"
+                    )
+                    print(f"Added missing column '{column_name}' to 'projects' table.")
+
+            # 7. Tạo bảng project_versions
             create_project_versions_table_query = """
             CREATE TABLE IF NOT EXISTS project_versions (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -170,7 +218,7 @@ def init_database():
             cursor.execute(create_project_versions_table_query)
             print("Table 'project_versions' created or already exists.")
 
-            # 8. Tạo bảng deployments (lưu lịch sử triển khai GitHub Pages)
+            # 8. Tạo bảng deployments
             create_deployments_table_query = """
             CREATE TABLE IF NOT EXISTS deployments (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -187,6 +235,24 @@ def init_database():
             """
             cursor.execute(create_deployments_table_query)
             print("Table 'deployments' created or already exists.")
+            # 9. Tạo bảng generations (lưu lịch sử sinh nội dung bằng Gemini)
+            create_generations_table_query = """
+            CREATE TABLE IF NOT EXISTS generations (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                project_id INT NOT NULL,
+                prompt TEXT NOT NULL,
+                response_json JSON NULL,
+                status VARCHAR(20) NOT NULL,
+                error_message TEXT NULL,
+                created_at DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()),
+                INDEX ix_generations_project_id (project_id),
+                CONSTRAINT fk_generations_project_id FOREIGN KEY (project_id)
+                    REFERENCES projects(id) ON DELETE CASCADE,
+                CONSTRAINT chk_generations_status CHECK (status IN ('pending', 'success', 'failed'))
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """
+            cursor.execute(create_generations_table_query)
+            print("Table 'generations' created or already exists.")
             print("Database migration & seeding completed successfully!")
 
     except Exception as e:

@@ -108,7 +108,10 @@ function renderSidebar() {
   const currentFile = window.location.pathname.split('/').pop() || 'index.html';
 
   const navItemsHtml = MENU_ITEMS.map((item) => {
-    const isActive = currentFile === item.file;
+    const isActive =
+      currentFile === item.file ||
+      ((currentFile === 'edit-project.html' || currentFile === 'version-history.html') &&
+        item.file === 'projects.html');
     if (isActive) {
       return `
         <a href="${item.href}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 text-white shadow-md shadow-indigo-600/30 transition group">
@@ -161,7 +164,7 @@ function renderSidebar() {
         <i class="fa-brands fa-github w-5 text-center text-base"></i>
         <span>Kho mã nguồn</span>
       </a>
-      <a href="http://127.0.0.1:8000/docs" target="_blank" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition">
+      <a href="${window.API_BASE_URL || ''}/docs" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition">
         <i class="fa-solid fa-code w-5 text-center text-base text-emerald-400"></i>
         <span>Swagger FastAPI Docs</span>
       </a>
@@ -195,7 +198,13 @@ function renderHeader(user) {
     }
 
   const currentFile = window.location.pathname.split('/').pop() || 'index.html';
-  const activeMenu = MENU_ITEMS.find((m) => m.file === currentFile) || MENU_ITEMS[0];
+  const activeMenu =
+    MENU_ITEMS.find((m) => m.file === currentFile) ||
+    (currentFile === 'edit-project.html'
+      ? { title: 'Chỉnh sửa Landing Page', breadcrumb: 'Chỉnh sửa Landing Page' }
+      : currentFile === 'version-history.html'
+        ? { title: 'Lịch sử phiên bản', breadcrumb: 'Lịch sử phiên bản' }
+        : MENU_ITEMS[0]);
 
   const displayName = user?.full_name || 'Thành Viên Nhóm 6';
   const displayEmail = user?.email || 'team6@landingai.vn';
@@ -280,7 +289,11 @@ function bindShellEvents() {
     setTimeout(() => {
       if (typeof handleLogout === 'function') {
         handleLogout();
+      } else if (typeof removeToken === 'function') {
+        removeToken();
+        window.location.href = `${ROOT_PREFIX}login.html`;
       } else {
+        localStorage.removeItem('lp_access_token');
         localStorage.removeItem('access_token');
         localStorage.removeItem('user_info');
         window.location.href = `${ROOT_PREFIX}login.html`;

@@ -114,9 +114,12 @@
             <span
               class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded flex items-center gap-0.5">
               <i class="fa-solid fa-arrow-trend-up"></i> +3 mới
+            <span class="text-2xl font-extrabold text-slate-900" id="dash-total-projects">—</span>
+            <span id="dash-total-trend" class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+              <i class="fa-solid fa-folder-tree"></i> 0 bản nháp
             </span>
           </div>
-          <p class="text-[11px] text-slate-400 mt-1">2 dự án đang lưu nháp</p>
+          <p class="text-[11px] text-slate-400 mt-1" id="dash-total-note">Đang tải dữ liệu...</p>
         </div>
 
         <div
@@ -129,12 +132,12 @@
             </div>
           </div>
           <div class="mt-4 flex items-baseline gap-2">
-            <span class="text-2xl font-extrabold text-slate-900" id="dash-published-projects">8</span>
-            <span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-              Online
+            <span class="text-2xl font-extrabold text-slate-900" id="dash-published-projects">—</span>
+            <span id="dash-published-trend" class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+              —% tổng dự án
             </span>
           </div>
-          <p class="text-[11px] text-slate-400 mt-1">Tốc độ phản hồi: 99.8%</p>
+          <p class="text-[11px] text-slate-400 mt-1" id="dash-published-note">Đang tải dữ liệu...</p>
         </div>
 
         <div
@@ -147,12 +150,12 @@
             </div>
           </div>
           <div class="mt-4 flex items-baseline gap-2">
-            <span class="text-2xl font-extrabold text-slate-900">146</span>
-            <span class="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">
-              Gemini Pro
+            <span class="text-2xl font-extrabold text-slate-900" id="dash-generation-count">—</span>
+            <span id="dash-generation-badge" class="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">
+              Gemini API
             </span>
           </div>
-          <p class="text-[11px] text-slate-400 mt-1">Tiết kiệm 84 giờ code</p>
+          <p class="text-[11px] text-slate-400 mt-1" id="dash-generation-note">Đang tải dữ liệu...</p>
         </div>
 
         <div
@@ -165,12 +168,12 @@
             </div>
           </div>
           <div class="mt-4 flex items-baseline gap-2">
-            <span class="text-2xl font-extrabold text-slate-900">24</span>
+            <span class="text-2xl font-extrabold text-slate-900" id="dash-template-count">—</span>
             <span class="text-[11px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
               Đa ngành
             </span>
           </div>
-          <p class="text-[11px] text-slate-400 mt-1">SaaS, Bất động sản, F&amp;B</p>
+          <p class="text-[11px] text-slate-400 mt-1" id="dash-template-note">Đang tải dữ liệu...</p>
         </div>
       </div>
 
@@ -281,19 +284,22 @@
                   <i class="fa-solid fa-pen-to-square text-sm"></i>
                 </a>
               </div>
+            <div class="p-10 text-center">
+              <i class="fa-solid fa-spinner fa-spin text-2xl text-indigo-400 mb-3"></i>
+              <p class="text-sm text-slate-400 font-semibold">Đang tải dữ liệu tổng quan...</p>
             </div>
           </div>
         </div>
 
-        <!-- Cột 3: Trạng thái & Ghi chú Nhóm 6 -->
+        <!-- Cột 3: Thao tác nhanh & Trạng thái kết nối -->
         <div class="space-y-4">
           <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
             <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-              <i class="fa-solid fa-terminal text-indigo-600"></i>
-              <span>Kiểm thử nhanh hệ thống</span>
+              <i class="fa-solid fa-bolt text-indigo-600"></i>
+              <span>Thao tác nhanh</span>
             </h3>
             <p class="text-xs text-slate-500 mb-4 leading-relaxed">
-              Các nút tiện ích để kiểm tra tính năng Toast thông báo toàn cục:
+              Đi thẳng tới các khu vực làm việc chính trong quy trình tạo và xuất bản Landing Page.
             </p>
             <div class="grid grid-cols-2 gap-2">
               <button onclick="window.showToast('Dữ liệu đã được lưu an toàn!', 'success')"
@@ -312,6 +318,18 @@
                 class="px-3 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition">
                 Toast Info
               </button>
+              <a href="pages/create.html" class="px-3 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition text-center">
+                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Tạo trang AI
+              </a>
+              <a href="pages/projects.html" class="px-3 py-2.5 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition text-center">
+                <i class="fa-solid fa-folder-open mr-1"></i> Dự án
+              </a>
+              <a href="pages/templates.html" class="px-3 py-2.5 rounded-xl text-xs font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition text-center">
+                <i class="fa-solid fa-layer-group mr-1"></i> Giao diện mẫu
+              </a>
+              <a href="pages/deployments.html" class="px-3 py-2.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition text-center">
+                <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Xuất bản
+              </a>
             </div>
           </div>
 
@@ -321,13 +339,19 @@
               <i class="fa-solid fa-circle-nodes text-indigo-600"></i>
               <span>Trạng thái kết nối</span>
             </div>
-            <p class="text-xs text-slate-600 leading-relaxed mb-3">
-              Trang Tổng quan tự động đọc JWT token để lấy họ tên hiển thị và kiểm tra trạng thái của FastAPI Backend.
+            <p id="backend-status-note" class="text-xs text-slate-600 leading-relaxed mb-3">
+              Đang kiểm tra kết nối tới FastAPI Backend...
             </p>
             <div
               class="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-2 border-t border-indigo-100/60">
               <span>Host: 127.0.0.1:8000</span>
               <span class="text-emerald-600 font-bold">● Active</span>
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-2 border-t border-indigo-100/60">
+              <span>Host: <span id="backend-status-host">—</span></span>
+              <span class="flex items-center gap-1.5">
+                <span id="backend-status-dot" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                <span id="backend-status-label" class="text-slate-500 font-bold">Đang kiểm tra</span>
+              </span>
             </div>
           </div>
         </div>
@@ -345,6 +369,7 @@
   <script src="js/auth.js"></script>
   <script src="js/layout.js"></script>
   <script src="js/deploy-status-ui.js"></script>
+  <script src="js/dashboard.js"></script>
 </body>
 
 </html>

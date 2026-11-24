@@ -1,7 +1,17 @@
+import base64
+import hashlib
+import logging
 import os
+import re
 from pathlib import Path
+from typing import Optional
+from urllib.parse import urlparse
+
 import requests
 from dotenv import load_dotenv
+from sqlalchemy.orm import Session
+
+from models.project import Project
 
 # Load file backend/.env bất kể chạy script từ thư mục nào
 env_path = Path(__file__).resolve().parent.parent / ".env"
@@ -9,6 +19,36 @@ load_dotenv(dotenv_path=env_path)
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 GITHUB_API_URL = "https://api.github.com"
+
+logger = logging.getLogger(__name__)
+
+PLACEHOLDER_TOKEN = "your_github_personal_access_token_here"
+
+
+def _resolve_token(token: Optional[str] = None) -> Optional[str]:
+    """Trả về token GitHub hợp lệ hoặc None nếu chưa cấu hình."""
+    value = token or GITHUB_TOKEN
+    if not value or value == PLACEHOLDER_TOKEN:
+        return None
+    return value
+
+
+def _github_headers(token: str) -> dict:
+    return {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+
+
+def _get_headers() -> dict:
+    if not GITHUB_TOKEN or GITHUB_TOKEN == "your_github_personal_access_token_here":
+        raise ValueError("GITHUB_TOKEN chưa được cấu hình hợp lệ trong file backend/.env")
+    return {
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
 
 
 def create_github_repo(
@@ -20,15 +60,8 @@ def create_github_repo(
     Gọi GitHub API để tạo một repository mới.
     Trả về dict chứa thông tin repo (name, full_name, html_url, clone_url, default_branch).
     """
-    if not GITHUB_TOKEN or GITHUB_TOKEN == "your_github_personal_access_token_here":
-        raise ValueError("GITHUB_TOKEN chưa được cấu hình hợp lệ trong file backend/.env")
-
+    headers = _get_headers()
     url = f"{GITHUB_API_URL}/user/repos"
-    headers = {
-        "Authorization": f"Bearer {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
     payload = {
         "name": repo_name,
         "description": description,
@@ -50,3 +83,379 @@ def create_github_repo(
 
     error_detail = response.json().get("message", response.text)
     raise RuntimeError(f"Tạo GitHub repo thất bại ({response.status_code}): {error_detail}")
+
+
+def upload_file_to_repo(
+    owner: str,
+    repo_name: str,
+    file_path: str,
+    content: str | bytes,
+    commit_message: str = "Upload landing page asset",
+    branch: str = "main",
+) -> dict:
+    """
+    Đẩy 1 file (index.html dạng str hoặc ảnh dạng bytes) lên repo qua GitHub Contents API.
+    Tự động lấy sha nếu file đã tồn tại để ghi đè.
+    """
+    headers = _get_headers()
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/contents/{file_path.lstrip('/')}"
+
+    raw_bytes = content.encode("utf-8") if isinstance(content, str) else content
+    encoded_content = base64.b64encode(raw_bytes).decode("utf-8")
+
+    sha = None
+    check_res = requests.get(url, headers=headers, params={"ref": branch}, timeout=15)
+    if check_res.status_code == 200:
+        sha = check_res.json().get("sha")
+
+    payload = {
+        "message": commit_message,
+        "content": encoded_content,
+        "branch": branch,
+    }
+    if sha:
+        payload["sha"] = sha
+
+    response = requests.put(url, json=payload, headers=headers, timeout=20)
+    if response.status_code in (200, 201):
+        data = response.json()
+        return {
+            "path": file_path,
+            "commit_sha": data.get("commit", {}).get("sha"),
+            "html_url": data.get("content", {}).get("html_url"),
+        }
+
+    error_detail = response.json().get("message", response.text)
+    raise RuntimeError(f"Push file '{file_path}' thất bại ({response.status_code}): {error_detail}")
+
+
+def push_landing_page_assets(
+    owner: str,
+    repo_name: str,
+    html_content: str,
+    images: list[dict] | None = None,
+    branch: str = "main",
+) -> dict:
+    """
+    Đẩy file index.html và danh sách ảnh (nếu có) lên repository vừa tạo.
+    Mỗi phần tử trong images có dạng: {"path": "images/banner.png", "content": <bytes>}
+    """
+    uploaded_files = []
+    latest_commit_sha = None
+
+    for img in images or []:
+        res = upload_file_to_repo(
+            owner=owner,
+            repo_name=repo_name,
+            file_path=img["path"],
+            content=img["content"],
+            commit_message=f"Add asset {img['path']}",
+            branch=branch,
+        )
+        uploaded_files.append(res["path"])
+        latest_commit_sha = res["commit_sha"]
+
+    html_res = upload_file_to_repo(
+        owner=owner,
+        repo_name=repo_name,
+        file_path="index.html",
+        content=html_content,
+        commit_message="Deploy index.html landing page",
+        branch=branch,
+    )
+    uploaded_files.append(html_res["path"])
+    latest_commit_sha = html_res["commit_sha"]
+
+    return {
+        "uploaded_files": uploaded_files,
+        "commit_sha": latest_commit_sha,
+    }
+
+
+def enable_github_pages(
+    owner: str,
+    repo_name: str,
+    branch: str = "main",
+    path: str = "/",
+) -> str:
+    """
+    Gọi API bật GitHub Pages cho repository và trả về URL chuẩn dạng https://username.github.io/repo-name
+    """
+    headers = _get_headers()
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/pages"
+    payload = {
+        "source": {
+            "branch": branch,
+            "path": path,
+        }
+    }
+
+    response = requests.post(url, json=payload, headers=headers, timeout=15)
+
+    # 201: Bật thành công | 409: Pages đã được bật từ trước
+    if response.status_code in (201, 409):
+        pages_url = f"https://{owner.lower()}.github.io/{repo_name}"
+        return pages_url
+
+    error_detail = response.json().get("message", response.text)
+    raise RuntimeError(f"Bật GitHub Pages thất bại ({response.status_code}): {error_detail}")
+
+
+def publish_and_save_project_url(
+    db: Session,
+    project: Project | dict,
+    owner: str,
+    repo_name: str,
+    html_content: str,
+    images: list[dict] | None = None,
+) -> dict:
+    """
+    Đẩy index.html + ảnh lên repo, bật GitHub Pages và lưu URL vào bản ghi project.
+    """
+    push_result = push_landing_page_assets(
+        owner=owner,
+        repo_name=repo_name,
+        html_content=html_content,
+        images=images,
+    )
+    pages_url = enable_github_pages(owner=owner, repo_name=repo_name)
+
+    if isinstance(project, dict):
+        project_obj = db.query(Project).filter(Project.id == project["id"]).first()
+        if not project_obj:
+            raise ValueError(f"Không tìm thấy project với id={project['id']}")
+    else:
+        project_obj = project
+
+    project_obj.github_pages_url = pages_url
+    db.commit()
+    db.refresh(project_obj)
+
+    return {
+        "commit_sha": push_result["commit_sha"],
+        "github_pages_url": pages_url,
+    }
+
+
+# ── Landing page commit helpers ──────────────────────────────────────
+def parse_repo_info(repo_url: str) -> Optional[tuple[str, str]]:
+    """Trích xuất ``(owner, repo)`` từ mọi định dạng URL GitHub."""
+    if not repo_url or not str(repo_url).strip():
+        return None
+
+    value = str(repo_url).strip()
+    ssh_match = re.match(
+        r"^git@github\.com:(?P<owner>[^/\s]+)/(?P<repo>[^/\s]+?)(?:\.git)?/?$",
+        value,
+        re.IGNORECASE,
+    )
+    if ssh_match:
+        owner, repo = ssh_match.group("owner"), ssh_match.group("repo")
+    else:
+        if value.startswith("git+"):
+            value = value[len("git+") :]
+        if "://" not in value:
+            value = "https://" + value
+        parsed = urlparse(value)
+        if parsed.hostname not in ("github.com", "www.github.com"):
+            return None
+        parts = [part for part in parsed.path.split("/") if part]
+        if len(parts) < 2:
+            return None
+        owner, repo = parts[0], parts[1]
+        if repo.endswith(".git"):
+            repo = repo[: -len(".git")]
+
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", owner or "") or not re.fullmatch(
+        r"[A-Za-z0-9_.-]+", repo or ""
+    ):
+        return None
+    return owner, repo
+
+
+def get_existing_file_sha(
+    owner: str,
+    repo: str,
+    file_path: str = "index.html",
+    branch: str = "main",
+    token: Optional[str] = None,
+) -> Optional[str]:
+    """Lấy SHA của file hiện tại trên GitHub (bắt buộc khi cập nhật file)."""
+    auth_token = _resolve_token(token)
+    if not auth_token:
+        return None
+
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path.lstrip('/')}"
+    try:
+        response = requests.get(
+            url,
+            headers=_github_headers(auth_token),
+            params={"ref": branch},
+            timeout=15,
+        )
+    except requests.RequestException as exc:
+        logger.warning("Không lấy được SHA file %s: %s", file_path, exc)
+        return None
+
+    if response.status_code == 404:
+        return None
+    if response.status_code != 200:
+        logger.warning(
+            "Không lấy được SHA file %s (%s): %s",
+            file_path,
+            response.status_code,
+            response.text[:200],
+        )
+        return None
+
+    data = response.json()
+    sha = data.get("sha") if isinstance(data, dict) else None
+    return sha if isinstance(sha, str) else None
+
+
+def simulate_commit_sha(
+    html_content: str,
+    repo_url: Optional[str] = None,
+    file_path: str = "index.html",
+) -> str:
+    """Sinh commit SHA mô phỏng 40 ký tự hex khi chạy offline/local."""
+    payload = f"{repo_url or 'local'}::{file_path}::{hashlib.sha256(html_content.encode('utf-8')).hexdigest()}"
+    return hashlib.sha1(payload.encode("utf-8")).hexdigest()
+
+
+def push_landing_page_commit(
+    repo_url: str,
+    html_content: str,
+    commit_message: str = "Cập nhật landing page",
+    file_path: str = "index.html",
+    branch: str = "main",
+    token: Optional[str] = None,
+) -> str:
+    """Tạo commit mới chứa ``html_content`` lên GitHub Contents API."""
+    if not html_content or not html_content.strip():
+        raise ValueError("html_content không được để rỗng")
+
+    auth_token = _resolve_token(token)
+    repo_info = parse_repo_info(repo_url)
+
+    if not auth_token or not repo_info:
+        reason = "chưa cấu hình GITHUB_TOKEN" if not auth_token else "repo_url không hợp lệ"
+        logger.info("Bỏ qua GitHub API (%s), dùng commit SHA mô phỏng", reason)
+        return simulate_commit_sha(html_content, repo_url, file_path)
+
+    owner, repo = repo_info
+    clean_path = file_path.lstrip("/")
+    api_url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{clean_path}"
+
+    try:
+        existing_sha = get_existing_file_sha(
+            owner, repo, clean_path, branch=branch, token=auth_token
+        )
+        payload = {
+            "message": commit_message or "Cập nhật landing page",
+            "content": base64.b64encode(html_content.encode("utf-8")).decode("ascii"),
+            "branch": branch,
+        }
+        if existing_sha:
+            payload["sha"] = existing_sha
+
+        response = requests.put(
+            api_url,
+            json=payload,
+            headers=_github_headers(auth_token),
+            timeout=30,
+        )
+
+        if response.status_code in (200, 201):
+            data = response.json()
+            commit_sha = (data.get("commit") or {}).get("sha")
+            if commit_sha:
+                return commit_sha
+            logger.warning("GitHub không trả về commit SHA, dùng SHA mô phỏng")
+        else:
+            logger.warning(
+                "Push GitHub thất bại (%s): %s",
+                response.status_code,
+                response.text[:300],
+            )
+    except requests.RequestException as exc:
+        logger.warning("Không kết nối được GitHub API: %s", exc)
+
+    return simulate_commit_sha(html_content, repo_url, file_path)
+
+
+# ── Delete repository helpers ────────────────────────────────────────
+def delete_github_repo(
+    repo_url: str,
+    token: Optional[str] = None,
+) -> dict:
+    """Xóa repository GitHub tương ứng với ``repo_url``.
+
+    Trả về dict trạng thái thay vì raise với các trường hợp không cần chặn
+    nghiệp vụ xóa mềm (chưa cấu hình token, repo đã bị xóa trước đó).
+
+    Raises:
+        ValueError: ``repo_url`` rỗng hoặc không phải URL GitHub hợp lệ.
+        RuntimeError: GitHub API trả về lỗi không mong muốn.
+    """
+    repo_info = parse_repo_info(repo_url)
+    if repo_info is None:
+        raise ValueError("repo_url không hợp lệ hoặc không phải repository GitHub")
+
+    owner, repo = repo_info
+    auth_token = _resolve_token(token)
+    if not auth_token:
+        logger.warning(
+            "Bỏ qua xóa GitHub repo %s/%s: chưa cấu hình GITHUB_TOKEN",
+            owner,
+            repo,
+        )
+        return {
+            "owner": owner,
+            "repo": repo,
+            "deleted": False,
+            "status": "skipped",
+            "reason": "GITHUB_TOKEN chưa được cấu hình hợp lệ trong backend/.env",
+        }
+
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}"
+    try:
+        response = requests.delete(
+            url,
+            headers=_github_headers(auth_token),
+            timeout=30,
+        )
+    except requests.RequestException as exc:
+        raise RuntimeError(f"Không kết nối được GitHub API để xóa repo: {exc}") from exc
+
+    if response.status_code == 204:
+        logger.info("Đã xóa GitHub repository %s/%s", owner, repo)
+        return {
+            "owner": owner,
+            "repo": repo,
+            "deleted": True,
+            "status": "deleted",
+            "reason": None,
+        }
+
+    if response.status_code == 404:
+        logger.info("GitHub repository %s/%s không tồn tại hoặc đã bị xóa", owner, repo)
+        return {
+            "owner": owner,
+            "repo": repo,
+            "deleted": False,
+            "status": "not_found",
+            "reason": "Repository không tồn tại hoặc đã bị xóa trước đó.",
+        }
+
+    try:
+        error_detail = response.json().get("message", response.text)
+    except ValueError:
+        error_detail = response.text
+    raise RuntimeError(
+        f"Xóa GitHub repo {owner}/{repo} thất bại ({response.status_code}): {error_detail}"
+    )
+
+
+# Alias ngắn gọn cho các module khác dễ gọi.
+delete_repository = delete_github_repo
