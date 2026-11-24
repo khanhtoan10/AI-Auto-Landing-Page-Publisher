@@ -1,7 +1,7 @@
-# Ở đầu file backend/api/projects.py (đã giải quyết conflict Git):
 import json
 import logging
 import re
+import unicodedata
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
@@ -34,6 +34,14 @@ DEFAULT_CHANGE_SUMMARY = "Cập nhật landing page: text, giá, link social"
 
 def _error_detail(code: str, message: str) -> dict:
     return {"success": False, "error": {"code": code, "message": message, "details": []}}
+
+
+def _slugify_vietnamese(value: str) -> str:
+    """Chuyển chuỗi tiếng Việt có dấu thành slug không dấu chuẩn tên repo GitHub."""
+    text_val = (value or "").replace("đ", "d").replace("Đ", "D")
+    text_val = unicodedata.normalize("NFKD", text_val).encode("ascii", "ignore").decode("ascii")
+    text_val = re.sub(r"[^a-zA-Z0-9]+", "-", text_val.lower()).strip("-")
+    return text_val or "landing-page"
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -527,7 +535,7 @@ async def delete_project(
 
 
 def _render_project_html(db: Session, project: dict) -> str:
-    """Render nội dung index.html từ snapshot mới nhất hoặc file template + dữ liệu project."""
+    """Render nội dung index.html đầy đủ giao diện Tailwind từ snapshot hoặc template_service."""
     latest_version = db.execute(
         text(
             "SELECT html_snapshot FROM project_versions "
@@ -538,60 +546,8 @@ def _render_project_html(db: Session, project: dict) -> str:
     if latest_version and latest_version[0]:
         return latest_version[0]
 
-    tpl_row = db.execute(
-        text("SELECT file_path FROM templates WHERE id = :tid"),
-        {"tid": project["template_id"]},
-    ).first()
-
-    raw_data = project.get("raw_json_data") or {}
-    if isinstance(raw_data, str):
-        try:
-            raw_data = json.loads(raw_data)
-        except json.JSONDecodeError:
-            raw_data = {}
-
-    context = {
-        "campaign_name": project.get("campaign_name") or "",
-        "product_name": project.get("product_name") or "",
-        "headline": raw_data.get("headline") or project.get("campaign_name") or project.get("product_name") or "",
-        "subheadline": raw_data.get("subheadline") or project.get("product_description") or "",
-        "product_description": project.get("product_description") or "",
-        "price": str(project.get("price") or ""),
-        "hero_image_url": raw_data.get("hero_image_url") or project.get("image_url") or "",
-        "image_url": project.get("image_url") or "",
-        "primary_color": raw_data.get("primary_color") or project.get("color_theme") or "#4f46e5",
-        "color_theme": project.get("color_theme") or "#4f46e5",
-        "social_facebook": raw_data.get("social_facebook") or project.get("facebook_url") or "#",
-        "social_tiktok": raw_data.get("social_tiktok") or project.get("tiktok_url") or "#",
-        "social_instagram": raw_data.get("social_instagram") or project.get("instagram_url") or "#",
-        **{k: str(v) for k, v in raw_data.items() if v is not None},
-    }
-
-    if tpl_row and tpl_row[0]:
-        backend_dir = Path(__file__).resolve().parent.parent
-        tpl_path = backend_dir / tpl_row[0]
-        if tpl_path.exists():
-            html = tpl_path.read_text(encoding="utf-8")
-            for key, val in context.items():
-                html = html.replace(f"{{{{{key}}}}}", str(val))
-            return html
-
-    return f"""<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{context['headline']}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-50 text-slate-800">
-  <main class="max-w-3xl mx-auto py-16 px-6 text-center">
-    <h1 class="text-4xl font-bold mb-4">{context['headline']}</h1>
-    <p class="text-lg text-slate-600 mb-6">{context['subheadline']}</p>
-    <p class="text-2xl font-semibold text-indigo-600 mb-8">{context['price']}</p>
-  </main>
-</body>
-</html>"""
+    project_dict = _serialize_project(project)
+    return template_service.render_landing_page(project_dict)
 
 
 MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
@@ -765,7 +721,8 @@ def deploy_project(
             parts = repo_url.rstrip("/").split("/")
             owner, repo_name = parts[-2], parts[-1]
         else:
-            slug = re.sub(r"[^a-zA-Z0-9-]+", "-", project.get("campaign_name", "")).strip("-").lower()
+            raw_title = project.get("campaign_name") or project.get("product_name") or ""
+            slug = _slugify_vietnamese(raw_title)
             repo_name = f"lp-{project['id']}-{slug}"[:60].rstrip("-") or f"landing-page-{project['id']}"
             repo_info = create_github_repo(repo_name=repo_name)
             owner = repo_info["full_name"].split("/")[0]
