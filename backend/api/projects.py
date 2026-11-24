@@ -15,6 +15,9 @@ from services.github_service import (
     enable_github_pages,
     get_github_pages_build_status,
     wait_for_github_pages_built,
+    GitHubRateLimitError,
+    GitHubRepoDuplicateError,
+    GitHubAuthError,
 )
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
@@ -311,6 +314,58 @@ async def deploy_project(
                 "status": "Success",
             },
         }
+    except GitHubAuthError as exc:
+        db.rollback()
+        db.execute(
+            text(
+                """
+                UPDATE deployments
+                SET status = 'Failed', error_message = :err, end_time = :end_time
+                WHERE id = :id
+                """
+            ),
+            {"err": str(exc), "end_time": datetime.utcnow(), "id": deployment_id},
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=401,
+            detail=str(exc),
+        )
+    except GitHubRateLimitError as exc:
+        db.rollback()
+        db.execute(
+            text(
+                """
+                UPDATE deployments
+                SET status = 'Failed', error_message = :err, end_time = :end_time
+                WHERE id = :id
+                """
+            ),
+            {"err": str(exc), "end_time": datetime.utcnow(), "id": deployment_id},
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=429,
+            detail=str(exc),
+            headers={"Retry-After": str(exc.retry_after)},
+        )
+    except GitHubRepoDuplicateError as exc:
+        db.rollback()
+        db.execute(
+            text(
+                """
+                UPDATE deployments
+                SET status = 'Failed', error_message = :err, end_time = :end_time
+                WHERE id = :id
+                """
+            ),
+            {"err": str(exc), "end_time": datetime.utcnow(), "id": deployment_id},
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=409,
+            detail=str(exc),
+        )
     except Exception as exc:
         db.rollback()
         db.execute(
