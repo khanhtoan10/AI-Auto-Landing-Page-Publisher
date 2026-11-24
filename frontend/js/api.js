@@ -177,6 +177,22 @@
     }
 
     if (!response.ok) {
+      // 503 với header X-GitHub-Error=auth → lỗi GitHub token, không phải JWT
+      if (response.status === 503 && response.headers.get("X-GitHub-Error") === "auth") {
+        const msg = extractErrorMessage(data, "Token GitHub không hợp lệ hoặc đã hết hạn.");
+        throw new Error(msg);
+      }
+      // 429 → rate limit GitHub
+      if (response.status === 429) {
+        const retryAfter = response.headers.get("Retry-After");
+        const baseMsg = extractErrorMessage(data, "GitHub API đang bị giới hạn tốc độ.");
+        const hint = retryAfter ? ` Vui lòng thử lại sau ${retryAfter} giây.` : "";
+        throw new Error(baseMsg + hint);
+      }
+      // 409 → trùng tên repo
+      if (response.status === 409) {
+        throw new Error(extractErrorMessage(data, "Tên repository đã tồn tại trên GitHub. Vui lòng đổi tên chiến dịch."));
+      }
       const fallback =
         response.status >= 500
           ? "Máy chủ gặp lỗi khi xử lý yêu cầu. Vui lòng thử lại sau."

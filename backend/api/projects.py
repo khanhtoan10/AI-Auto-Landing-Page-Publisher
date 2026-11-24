@@ -22,6 +22,9 @@ from services.github_service import (
     create_github_repo,
     enable_github_pages,
     push_landing_page_assets,
+    GitHubAuthError,
+    GitHubRateLimitError,
+    GitHubRepoDuplicateError,
 )
 from services.version_service import create_version
 
@@ -835,6 +838,72 @@ def deploy_project(
             },
         }
 
+    except GitHubAuthError as exc:
+        db.rollback()
+        db.execute(
+            text(
+                """
+                UPDATE deployments
+                SET status = 'Failed', error_message = :err, end_time = :end_time
+                WHERE id = :id
+                """
+            ),
+            {"err": str(exc), "end_time": datetime.utcnow(), "id": deployment_id},
+        )
+        db.execute(
+            text("UPDATE projects SET status = 'failed' WHERE id = :id"),
+            {"id": project["id"]},
+        )
+        db.commit()
+        # Dùng 503 thay vì 401 để frontend không nhầm với JWT hết hạn → không redirect login
+        raise HTTPException(
+            status_code=503,
+            detail=str(exc),
+            headers={"X-GitHub-Error": "auth"},
+        )
+    except GitHubRateLimitError as exc:
+        db.rollback()
+        db.execute(
+            text(
+                """
+                UPDATE deployments
+                SET status = 'Failed', error_message = :err, end_time = :end_time
+                WHERE id = :id
+                """
+            ),
+            {"err": str(exc), "end_time": datetime.utcnow(), "id": deployment_id},
+        )
+        db.execute(
+            text("UPDATE projects SET status = 'failed' WHERE id = :id"),
+            {"id": project["id"]},
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=429,
+            detail=str(exc),
+            headers={"Retry-After": str(exc.retry_after)},
+        )
+    except GitHubRepoDuplicateError as exc:
+        db.rollback()
+        db.execute(
+            text(
+                """
+                UPDATE deployments
+                SET status = 'Failed', error_message = :err, end_time = :end_time
+                WHERE id = :id
+                """
+            ),
+            {"err": str(exc), "end_time": datetime.utcnow(), "id": deployment_id},
+        )
+        db.execute(
+            text("UPDATE projects SET status = 'failed' WHERE id = :id"),
+            {"id": project["id"]},
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=409,
+            detail=str(exc),
+        )
     except Exception as exc:
         db.rollback()
         db.execute(
