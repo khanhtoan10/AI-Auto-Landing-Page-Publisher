@@ -1,0 +1,33 @@
+﻿Mã TC,Phân hệ / Hàm,Phân loại,Mô tả kịch bản kiểm thử,Dữ liệu đầu vào (Input),Kết quả kỳ vọng (Expected Output),Trạng thái
+TC01,_resolve_token,Đúng,Truyền token tùy biến hợp lệ,token = 'custom_token_123',Trả về đúng 'custom_token_123',PASSED
+TC02,_get_headers,Sai,Thiếu token hoặc token mặc định,GITHUB_TOKEN = None hoặc placeholder,Ném ValueError báo lỗi cấu hình,PASSED
+TC03,create_github_repo,Đúng,Tạo repo mới thành công,"repo_name = 'lp-test-campaign', 201 Created","Trả về dict name, full_name, html_url, default_branch",PASSED
+TC04,create_github_repo,Sai,Tên repo đã tồn tại trên tài khoản,API trả về HTTP 422 Unprocessable Entity,Ném RuntimeError chứa mã 422,PASSED
+TC05,upload_file_to_repo,Đúng,Upload file mới lần đầu (chưa có SHA),"file_path = 'index.html', GET 404, PUT 201","File được tạo mới, trả về commit_sha mới",PASSED
+TC06,upload_file_to_repo,Đúng,Ghi đè file đã tồn tại trên repo,"File cũ có sha, GET 200, PUT 200","Request PUT kèm sha cũ, cập nhật thành công",PASSED
+TC07,upload_file_to_repo,Biên,Upload file ảnh nhị phân (bytes),content = b'\x89PNG\r\n...',Dữ liệu nhị phân được encode Base64 chuẩn,PASSED
+TC08,upload_file_to_repo,Sai,Lỗi quyền hạn hoặc repo không tồn tại,API trả về HTTP 403 Forbidden,Ném RuntimeError kèm mã 403,PASSED
+TC09,push_landing_page_assets,Đúng,Đẩy file index.html kèm danh sách ảnh,"images = [{'path': 'hero.jpg', 'content': b'...'}]","Upload đủ 2 files, trả về commit_sha",PASSED
+TC10,push_landing_page_assets,Biên,Đẩy trang không có ảnh phụ trợ,images = None,Chỉ upload duy nhất file index.html,PASSED
+TC11,enable_github_pages,Đúng,Kích hoạt GitHub Pages lần đầu,POST /pages trả về 201 Created,Trả về Pages URL: https://{owner}.github.io/{repo},PASSED
+TC12,enable_github_pages,Đúng,Kích hoạt Pages khi đã bật từ trước,POST /pages trả về 409 Conflict,"Xử lý an toàn, coi là thành công, trả về URL chuẩn",PASSED
+TC13,enable_github_pages,Sai,Repo private mà tài khoản chưa lên Pro,POST /pages trả về 403 Forbidden,Ném RuntimeError thông báo chi tiết lỗi,PASSED
+TC14,get_github_pages_build_status,Đúng,GitHub Pages build hoàn tất,API trả về status 'built',"Trả về status='built', error=None, html_url chuẩn",PASSED
+TC15,get_github_pages_build_status,Đúng,Build đang trong hàng đợi hoặc 404,API trả về 'building' hoặc 404,"Trả về status='building', error=None",PASSED
+TC16,get_github_pages_build_status,Sai,GitHub Pages build bị lỗi nội dung,API trả về status 'errored',"Trả về status='errored', error chứa thông báo lỗi",PASSED
+TC17,get_github_pages_build_status,Biên,Chế độ Mock an toàn khi thiếu token,"token = None, GITHUB_TOKEN = None",Trả về trạng thái built mock để hệ thống không crash,PASSED
+TC18,wait_for_github_pages_built,Đúng,Polling chuyển từ building sang built,"Lần 1: building, Lần 2: built",Thoát vòng lặp thành công ngay khi build xong,PASSED
+TC19,wait_for_github_pages_built,Sai,Trạng thái build chuyển sang errored,Status trả về 'errored',Dừng polling ngay lập tức và ném RuntimeError,PASSED
+TC20,wait_for_github_pages_built,Biên,Quá thời gian timeout mà vẫn building,timeout_seconds = 0.01,Ném TimeoutError với thông báo rõ ràng,PASSED
+TC21,_render_project_html,Đúng,Render từ snapshot phiên bản trước,Project có bản ghi trong project_versions,Trả về nguyên văn html_snapshot mới nhất,PASSED
+TC22,_render_project_html,Đúng,Render fallback HTML chuẩn TailwindCSS,"project_versions rỗng, template_id = None","Sinh HTML đầy đủ tiêu đề, mô tả, giá, CDN Tailwind",PASSED
+TC23,_render_project_html,Biên,raw_json_data bị lỗi cú pháp JSON,raw_json_data = '{bad_json: 123',"Bắt lỗi an toàn, fallback render không crash",PASSED
+TC24,POST /deploy,Đúng,Luồng deploy đầy đủ cho project mới,"Project chưa có repo_url, API thành công","Tạo repo, push code, cập nhật github_pages_url vào DB, status=Success",PASSED
+TC25,POST /deploy,Đúng,Xuất bản lại cho project đã có repo,Project đã có repo_url hợp lệ,"Không tạo repo trùng, push đè code và build lại",PASSED
+TC26,POST /deploy,Sai,Lỗi bất ngờ trong quá trình deploy,Ném ngoại lệ RuntimeError khi đang push,"Rollback DB, cập nhật status='Failed', ghi error_message, HTTP 500",PASSED
+TC27,GET /deploy-status,Biên,Dự án chưa từng được deploy,"repo_url = None, deployments rỗng","Trả về HTTP 200: deploy_status='NotDeployed', is_built=False",PASSED
+TC28,GET /deploy-status,Đúng,Kiểm tra khi trang đang build,GitHub Pages trả về 'building',"Trả về deploy_status='Building', is_built=False",PASSED
+TC29,GET /deploy-status,Đúng,Kiểm tra khi trang vừa build xong,GitHub Pages chuyển sang 'built',"Đồng bộ DB: deployments.status='Success', projects.status='published'",PASSED
+TC30,GET /deploy-status,Sai,Kiểm tra khi build bị lỗi,GitHub Pages trả về 'errored',"Cập nhật DB: deployments.status='Failed', ghi error_message",PASSED
+TC31,projects.py Static Check,Biên,Kiểm tra chống trùng lặp route,Quét mã nguồn file backend/api/projects.py,POST /deploy và GET /deploy-status mỗi endpoint xuất hiện đúng 1 lần,PASSED
+TC32,projects.py Static Check,Biên,Kiểm tra chuẩn hóa tên cột database,Tìm kiếm từ khóa 'published_url',"Từ khóa 'published_url' xuất hiện 0 lần, 100% dùng github_pages_url",PASSED
