@@ -209,14 +209,8 @@
         const basePath = isSubPage ? "" : "pages/";
 
         let projects = [];
-        try {
-            const res = await fetch(`${getApiBase()}/projects`, { headers: getAuthHeaders() });
-            if (!res.ok) throw new Error("fetch_projects_failed");
-            const json = await res.json();
-            projects = Array.isArray(json.data) && json.data.length > 0 ? json.data : FALLBACK_PROJECTS;
-        } catch (_) {
-            projects = FALLBACK_PROJECTS;
-        }
+        const rawItems = Array.isArray(json.data) ? json.data : (json.data?.items || []);
+            projects = rawItems.length > 0 ? rawItems : FALLBACK_PROJECTS;
 
         const enriched = await enrichWithDeployStatus(projects);
         container.innerHTML = enriched.map((p) => renderProjectRow(p, basePath)).join("");
