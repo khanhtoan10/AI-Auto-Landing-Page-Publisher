@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chỉnh sửa Landing Page - AI Publisher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="../css/common.css"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+          colors: {
+            brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' }
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="h-full bg-slate-50 text-slate-800 antialiased flex overflow-hidden">
+
+  <!-- Overlay làm tối nền khi mở Sidebar trên Mobile -->
+  <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden lg:hidden transition-opacity duration-300"></div>
+
+  <!-- Sidebar điều hướng (tự động tiêm qua ../js/layout.js) -->
+  <aside id="app-sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-72 h-full transform -translate-x-full lg:translate-x-0 transition-transform duration-300 shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col"></aside>
+
+  <!-- Khung nội dung chính -->
+  <div class="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+
+    <!-- Top Header (tự động tiêm qua ../js/layout.js) -->
+    <div id="app-header"></div>
+
+    <main id="app-content" class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-slate-50/70 custom-scrollbar animate-fadeIn">
+      <div class="max-w-[1560px] mx-auto space-y-5">
+
+        <!-- Banner dự án -->
+        <section class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 sm:p-6 shadow-xl shadow-indigo-950/10 border border-slate-800">
+          <div class="absolute -right-10 -bottom-16 w-72 h-72 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none"></div>
+          <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+            <div class="space-y-1.5 min-w-0">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-[11px] font-semibold">
+                <i class="fa-solid fa-pen-to-square text-amber-300"></i>
+                <span>Workspace chỉnh sửa • Live Preview Studio</span>
+              </div>
+              <h2 id="page-project-title" class="text-xl sm:text-2xl font-extrabold tracking-tight truncate">Đang tải dự án...</h2>
+              <p class="text-slate-300 text-xs sm:text-sm leading-relaxed max-w-2xl">
+                Chỉnh nội dung, giá bán, màu chủ đạo và kênh mạng xã hội. Bản xem trước bên phải cập nhật trực tiếp trước khi bạn xuất bản.
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+              <span id="current-version-badge" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-xs font-bold text-white">
+                <i class="fa-solid fa-code-branch text-indigo-300"></i>
+                <span id="current-version-text">v1</span>
+              </span>
+              <a id="btn-open-page" href="#" target="_blank" rel="noopener noreferrer" class="hidden items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/90 hover:bg-emerald-500 text-white text-xs font-bold transition">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                <span>Mở website</span>
+              </a>
+              <a id="btn-deploy-project" href="#" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-950/30 transition">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span>Xuất bản</span>
+              </a>
+              <a id="btn-version-history" href="#" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-bold transition">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Lịch sử phiên bản</span>
+              </a>
+              <a href="projects.html" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-bold transition">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Danh sách dự án</span>
+              </a>
+              <button type="button" id="btn-delete-project" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500 border border-rose-400/40 text-rose-200 hover:text-white text-xs font-bold transition">
+                <i class="fa-solid fa-trash-can"></i>
+                <span>Xóa dự án</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Lỗi tải dữ liệu -->
+        <div id="load-error" class="hidden rounded-2xl border border-rose-200 bg-rose-50 p-5 flex items-start gap-4">
+          <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-sm font-bold text-rose-800">Không thể tải dữ liệu dự án</h3>
+            <p id="load-error-message" class="text-xs text-rose-700 mt-1 leading-relaxed">Vui lòng kiểm tra lại đường dẫn và backend FastAPI.</p>
+            <div class="flex flex-wrap items-center gap-2 mt-3">
+              <button type="button" onclick="window.location.reload()" class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition">
+                <i class="fa-solid fa-rotate-right mr-1.5"></i>Thử lại
+              </button>
+              <a href="projects.html" class="px-3.5 py-2 rounded-xl bg-white border border-rose-200 text-rose-700 text-xs font-bold hover:bg-rose-100 transition">Về danh sách dự án</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Split-screen workspace -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
+
+          <!-- CỘT TRÁI: FORM CHỈNH SỬA -->
+          <form id="edit-project-form" class="relative bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6 space-y-6">
+
+            <!-- Overlay loading khi tải dữ liệu -->
+            <div id="form-loading" class="absolute inset-0 z-20 rounded-2xl bg-white/85 backdrop-blur-[2px] hidden items-center justify-center">
+              <div class="flex flex-col items-center gap-3 text-indigo-600">
+                <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
+                <span class="text-xs font-bold text-slate-600">Đang tải dữ liệu dự án...</span>
+              </div>
+            </div>
+
+            <!-- Nhóm 1: Thông tin chung -->
+            <div class="space-y-4">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 font-bold text-xs flex items-center justify-center">1</span>
+                  <h3 class="text-sm font-bold text-slate-900">Thông tin chung &amp; Chiến dịch</h3>
+                </div>
+                <span class="text-[11px] text-slate-400 font-medium">* Bắt buộc</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="campaign-name" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Tên chiến dịch</label>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-xs">
+                      <i class="fa-solid fa-bullhorn"></i>
+                    </span>
+                    <input type="text" id="campaign-name" required maxlength="255" placeholder="Ví dụ: Ra mắt Cold Brew 2025"
+                      class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800 placeholder-slate-400"/>
+                  </div>
+                </div>
+                <div>
+                  <label for="product-name" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Tên sản phẩm / Thương hiệu</label>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-xs">
+                      <i class="fa-solid fa-tag"></i>
+                    </span>
+                    <input type="text" id="product-name" required maxlength="255" placeholder="Ví dụ: Cà Phê Cold Brew Đắk Lắk"
+                      class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800 placeholder-slate-400"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Nhóm 2: Giá & Mô tả -->
+            <div class="space-y-4">
+              <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
+                <span class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 font-bold text-xs flex items-center justify-center">2</span>
+                <h3 class="text-sm font-bold text-slate-900">Giá bán &amp; Mô tả</h3>
+              </div>
+
+              <div>
+                <label for="price" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Giá niêm yết (VND)</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-xs">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+                  </span>
+                  <input type="number" id="price" min="0" step="1000" placeholder="1250000"
+                    class="w-full pl-9 pr-14 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 hover:bg-white focus:bg-white font-semibold text-slate-800 placeholder-slate-400"/>
+                  <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs font-bold text-slate-400">₫</span>
+                </div>
+                <p id="price-formatted" class="text-[11px] text-slate-400 mt-1.5 font-medium">Hiển thị trên trang: <span class="text-indigo-600 font-bold">Liên hệ</span></p>
+              </div>
+
+              <div>
+                <label for="product-description" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Mô tả sản phẩm</label>
+                <textarea id="product-description" rows="5" maxlength="5000" placeholder="Mô tả điểm nổi bật, lợi ích và thông điệp bán hàng của sản phẩm..."
+                  class="w-full p-3.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800 placeholder-slate-400 leading-relaxed resize-y custom-scrollbar"></textarea>
+              </div>
+            </div>
+
+            <!-- Nhóm 3: Màu & Ảnh -->
+            <div class="space-y-4">
+              <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
+                <span class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 font-bold text-xs flex items-center justify-center">3</span>
+                <h3 class="text-sm font-bold text-slate-900">Màu chủ đạo &amp; Hình ảnh</h3>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Màu chủ đạo (color_theme)</label>
+                <div class="flex flex-wrap items-center gap-2.5">
+                  <input type="color" id="color-theme-picker" value="#4f46e5" aria-label="Chọn màu chủ đạo"
+                    class="w-11 h-11 p-1 rounded-xl border border-slate-200 bg-white cursor-pointer"/>
+                  <input type="text" id="color-theme-hex" maxlength="7" value="#4F46E5" placeholder="#4F46E5"
+                    class="w-28 px-3 py-2.5 rounded-xl border border-slate-200 text-sm font-mono font-bold uppercase text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"/>
+                  <div class="flex items-center gap-1.5">
+                    <button type="button" data-color="#4F46E5" class="color-preset w-7 h-7 rounded-lg ring-2 ring-offset-2 ring-transparent transition" style="background:#4F46E5" title="Indigo"></button>
+                    <button type="button" data-color="#059669" class="color-preset w-7 h-7 rounded-lg ring-2 ring-offset-2 ring-transparent transition" style="background:#059669" title="Emerald"></button>
+                    <button type="button" data-color="#D97706" class="color-preset w-7 h-7 rounded-lg ring-2 ring-offset-2 ring-transparent transition" style="background:#D97706" title="Amber"></button>
+                    <button type="button" data-color="#E11D48" class="color-preset w-7 h-7 rounded-lg ring-2 ring-offset-2 ring-transparent transition" style="background:#E11D48" title="Rose"></button>
+                    <button type="button" data-color="#2563EB" class="color-preset w-7 h-7 rounded-lg ring-2 ring-offset-2 ring-transparent transition" style="background:#2563EB" title="Blue"></button>
+                    <button type="button" data-color="#0F172A" class="color-preset w-7 h-7 rounded-lg ring-2 ring-offset-2 ring-transparent transition" style="background:#0F172A" title="Dark"></button>
+                  </div>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-1.5">Mã màu HEX 6 ký tự, ví dụ <code class="font-mono text-indigo-600">#4F46E5</code></p>
+              </div>
+
+              <div>
+                <label for="image-url" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Link ảnh sản phẩm</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-xs">
+                    <i class="fa-regular fa-image"></i>
+                  </span>
+                  <input type="url" id="image-url" maxlength="500" placeholder="https://..."
+                    class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800 placeholder-slate-400"/>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-1.5">Bỏ trống để dùng ảnh placeholder theo màu chủ đạo.</p>
+              </div>
+            </div>
+
+            <!-- Nhóm 4: Social -->
+            <div class="space-y-4">
+              <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
+                <span class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 font-bold text-xs flex items-center justify-center">4</span>
+                <h3 class="text-sm font-bold text-slate-900">Liên kết mạng xã hội</h3>
+              </div>
+
+              <div class="space-y-3">
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#1877F2]">
+                    <i class="fa-brands fa-facebook-messenger"></i>
+                  </span>
+                  <input type="text" id="messenger-link" maxlength="500" placeholder="https://m.me/ten-trang hoặc tên người dùng"
+                    class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800 placeholder-slate-400"/>
+                </div>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-900">
+                    <i class="fa-brands fa-tiktok"></i>
+                  </span>
+                  <input type="text" id="tiktok-shop-link" maxlength="500" placeholder="https://shop.tiktok.com/@ten-tai-khoan"
+                    class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800 placeholder-slate-400"/>
+                </div>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#0068FF]">
+                    <i class="fa-solid fa-comment-dots"></i>
+                  </span>
+                  <input type="text" id="zalo-link" maxlength="500" placeholder="https://zalo.me/0987654321 hoặc số điện thoại"
+                    class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800 placeholder-slate-400"/>
+                </div>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#E1306C]">
+                    <i class="fa-brands fa-instagram"></i>
+                  </span>
+                  <input type="text" id="instagram-link" maxlength="500" placeholder="https://instagram.com/ten-tai-khoan"
+                    class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800 placeholder-slate-400"/>
+                </div>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-amber-600">
+                    <i class="fa-solid fa-phone"></i>
+                  </span>
+                  <input type="text" id="hotline-input" maxlength="50" placeholder="1900 6868"
+                    class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800 placeholder-slate-400"/>
+                </div>
+              </div>
+            </div>
+
+            <!-- Nhóm 5: Ghi chú thay đổi -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 font-bold text-xs flex items-center justify-center">5</span>
+                  <h3 class="text-sm font-bold text-slate-900">Ghi chú thay đổi</h3>
+                </div>
+                <span id="change-summary-counter" class="text-[11px] text-slate-400 font-medium">0/255</span>
+              </div>
+              <textarea id="change-summary" rows="2" maxlength="255" placeholder="Ví dụ: Cập nhật giá khuyến mãi và link Facebook tháng 11"
+                class="w-full p-3.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800 placeholder-slate-400 leading-relaxed resize-y"></textarea>
+              <p class="text-[11px] text-slate-400">Nội dung này được lưu vào lịch sử phiên bản để bạn dễ đối chiếu sau này.</p>
+            </div>
+
+            <!-- Thanh hành động -->
+            <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <button type="button" id="btn-reset-form"
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-sm font-semibold transition">
+                <i class="fa-solid fa-rotate-left"></i>
+                <span>Khôi phục gốc</span>
+              </button>
+              <button type="submit" id="btn-save"
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white text-sm font-bold shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.01] active:scale-[0.99]">
+                <i id="save-spinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+                <i id="save-icon" class="fa-solid fa-cloud-arrow-up"></i>
+                <span id="save-btn-text">Lưu &amp; Cập nhật Website</span>
+              </button>
+            </div>
+          </form>
+
+          <!-- CỘT PHẢI: LIVE PREVIEW -->
+          <div class="space-y-3 xl:sticky xl:top-4">
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+              <div class="p-3.5 sm:p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200/70">
+                  <button type="button" data-device="desktop" class="device-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition bg-white text-indigo-700 shadow-sm" title="Desktop 100%">
+                    <i class="fa-solid fa-desktop"></i><span class="hidden sm:inline">Desktop</span>
+                  </button>
+                  <button type="button" data-device="tablet" class="device-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition text-slate-500 hover:text-slate-800" title="Tablet 768px">
+                    <i class="fa-solid fa-tablet-screen-button"></i><span class="hidden sm:inline">Tablet</span>
+                  </button>
+                  <button type="button" data-device="mobile" class="device-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition text-slate-500 hover:text-slate-800" title="Mobile 375px">
+                    <i class="fa-solid fa-mobile-screen-button"></i><span class="hidden sm:inline">Mobile</span>
+                  </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span id="preview-status" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
+                    <span id="preview-status-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span id="preview-status-text">Live</span>
+                  </span>
+                  <span id="device-label" class="text-[10px] font-mono font-semibold text-slate-400 hidden sm:inline">100%</span>
+                  <button type="button" id="btn-refresh-preview" class="w-8 h-8 rounded-lg border border-slate-200 text-slate-500 hover:text-indigo-600 hover:border-indigo-200 flex items-center justify-center transition bg-white" title="Làm mới xem trước">
+                    <i class="fa-solid fa-rotate-right text-xs"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="bg-slate-100/80 p-3 sm:p-4">
+                <div id="preview-frame-wrap" class="mx-auto bg-white rounded-lg transition-all duration-300 shadow-sm overflow-hidden ring-1 ring-slate-200" style="width: 100%; max-width: 100%;">
+                  <div id="preview-empty" class="h-[70vh] min-h-[520px] flex flex-col items-center justify-center gap-3 text-slate-400">
+                    <i class="fa-solid fa-spinner fa-spin text-2xl text-indigo-500"></i>
+                    <span class="text-xs font-semibold">Đang chuẩn bị bản xem trước...</span>
+                  </div>
+                  <iframe id="preview-frame" title="Xem trước Landing Page" class="w-full h-[70vh] min-h-[520px] block border-0 bg-white hidden"
+                    sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
+                </div>
+              </div>
+
+              <div class="px-4 py-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+                <span><i class="fa-solid fa-bolt text-amber-500 mr-1"></i>Xem trước tự động cập nhật sau 300ms khi bạn gõ.</span>
+                <span id="preview-updated-at" class="font-mono"></span>
+              </div>
+            </div>
+
+            <div class="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-4 space-y-2">
+              <div class="flex items-center gap-2 text-indigo-900 font-bold text-[11px] uppercase tracking-wide">
+                <i class="fa-solid fa-circle-info text-indigo-500"></i>
+                <span>Quy trình xuất bản</span>
+              </div>
+              <ul class="text-[11px] text-slate-600 space-y-1.5 list-disc list-inside leading-relaxed">
+                <li>Lưu dữ liệu vào bảng <code class="font-mono text-indigo-700">projects</code>.</li>
+                <li>Render lại HTML và push commit lên GitHub.</li>
+                <li>Tạo snapshot mới trong <code class="font-mono text-indigo-700">project_versions</code>.</li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL THÀNH CÔNG -->
+  <div id="success-modal" class="fixed inset-0 z-[80] hidden">
+    <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" data-close-modal></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+      <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-fadeIn">
+        <div class="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-5 text-white relative">
+          <button type="button" data-close-modal class="absolute top-3 right-3 w-8 h-8 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div class="min-w-0">
+              <h3 class="text-base font-extrabold">Website đã được cập nhật!</h3>
+              <p class="text-[11px] text-emerald-50 font-medium">Landing page của bạn đã sẵn sàng online.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 space-y-5">
+          <p id="modal-message" class="text-sm text-slate-600 leading-relaxed">Cập nhật thành công.</p>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Phiên bản mới</p>
+              <p id="modal-version" class="text-lg font-extrabold text-indigo-600 mt-0.5">v2</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 min-w-0">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Commit SHA</p>
+              <button type="button" id="btn-copy-sha" class="mt-0.5 flex items-center gap-1.5 text-xs font-mono font-bold text-slate-700 hover:text-indigo-600 transition max-w-full" title="Sao chép commit SHA">
+                <span id="modal-commit" class="truncate">—</span>
+                <i class="fa-regular fa-copy text-[10px] shrink-0"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <a id="modal-pages-link" href="#" target="_blank" rel="noopener noreferrer"
+              class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold transition">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              <span>Mở website GitHub Pages</span>
+            </a>
+            <a id="modal-version-history-link" href="#" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-bold transition">
+              <i class="fa-solid fa-code-branch"></i>
+              <span>Xem lịch sử phiên bản</span>
+            </a>
+          </div>
+
+          <p class="text-[11px] text-slate-400 text-center leading-relaxed">
+            Bạn có thể tiếp tục chỉnh sửa và lưu lại — mỗi lần lưu sẽ tạo một phiên bản mới.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL XÁC NHẬN XÓA DỰ ÁN -->
+  <div id="delete-modal" class="fixed inset-0 z-[90] hidden" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+    <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" data-close-delete-modal></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+      <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-fadeIn">
+        <div class="bg-gradient-to-r from-rose-600 to-red-600 px-6 py-5 text-white relative">
+          <button type="button" data-close-delete-modal class="absolute top-3 right-3 w-8 h-8 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+              <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <div class="min-w-0">
+              <h3 id="delete-modal-title" class="text-base font-extrabold">Xóa landing page?</h3>
+              <p class="text-[11px] text-rose-50 font-medium">Hành động này không thể hoàn tác từ giao diện.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <p class="text-sm text-slate-600 leading-relaxed">
+            Bạn sắp xóa dự án
+            <strong id="delete-project-name" class="text-slate-900">này</strong>.
+            Vui lòng kiểm tra kỹ trước khi xác nhận.
+          </p>
+
+          <ul class="space-y-2 text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+            <li class="flex items-start gap-2">
+              <i class="fa-solid fa-circle-info text-indigo-500 mt-0.5"></i>
+              <span>Dự án sẽ được <strong class="text-slate-700">xóa mềm</strong> và biến mất khỏi danh sách dự án.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fa-brands fa-github text-slate-700 mt-0.5"></i>
+              <span>GitHub repository liên kết (nếu có) sẽ bị xóa vĩnh viễn.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fa-solid fa-code-branch text-amber-500 mt-0.5"></i>
+              <span>Lịch sử phiên bản vẫn được lưu trong database để đối soát.</span>
+            </li>
+          </ul>
+
+          <div class="flex flex-col sm:flex-row gap-2">
+            <button type="button" id="btn-cancel-delete" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-bold transition">
+              Hủy, giữ dự án
+            </button>
+            <button type="button" id="btn-confirm-delete" class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 disabled:cursor-not-allowed text-white text-sm font-bold shadow-lg shadow-rose-600/20 transition">
+              <i id="delete-spinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+              <i id="delete-icon" class="fa-solid fa-trash-can"></i>
+              <span id="delete-btn-text">Xóa vĩnh viễn</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/edit-project.js"></script>
+  <script src="../js/layout.js"></script>
+</body>
+</html>

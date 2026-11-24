@@ -10,6 +10,7 @@ from typing import Any, Callable
 from sqlalchemy.orm import Session
 
 from models import STATUS_FAILED, STATUS_PENDING, STATUS_SUCCESS, Generation, Project
+from services.gemini_service import generate_landing_page_json
 
 
 class ProjectNotFoundError(Exception):
@@ -101,13 +102,55 @@ def execute_generation(
 ) -> Generation:
     """Tạo bản ghi pending, gọi hàm sinh, rồi đóng trạng thái success hoặc failed.
 
-    generate_fn là chỗ gắn Gemini sau này. Nếu hàm đó ném lỗi, bản ghi
-    không được để ở pending. raw_json_data của project chỉ đổi khi thành công.
+    generate_fn là chỗ gắn Gemini sau này. Nếu hàm đó ném lỗi hoặc trả JSON
+    không hợp lệ, bản ghi chuyển sang failed. Nếu lưu DB lỗi thì rollback và
+    ném lỗi lên router, không báo nhầm là lỗi Gemini.
+    raw_json_data của project chỉ đổi khi thành công.
     """
     generation = create_pending_generation(db, project_id, prompt)
+
+    # Giai đoạn 1: sinh nội dung và kiểm tra JSON (lỗi ở đây = failed)
     try:
-        result = generate_fn()
-        return mark_generation_success(db, generation.id, result)
+        payload = _require_structured_json(generate_fn())
     except Exception as exc:
         db.rollback()
         return mark_generation_failed(db, generation.id, str(exc))
+
+    # Giai đoạn 2: lưu DB (lỗi ở đây = lỗi database, không phải lỗi Gemini)
+    try:
+        return mark_generation_success(db, generation.id, payload)
+    except Exception:
+        db.rollback()
+        try:
+            mark_generation_failed(db, generation.id, "Lỗi khi lưu kết quả vào database")
+        except Exception:
+            db.rollback()
+        raise
+
+
+def build_campaign_prompt(project: Project) -> str:
+    """Tổng hợp thông tin chiến dịch từ bản ghi Project thành mô tả đầu vào cho Gemini."""
+    lines = [
+        f"- Tên chiến dịch: {project.campaign_name}",
+        f"- Tên sản phẩm/dịch vụ: {project.product_name}",
+    ]
+    if project.product_description:
+        lines.append(f"- Mô tả sản phẩm: {project.product_description}")
+    if project.price is not None:
+        lines.append(f"- Giá bán: {project.price}")
+    if project.color_theme:
+        lines.append(f"- Tông màu chủ đạo ưu tiên: {project.color_theme}")
+
+    return "\n".join(lines)
+
+
+def generate_content_for_project(db: Session, project_id: int) -> Generation:
+    """Lấy thông tin project, gọi Gemini Service sinh JSON và lưu kết quả vào DB."""
+    project = _require_project(db, project_id)
+    campaign_prompt = build_campaign_prompt(project)
+    return execute_generation(
+        db=db,
+        project_id=project.id,
+        prompt=campaign_prompt,
+        generate_fn=lambda: generate_landing_page_json(campaign_prompt),
+    )

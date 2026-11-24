@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+{% include "partials/seo_meta.html" %}
+<!-- Google Fonts & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-variant": "#d3e4fe",
+            "primary-fixed": "#e2dfff",
+            "on-tertiary": "#ffffff",
+            "surface-container-low": "#eff4ff",
+            "primary": "var(--primary-custom, #3525cd)",
+            "secondary-fixed": "#6ffbbe",
+            "on-secondary-fixed-variant": "#005236",
+            "error": "#ba1a1a",
+            "tertiary-container": "#885500",
+            "surface-container-lowest": "#ffffff",
+            "surface-container": "#e5eeff",
+            "background": "#f8f9ff",
+            "on-primary-container": "#dad7ff",
+            "secondary": "#006c49",
+            "on-primary-fixed": "#0f0069",
+            "on-error-container": "#93000a",
+            "outline-variant": "#c7c4d8",
+            "on-secondary-container": "#00714d",
+            "surface-tint": "#4d44e3",
+            "on-surface-variant": "#464555",
+            "tertiary": "#684000",
+            "surface-bright": "#f8f9ff",
+            "tertiary-fixed": "#ffddb8",
+            "on-primary-fixed-variant": "#3323cc",
+            "on-surface": "#0b1c30",
+            "inverse-primary": "#c3c0ff",
+            "outline": "#777587",
+            "on-secondary-fixed": "#002113",
+            "surface": "#f8f9ff",
+            "tertiary-fixed-dim": "#ffb95f",
+            "inverse-on-surface": "#eaf1ff",
+            "on-tertiary-fixed": "#2a1700",
+            "secondary-fixed-dim": "#4edea3",
+            "surface-container-high": "#dce9ff",
+            "on-background": "#0b1c30",
+            "secondary-container": "#6cf8bb",
+            "on-tertiary-fixed-variant": "#653e00",
+            "on-secondary": "#ffffff",
+            "inverse-surface": "#213145",
+            "on-primary": "#ffffff",
+            "primary-fixed-dim": "#c3c0ff",
+            "surface-container-highest": "#d3e4fe",
+            "primary-container": "#4f46e5",
+            "error-container": "#ffdad6",
+            "on-error": "#ffffff",
+            "on-tertiary-container": "#ffd4a4",
+            "surface-dim": "#cbdbf5"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "gutter": "1.5rem",
+            "space-sm": "0.5rem",
+            "margin": "2rem",
+            "space-xs": "0.25rem",
+            "gutter-mobile": "1rem",
+            "space-md": "1rem",
+            "space-xl": "2.5rem",
+            "margin-mobile": "1rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "display-mobile": ["Plus Jakarta Sans"],
+            "body-sm": ["Inter"],
+            "label-md": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "display": ["Plus Jakarta Sans"],
+            "label-sm": ["Inter"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "display-mobile": ["2.25rem", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "body-sm": ["0.875rem", { "lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "400" }],
+            "label-md": ["0.875rem", { "lineHeight": "1.25", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "body-lg": ["1.125rem", { "lineHeight": "1.6", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "headline-lg-mobile": ["1.75rem", { "lineHeight": "1.25", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+            "headline-lg": ["2.5rem", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["1.25rem", { "lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-md": ["1.75rem", { "lineHeight": "1.3", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "display": ["3.5rem", { "lineHeight": "1.15", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+            "label-sm": ["0.75rem", { "lineHeight": "1.2", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "body-md": ["1rem", { "lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    :root {
+      --primary-custom: {{data.primary_color}};
+    }
+    .custom-dynamic-bg {
+      background-color: var(--primary-custom, #3525cd);
+    }
+    .custom-dynamic-text {
+      color: var(--primary-custom, #3525cd);
+    }
+    .custom-dynamic-border {
+      border-color: var(--primary-custom, #3525cd);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background antialiased selection:bg-primary selection:text-on-primary">
+<!-- Top Announcement Bar / Countdown Hook -->
+<div class="bg-inverse-surface text-inverse-on-surface py-2.5 px-4 text-center text-xs sm:text-sm font-label-md flex flex-wrap items-center justify-center gap-3">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary-fixed text-base" data-icon="timer">timer</span>
+<span>Sự kiện quốc tế do <strong class="text-secondary-fixed">{{data.brand_name}}</strong> chủ trì — Đếm ngược giờ khai mạc:</span>
+</div>
+<div class="flex items-center gap-1 font-mono font-bold text-secondary-container" id="countdown-banner">
+<span class="bg-surface-container-lowest/10 px-2 py-0.5 rounded">03</span>:
+      <span class="bg-surface-container-lowest/10 px-2 py-0.5 rounded">14</span>:
+      <span class="bg-surface-container-lowest/10 px-2 py-0.5 rounded">48</span>:
+      <span class="bg-surface-container-lowest/10 px-2 py-0.5 rounded">22</span>
+</div>
+<a class="inline-flex items-center gap-1 text-secondary-fixed underline hover:text-white ml-2" href="#register-form">
+      Đăng ký ngay <span class="material-symbols-outlined text-xs" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</div>
+<!-- Shared Component: TopNavBar -->
+<header class="bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none docked full-width top-0 sticky z-50">
+<div class="flex justify-between items-center w-full px-margin max-w-7xl mx-auto h-16">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary-container text-white flex items-center justify-center font-bold text-lg shadow-sm">
+<span class="material-symbols-outlined" data-icon="stars">stars</span>
+</div>
+<a class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary tracking-tight" href="#">
+          {{data.brand_name}}
+        </a>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-primary dark:text-inverse-primary font-bold border-b-2 border-primary dark:border-inverse-primary pb-1" href="#about">Perks</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors pb-1" href="#early-bird">Flash Sale</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors pb-1" href="#agenda">Features</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors pb-1" href="#reviews">Reviews</a>
+</nav>
+<div class="flex items-center gap-4">
+<a class="hidden sm:inline-flex items-center font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" href="#channels">
+          Support
+        </a>
+<a class="relative p-2 text-on-surface-variant hover:text-primary transition-colors" href="#early-bird">
+<span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+<span class="absolute top-1 right-1 w-2.5 h-2.5 bg-secondary rounded-full ring-2 ring-surface-container-lowest"></span>
+</a>
+<a class="inline-flex items-center gap-2 bg-primary hover:bg-primary-container text-white font-label-md text-label-md px-5 py-2.5 rounded-lg transition-transform active:scale-[0.98] shadow-sm" href="#register-form">
+          {{data.cta_text}}
+          <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</div>
+</div>
+</header>
+<!-- Hero Event Section -->
+<section class="relative pt-12 pb-20 overflow-hidden bg-gradient-to-b from-surface-container-lowest via-background to-surface-container-low border-b border-outline-variant/40" id="about">
+<div class="max-w-7xl mx-auto px-margin">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+<!-- Text Column -->
+<div class="lg:col-span-7 flex flex-col items-start space-y-6">
+<div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-secondary-container/20 border border-secondary/30 text-secondary font-label-sm uppercase tracking-wider">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+            {{data.hero_badge}}
+          </div>
+<h1 class="font-display text-display text-on-surface font-extrabold tracking-tight">
+            {{data.headline}}
+          </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
+            {{data.subheadline}}
+          </p>
+<!-- Attendance counter badge -->
+<div class="p-4 bg-surface-container-lowest border border-outline-variant rounded-xl flex items-center gap-4 shadow-sm w-full sm:w-auto">
+<div class="flex -space-x-3 overflow-hidden">
+<div class="inline-block h-10 w-10 rounded-full ring-2 ring-white bg-slate-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close up portrait photograph of an Asian professional business summit speaker in an elegant suit with bright conference studio light and soft backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmQYorSjM8cg422iXBvipO4OViUrALeLPPEWq8viXNfHTiJjvcwBtDKlVvTx5_C7StFcKjLGVst69U2cbH-hIjl8mowOiF-QCQY0A7J7l_Wr8T5soQ3hXFwIEcOhWPyHQYdhiNwwqFMk1OqRPAIGEASg1appuW9ddEtvZq4xLmv0JSjlMevYEZ67Gvg1Aje1-VEPbcn4eZcfsDuLWUf_BcSjKTWVtdKkxx_H0MVp4"/>
+</div>
+<div class="inline-block h-10 w-10 rounded-full ring-2 ring-white bg-slate-300 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Headshot of a creative female tech founder wearing modern round spectacles smiling softly with vibrant indigo gradient conference lighting in background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqlye9CDL_kEoEdgkGQUe1WINTbGp0bQ6BRwja44bWkkBvIKJFT0MktnN0sbzXmynqzBtklMsBao0pg5JBVeSP9naTDmnB6hAaqNsaWDIZCn9XrYsNfiuJ71UaNxFKQ1hsszU0CmHMkvagxWRVN1R2dilOIaWDKpwgWmls2tDKtJPGCr8kbFOKAAV-9uCeFgvfduZN5LXkt_4KzImZy36hDs75NKAzF64Tg8x4nMs"/>
+</div>
+<div class="inline-block h-10 w-10 rounded-full ring-2 ring-white bg-slate-400 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Candid studio photograph of an energetic corporate strategist in dark navy shirt giving a keynote speech at a major technology summit." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEiWCbAvI3twZBqvS7RJIYBz-399iNWh_2U10ULdHr75gUGX0ANiUmszI0XIZ0zsAmqAdlu5w6T7exvltGxCBzDcKoN8dC3ufrN84YoqRwBZDV2hJnOEojSJ4p5t3bOPp5gfvsVNtkKxpBOIXSCBL_oQ_KSGoM8X_zi0gnWmp2pBvwRSnUOlDaVMs9y7d7kUit_0fR-UuCLbvGi-0ex-K1VzLzy10gQvTKKulQocU"/>
+</div>
+<div class="inline-flex h-10 w-10 rounded-full ring-2 ring-white bg-primary text-white text-xs font-bold items-center justify-center">
+                +8K
+              </div>
+</div>
+<div class="text-sm">
+<div class="font-label-md text-on-surface flex items-center gap-1.5">
+<span class="font-bold text-primary">{{data.sold_count}}</span> vé &amp; đăng ký đã giữ chỗ
+              </div>
+<p class="font-body-sm text-on-surface-variant text-xs">Cập nhật theo thời gian thực từ ban tổ chức</p>
+</div>
+</div>
+<!-- CTAs -->
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto pt-2">
+<a class="inline-flex justify-center items-center gap-2 bg-secondary hover:bg-emerald-600 text-white font-label-md text-label-md px-8 py-3.5 rounded-lg shadow-sm hover:shadow-md transition-all active:scale-[0.98]" href="#register-form">
+              {{data.cta_text}}
+              <span class="material-symbols-outlined text-base" data-icon="confirmation_number">confirmation_number</span>
+</a>
+<a class="inline-flex justify-center items-center gap-2 bg-surface-container-lowest border border-outline-variant hover:bg-surface text-on-surface font-label-md text-label-md px-6 py-3.5 rounded-lg transition-all" href="#agenda">
+<span class="material-symbols-outlined text-base text-primary" data-icon="event_note">event_note</span>
+              Khám Phá Lịch Trình
+            </a>
+</div>
+<!-- Key Metrics -->
+<div class="grid grid-cols-3 gap-6 pt-4 border-t border-outline-variant/50 w-full">
+<div>
+<div class="font-headline-sm text-headline-sm font-bold text-primary">15+</div>
+<div class="font-body-sm text-on-surface-variant">Diễn giả hàng đầu</div>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm font-bold text-primary">02 Ngày</div>
+<div class="font-body-sm text-on-surface-variant">Thảo luận chuyên sâu</div>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm font-bold text-primary">100%</div>
+<div class="font-body-sm text-on-surface-variant">Networking độc quyền</div>
+</div>
+</div>
+</div>
+<!-- Poster Visual Column -->
+<div class="lg:col-span-5 relative">
+<div class="relative mx-auto max-w-md lg:max-w-none rounded-2xl overflow-hidden border border-outline-variant bg-surface-container-lowest shadow-xl">
+<div class="aspect-[4/5] w-full overflow-hidden bg-surface-container-high relative">
+<img alt="{{data.headline}}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500" src="{{ data.image_url or 'https://lh3.googleusercontent.com/aida-public/AB6AXuAuoeRxLsUv20a4qs6GIBkUUOEuxKfG4u55NphoY28cYFzzDvLf8A2VcE2DNuucrUamlGx56aMmapFLmQEVUCfRN7S2sgi9tnLOJozGtEUX-UoT7ZsL0N0Bgba5lpTzYkm2vtChicPbRsk1VRTfsMc63odlH3GYX9TpxHScPVio8IRi8Ea9aetpHJVfOqDbxaSgnPi5JEDNOz3OaGFSMNqDtq8KFiubFlvYAIoESUY' }}"/>
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/80 via-transparent to-transparent flex flex-col justify-end p-6 text-white">
+<span class="inline-block px-3 py-1 bg-secondary text-white font-label-sm text-xs rounded-full w-fit mb-2">
+                  Official Poster Summit
+                </span>
+<h3 class="font-headline-sm text-white font-bold leading-tight">{{data.headline}}</h3>
+<p class="text-xs text-slate-200 mt-1">Tổ chức bảo trợ: {{data.brand_name}}</p>
+</div>
+</div>
+</div>
+<!-- Floating Badge -->
+<div class="absolute -bottom-5 -left-4 bg-surface-container-lowest border border-outline-variant p-3.5 rounded-xl shadow-lg hidden sm:flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-secondary-container/30 text-secondary flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="verified">verified</span>
+</div>
+<div>
+<div class="text-xs font-bold text-on-surface">Chứng Nhận Toàn Cầu</div>
+<div class="text-[11px] text-on-surface-variant">Cấp bởi {{data.brand_name}} Hội Đồng</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Agenda & Highlights (Features & Bento Matrix) -->
+<section class="py-20 bg-surface" id="agenda">
+<div class="max-w-7xl mx-auto px-margin">
+<div class="text-center max-w-3xl mx-auto mb-14">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-fixed text-primary font-label-sm mb-3">
+<span class="material-symbols-outlined text-sm" data-icon="schedule">schedule</span>
+          AGENDA &amp; QUYỀN LỢI ĐẶC QUYỀN
+        </div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-bold">
+          Nội Dung Hội Thảo &amp; Giá Trị Nhận Được
+        </h2>
+<p class="font-body-md text-on-surface-variant mt-3">
+          {{data.features_description}}
+        </p>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Main Feature Bento Card (Spans 2 cols) -->
+<div class="md:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-xl p-8 shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="px-3 py-1 rounded-md bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-xs">
+                Chủ Đề Trọng Tâm
+              </span>
+<span class="text-on-surface-variant text-sm flex items-center gap-1 font-body-sm">
+<span class="material-symbols-outlined text-base" data-icon="location_on">location_on</span> Grand Ballroom &amp; Online Livestream
+              </span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface font-bold mb-3">
+              {{data.features}}
+            </h3>
+<p class="font-body-md text-on-surface-variant leading-relaxed mb-6">
+              {{data.features_description}}
+            </p>
+</div>
+<!-- Agenda Timeline mini snippet -->
+<div class="border-t border-outline-variant pt-6 space-y-3">
+<div class="flex items-start gap-4">
+<span class="font-mono text-xs font-bold px-2 py-1 bg-surface-container text-primary rounded">08:30 AM</span>
+<div>
+<p class="font-label-md text-on-surface text-sm">Lễ Khai Mạc &amp; Báo Cáo Xu Hướng Năm 2025</p>
+<p class="font-body-sm text-xs text-on-surface-variant">Phát biểu định hướng tương lai công nghệ từ Hội Đồng Chuyên Gia.</p>
+</div>
+</div>
+<div class="flex items-start gap-4">
+<span class="font-mono text-xs font-bold px-2 py-1 bg-surface-container text-primary rounded">10:15 AM</span>
+<div>
+<p class="font-label-md text-on-surface text-sm">Tọa Đàm Bàn Tròn: Chuyển Đổi Số Đột Phá</p>
+<p class="font-body-sm text-xs text-on-surface-variant">Phiên Q&amp;A trực tiếp cùng các nhà lãnh đạo tập đoàn công nghệ.</p>
+</div>
+</div>
+<div class="flex items-start gap-4">
+<span class="font-mono text-xs font-bold px-2 py-1 bg-surface-container text-primary rounded">02:00 PM</span>
+<div>
+<p class="font-label-md text-on-surface text-sm">Giao Lưu Độc Quyền VIP &amp; Ký Kết Hợp Tác</p>
+<p class="font-body-sm text-xs text-on-surface-variant">Không gian kết nối kín dành cho người tham gia sở hữu vé VIP.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Speaker Spotlight Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 shadow-sm flex flex-col justify-between">
+<div>
+<div class="w-12 h-12 rounded-lg bg-surface-container-high text-primary flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-2xl" data-icon="groups">groups</span>
+</div>
+<h4 class="font-headline-sm text-on-surface font-bold mb-2">Quy Tụ Diễn Giả Hàng Đầu</h4>
+<p class="font-body-sm text-on-surface-variant mb-6">
+              Học hỏi từ những người tiên phong đã kiến tạo nên các dự án kỳ lân và chuyển đổi quy mô doanh nghiệp triệu đô.
+            </p>
+</div>
+<div class="p-4 bg-surface-container-low rounded-lg border border-outline-variant/60 flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-2xl" data-icon="workspace_premium">workspace_premium</span>
+<div>
+<div class="font-label-md text-on-surface text-xs font-bold">100% Nội Dung Bản Quyền</div>
+<div class="text-[11px] text-on-surface-variant">Bộ slide thuyết trình gửi riêng qua email sau sự kiện</div>
+</div>
+</div>
+</div>
+<!-- 3 Highlights Cards Row -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm">
+<div class="w-10 h-10 rounded-lg bg-secondary-container/30 text-secondary flex items-center justify-center mb-4">
+<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
+</div>
+<h4 class="font-headline-sm text-on-surface font-semibold mb-2">Chứng Nhận Hội Thảo</h4>
+<p class="font-body-sm text-on-surface-variant">Cấp chứng chỉ điện tử có mã định danh toàn cầu bởi {{data.brand_name}}.</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-variant text-primary flex items-center justify-center mb-4">
+<span class="material-symbols-outlined" data-icon="wine_bar">wine_bar</span>
+</div>
+<h4 class="font-headline-sm text-on-surface font-semibold mb-2">Tiệc Trà &amp; Networking</h4>
+<p class="font-body-sm text-on-surface-variant">Tea-break tiêu chuẩn 5 sao cùng cơ hội gặp gỡ đối tác kinh doanh chiến lược.</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm">
+<div class="w-10 h-10 rounded-lg bg-tertiary-fixed text-tertiary-container flex items-center justify-center mb-4">
+<span class="material-symbols-outlined" data-icon="card_giftcard">card_giftcard</span>
+</div>
+<h4 class="font-headline-sm text-on-surface font-semibold mb-2">Bộ Quà Tặng Ban Tổ Chức</h4>
+<p class="font-body-sm text-on-surface-variant">Nhận sổ tay da cao cấp, tài liệu chiến lược, cùng quà tặng kỷ niệm độc quyền.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Flash Sale / Early Bird Ticket Section -->
+<section class="py-20 bg-surface-container-lowest border-y border-outline-variant" id="early-bird">
+<div class="max-w-7xl mx-auto px-margin">
+<div class="bg-gradient-to-r from-primary to-primary-container rounded-2xl text-white p-8 md:p-12 shadow-xl relative overflow-hidden">
+<div class="absolute -right-16 -bottom-16 w-80 h-80 rounded-full bg-white/5 pointer-events-none blur-2xl"></div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+<div class="lg:col-span-7">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-white font-label-sm text-xs mb-4">
+<span class="material-symbols-outlined text-sm" data-icon="bolt">bolt</span>
+              ƯU ĐÃI FLASH SALE CÓ HẠN
+            </div>
+<h2 class="font-headline-lg text-headline-lg text-white font-bold leading-tight mb-3">
+              Giữ Chỗ Vé Sớm - Tiết Kiệm Tới {{data.discount_percent}}
+            </h2>
+<p class="text-surface-variant font-body-md max-w-xl mb-6">
+              Áp dụng riêng cho 50 lượt đăng ký đầu tiên trong hôm nay. Hưởng toàn quyền lợi VIP summit và phòng nghỉ đối tác.
+            </p>
+<!-- Countdown Box -->
+<div class="flex items-center gap-3">
+<span class="text-xs font-label-md tracking-wider uppercase text-surface-container-low">Thời hạn ưu đãi kết thúc trong:</span>
+<div class="flex gap-2 text-center font-mono">
+<div class="bg-inverse-surface/60 px-3 py-1.5 rounded-lg border border-white/10 text-white font-bold text-sm">04h</div>
+<div class="bg-inverse-surface/60 px-3 py-1.5 rounded-lg border border-white/10 text-white font-bold text-sm">18m</div>
+<div class="bg-inverse-surface/60 px-3 py-1.5 rounded-lg border border-white/10 text-white font-bold text-sm">32s</div>
+</div>
+</div>
+</div>
+<!-- Pricing Card -->
+<div class="lg:col-span-5">
+<div class="bg-surface-container-lowest text-on-surface rounded-xl p-6 sm:p-8 border border-outline-variant shadow-2xl">
+<div class="flex justify-between items-start mb-4">
+<div>
+<span class="font-label-sm text-xs font-bold text-secondary uppercase bg-secondary-container/30 px-2.5 py-1 rounded">
+                    Tiết Kiệm {{data.discount_percent}}
+                  </span>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface mt-2">Vé Early Bird Summit</h3>
+</div>
+<span class="material-symbols-outlined text-3xl text-secondary" data-icon="local_activity">local_activity</span>
+</div>
+<!-- Price Compare -->
+<div class="my-6 pb-6 border-b border-outline-variant">
+<div class="text-sm text-on-surface-variant">Giá vé tiêu chuẩn ban tổ chức:</div>
+<div class="text-lg line-through text-outline font-semibold mb-1">{{data.original_price}}</div>
+<div class="flex items-baseline gap-2">
+<span class="font-display-mobile text-display-mobile font-extrabold text-secondary">{{data.sale_price}}</span>
+<span class="text-xs text-on-surface-variant font-label-sm">/ 01 Vé Trọn Gói</span>
+</div>
+<p class="text-xs text-error font-medium mt-1">Đã có {{data.sold_count}} người giữ chỗ thành công!</p>
+</div>
+<ul class="space-y-2.5 text-xs text-on-surface-variant mb-6">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-base" data-icon="check_circle">check_circle</span>
+                  Tham dự đầy đủ tất cả các phiên thảo luận chính
+                </li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-base" data-icon="check_circle">check_circle</span>
+                  Bộ tài liệu chiến lược &amp; slide độc quyền
+                </li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-base" data-icon="check_circle">check_circle</span>
+                  Tiệc Teabreak cao cấp cùng dàn diễn giả
+                </li>
+</ul>
+<a class="w-full inline-flex justify-center items-center gap-2 bg-secondary hover:bg-emerald-600 text-white font-label-md text-label-md py-3.5 rounded-lg shadow-md transition-all active:scale-[0.98]" href="#register-form">
+                {{data.cta_text}}
+                <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Registration Form Section -->
+<section class="py-20 bg-background" id="register-form">
+<div class="max-w-4xl mx-auto px-margin">
+<div class="text-center mb-10">
+<div class="inline-flex items-center gap-1.5 text-primary font-label-sm uppercase tracking-wider mb-2">
+<span class="material-symbols-outlined text-base" data-icon="app_registration">app_registration</span>
+          ĐĂNG KÝ VÉ CHÍNH THỨC
+        </div>
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface">
+          Đăng Ký Tham Dự {{data.headline}}
+        </h2>
+<p class="font-body-md text-on-surface-variant mt-2">
+          Vui lòng điền thông tin chính xác để hệ thống của {{data.brand_name}} gửi mã vé điện tử QR Code tới email của bạn.
+        </p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-2xl p-8 sm:p-10 shadow-lg">
+<form class="space-y-6" onsubmit="event.preventDefault(); alert('Cảm ơn bạn! Đơn đăng ký tham dự đã gửi tới ban tổ chức {{data.brand_name}}.');">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+<div>
+<label class="block font-label-md text-on-surface text-sm mb-1.5">Họ và tên người tham dự *</label>
+<input class="w-full h-11 px-3.5 rounded-lg border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 text-on-surface text-sm outline-none transition" placeholder="Ví dụ: Nguyễn Văn A" required="" type="text"/>
+</div>
+<div>
+<label class="block font-label-md text-on-surface text-sm mb-1.5">Số điện thoại liên hệ *</label>
+<input class="w-full h-11 px-3.5 rounded-lg border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 text-on-surface text-sm outline-none transition" placeholder="Ví dụ: 0987 654 321" required="" type="tel"/>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+<div>
+<label class="block font-label-md text-on-surface text-sm mb-1.5">Email nhận vé điện tử (E-ticket) *</label>
+<input class="w-full h-11 px-3.5 rounded-lg border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 text-on-surface text-sm outline-none transition" placeholder="name@company.com" required="" type="email"/>
+</div>
+<div>
+<label class="block font-label-md text-on-surface text-sm mb-1.5">Tổ chức / Doanh nghiệp công tác</label>
+<input class="w-full h-11 px-3.5 rounded-lg border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 text-on-surface text-sm outline-none transition" placeholder="Công ty / Đơn vị đại diện" type="text"/>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-on-surface text-sm mb-2">Chọn hạng vé tham dự</label>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+<label class="relative flex flex-col p-4 border-2 border-primary bg-primary-fixed/20 rounded-xl cursor-pointer">
+<input checked="" class="sr-only" name="ticket_tier" type="radio" value="early_bird"/>
+<span class="font-label-md text-primary text-sm font-bold">Vé Early Bird</span>
+<span class="text-xs text-on-surface-variant mt-1">{{data.sale_price}} (Tiết kiệm {{data.discount_percent}})</span>
+<span class="material-symbols-outlined text-primary text-sm absolute top-3 right-3" data-icon="check_circle">check_circle</span>
+</label>
+<label class="relative flex flex-col p-4 border border-outline-variant hover:border-primary/50 rounded-xl cursor-pointer">
+<input class="sr-only" name="ticket_tier" type="radio" value="standard"/>
+<span class="font-label-md text-on-surface text-sm font-bold">Vé Tiêu Chuẩn</span>
+<span class="text-xs text-on-surface-variant mt-1">{{data.original_price}}</span>
+</label>
+<label class="relative flex flex-col p-4 border border-outline-variant hover:border-primary/50 rounded-xl cursor-pointer">
+<input class="sr-only" name="ticket_tier" type="radio" value="vip"/>
+<span class="font-label-md text-on-surface text-sm font-bold">Vé VIP Summit</span>
+<span class="text-xs text-on-surface-variant mt-1">Networking riêng &amp; Bàn tròn</span>
+</label>
+</div>
+</div>
+<div class="flex items-start gap-2.5 pt-2">
+<input class="w-4 h-4 mt-0.5 rounded text-primary focus:ring-primary border-outline-variant" id="policy" required="" type="checkbox"/>
+<label class="text-xs text-on-surface-variant" for="policy">
+              Tôi đồng ý với chính sách bảo mật và điều khoản tham dự do <strong>{{data.brand_name}}</strong> công bố.
+            </label>
+</div>
+<button class="w-full bg-secondary hover:bg-emerald-600 text-white font-label-md text-base py-4 rounded-lg shadow-md hover:shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2" type="submit">
+            {{data.cta_text}} (Chỉ {{data.sale_price}})
+            <span class="material-symbols-outlined text-lg" data-icon="send">send</span>
+</button>
+</form>
+</div>
+</div>
+</section>
+<!-- Dynamic CTA Buttons & Contact Hub -->
+<div id="channels">
+{% include "partials/cta_buttons.html" %}
+</div>
+<!-- Shared Component: Footer -->
+<footer class="bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant dark:border-outline full-width">
+<div class="w-full max-w-7xl mx-auto px-margin py-space-xl flex flex-col md:flex-row justify-between items-center gap-space-md">
+<div class="flex flex-col items-center md:items-start gap-1">
+<div class="font-headline-sm text-headline-sm font-bold text-on-surface dark:text-inverse-on-surface">
+          {{data.brand_name}}
+        </div>
+<div class="font-body-sm text-body-sm text-on-surface-variant dark:text-surface-variant">
+          © 2025 {{data.brand_name}}. All rights reserved. 100% Guaranteed Satisfaction.
+        </div>
+</div>
+<nav class="flex flex-wrap justify-center gap-6 font-label-sm text-label-sm">
+<a class="text-primary dark:text-inverse-primary font-semibold hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 hover:underline" href="#">Terms of Service</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 hover:underline" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 hover:underline" href="#">Return Policy</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 hover:underline" href="#">Guarantee &amp; Warranty</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 hover:underline" href="#">Contact Support</a>
+</nav>
+</div>
+</footer>
+</body></html>
