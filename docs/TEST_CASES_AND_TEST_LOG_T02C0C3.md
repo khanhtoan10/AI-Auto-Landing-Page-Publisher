@@ -149,3 +149,4 @@ Trong quá trình phát triển sprint và kiểm thử module, các lỗi nghi�
    - Mã nguồn kiểm thử: [`backend/tests/test_deploy_module.py`](file:///c:/Users/ASUS/OneDrive/Máy tính/codeduan/AI-Auto-Landing-Page-Publisher/backend/tests/test_deploy_module.py)
    - Bảng ma trận Test Case (CSV/Excel): [`docs/TEST_CASE_T02C0C3.csv`](file:///c:/Users/ASUS/OneDrive/Máy tính/codeduan/AI-Auto-Landing-Page-Publisher/docs/TEST_CASE_T02C0C3.csv)
    - Bảng nhật ký Test Log & Bug Log (CSV/Excel): [`docs/TEST_LOG_T02C0C3.csv`](file:///c:/Users/ASUS/OneDrive/Máy tính/codeduan/AI-Auto-Landing-Page-Publisher/docs/TEST_LOG_T02C0C3.csv)
+
