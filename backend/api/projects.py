@@ -770,6 +770,7 @@ def deploy_project(
 
         enable_github_pages(owner=owner, repo_name=repo_name)
 
+        # Đồng bộ trạng thái build GitHub Pages: chỉ đánh dấu Success khi đã build xong
         db.execute(
             text("UPDATE deployments SET status = :status WHERE id = :id"),
             {"status": "Building", "id": deployment_id},
@@ -826,6 +827,7 @@ def deploy_project(
             {"id": project["id"]},
         )
         db.commit()
+        # Dùng 503 thay vì 401 để frontend không nhầm với JWT hết hạn → không redirect login
         raise HTTPException(
             status_code=503,
             detail=str(exc),

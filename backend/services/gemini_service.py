@@ -20,6 +20,10 @@ from core.config import settings  # noqa: E402
 logger = logging.getLogger(__name__)
 
 GEMINI_MODEL = "gemini-3.8-flash"
+GEMINI_FALLBACK_MODELS = [
+    "gemini-3.8-flash",
+    "gemini-3.5-flash-lite",
+]
 GEMINI_API_URL = (
     f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 )
@@ -259,67 +263,106 @@ def _extract_text_from_gemini_response(response_payload: dict[str, Any]) -> str:
     return combined_text
 
 
+def _get_models_to_try() -> list[str]:
+    """Tổng hợp danh sách model chính và các model dự phòng không trùng lặp."""
+    raw_models = (
+        list(GEMINI_MODEL)
+        if isinstance(GEMINI_MODEL, (list, tuple))
+        else [GEMINI_MODEL]
+    ) + GEMINI_FALLBACK_MODELS
+
+    models: list[str] = []
+    for m in raw_models:
+        if isinstance(m, str) and m.strip() and m.strip() not in models:
+            models.append(m.strip())
+    return models or ["gemini-3.8-flash"]
+
+
 def _call_gemini_once(
     api_key: str,
     encoded_body: bytes,
     timeout: int,
 ) -> dict[str, Any]:
-    """Thực hiện 1 lần gọi HTTP tới Gemini API và kiểm tra JSON trả về."""
-    req = request.Request(
-        url=GEMINI_API_URL,
-        data=encoded_body,
-        headers={
-            "Content-Type": "application/json",
-            "x-goog-api-key": api_key,
-        },
-        method="POST",
-    )
+    """Thực hiện 1 lượt gọi HTTP tới Gemini API (hỗ trợ fallback model) và kiểm tra JSON trả về."""
+    models_to_try = _get_models_to_try()
+    last_error: GeminiServiceError | None = None
+    raw_http_body = ""
 
-    try:
-        with request.urlopen(req, timeout=timeout) as resp:
-            raw_http_body = resp.read().decode("utf-8")
-    except error.HTTPError as exc:
-        # Không log hoặc đưa API Key vào thông báo lỗi
-        error_detail = ""
-        error_status = ""
+    for idx, model_name in enumerate(models_to_try):
+        has_next_model = idx < len(models_to_try) - 1
+        api_url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{model_name}:generateContent"
+        )
+        req = request.Request(
+            url=api_url,
+            data=encoded_body,
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": api_key,
+            },
+            method="POST",
+        )
+
         try:
-            err_json = json.loads(exc.read().decode("utf-8"))
-            err_obj = err_json.get("error", {}) if isinstance(err_json, dict) else {}
-            error_detail = str(err_obj.get("message", ""))
-            error_status = str(err_obj.get("status", ""))
-        except Exception:
-            error_detail = exc.reason or "HTTP Error"
+            with request.urlopen(req, timeout=timeout) as resp:
+                raw_http_body = resp.read().decode("utf-8")
+                last_error = None
+                break
+        except error.HTTPError as exc:
+            error_detail = ""
+            error_status = ""
+            try:
+                err_json = json.loads(exc.read().decode("utf-8"))
+                err_obj = err_json.get("error", {}) if isinstance(err_json, dict) else {}
+                error_detail = str(err_obj.get("message", ""))
+                error_status = str(err_obj.get("status", ""))
+            except Exception:
+                error_detail = exc.reason or "HTTP Error"
 
-        logger.error("Gemini API trả về lỗi HTTP %s: %s", exc.code, error_detail)
+            logger.error(
+                "Gemini API (model '%s') trả về lỗi HTTP %s: %s",
+                model_name,
+                exc.code,
+                error_detail,
+            )
 
-        if _is_quota_error(exc.code, error_status, error_detail):
-            raise GeminiQuotaError(
-                f"Gemini API vượt giới hạn quota (HTTP {exc.code}): {error_detail}"
+            if _is_quota_error(exc.code, error_status, error_detail):
+                last_error = GeminiQuotaError(
+                    f"Gemini API vượt giới hạn quota (HTTP {exc.code}): {error_detail}"
+                )
+                if has_next_model:
+                    continue
+                raise last_error from exc
+
+            if exc.code in (408, 504):
+                raise GeminiTimeoutError(
+                    f"Gemini API phản hồi quá thời gian chờ (HTTP {exc.code})"
+                ) from exc
+
+            is_transient_5xx = 500 <= exc.code < 600
+            last_error = GeminiConnectionError(
+                f"Lỗi kết nối Gemini API (HTTP {exc.code}): {error_detail}",
+                retryable=is_transient_5xx,
+            )
+            if exc.code in (404, 503) and has_next_model:
+                continue
+            raise last_error from exc
+        except (error.URLError, TimeoutError, socket.timeout, OSError) as exc:
+            if _is_timeout_exception(exc):
+                logger.error("Kết nối tới Gemini API bị timeout sau %ss", timeout)
+                raise GeminiTimeoutError(
+                    f"Kết nối tới Gemini API bị quá thời gian chờ ({timeout}s)"
+                ) from exc
+
+            logger.error("Không thể kết nối tới Gemini API: %s", type(exc).__name__)
+            raise GeminiConnectionError(
+                f"Không thể kết nối tới Gemini API: {exc}",
+                retryable=True,
             ) from exc
 
-        if exc.code in (408, 504):
-            raise GeminiTimeoutError(
-                f"Gemini API phản hồi quá thời gian chờ (HTTP {exc.code})"
-            ) from exc
-
-        # Các lỗi 5xx tạm thời phía server có thể retry; lỗi 4xx (key sai, model sai, bad request) không retry
-        is_transient_5xx = 500 <= exc.code < 600
-        raise GeminiConnectionError(
-            f"Lỗi kết nối Gemini API (HTTP {exc.code}): {error_detail}",
-            retryable=is_transient_5xx,
-        ) from exc
-    except (error.URLError, TimeoutError, socket.timeout, OSError) as exc:
-        if _is_timeout_exception(exc):
-            logger.error("Kết nối tới Gemini API bị timeout sau %ss", timeout)
-            raise GeminiTimeoutError(
-                f"Kết nối tới Gemini API bị quá thời gian chờ ({timeout}s)"
-            ) from exc
-
-        logger.error("Không thể kết nối tới Gemini API: %s", type(exc).__name__)
-        raise GeminiConnectionError(
-            f"Không thể kết nối tới Gemini API: {exc}",
-            retryable=True,
-        ) from exc
+    if last_error is not None:
+        raise last_error
 
     if not raw_http_body.strip():
         raise GeminiResponseError("Gemini API trả về phản hồi HTTP rỗng")

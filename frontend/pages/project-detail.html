@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chi tiết chiến dịch — AI Auto Landing Page Publisher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/common.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="h-full bg-slate-50 text-slate-800 antialiased flex overflow-hidden">
+
+  <!-- Overlay làm tối nền khi mở Sidebar trên Mobile -->
+  <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden lg:hidden transition-opacity duration-300"></div>
+
+  <!-- Sidebar điều hướng bên trái -->
+  <aside id="app-sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-64 h-full transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shrink-0 bg-white border-r border-slate-200 flex flex-col"></aside>
+
+  <!-- Khung nội dung chính -->
+  <div class="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+
+    <!-- Top Header (tự động tiêm qua ../js/layout.js) -->
+    <div id="app-header"></div>
+
+    <!-- Main Content Area -->
+    <main id="app-content" class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 animate-fadeIn">
+
+      <!-- Trạng thái đang tải toàn trang -->
+      <div id="page-loading" class="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-xs">
+        <i class="fa-solid fa-spinner fa-spin text-3xl text-indigo-500 mb-4"></i>
+        <p class="text-sm font-semibold text-slate-700">Đang tải thông tin chiến dịch...</p>
+        <p class="text-xs text-slate-400 mt-1">Vui lòng chờ trong giây lát.</p>
+      </div>
+
+      <!-- Trạng thái lỗi toàn trang (không có ID, sai ID, 403, 404, lỗi mạng) -->
+      <div id="page-error" class="hidden bg-white rounded-2xl border border-slate-200/80 p-10 text-center max-w-lg mx-auto shadow-xs">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center text-2xl mb-4">
+          <i id="page-error-icon" class="fa-solid fa-circle-exclamation"></i>
+        </div>
+        <h3 id="page-error-title" class="text-lg font-bold text-slate-800 mb-2">Đã xảy ra lỗi</h3>
+        <p id="page-error-message" class="text-xs text-slate-500 mb-6 leading-relaxed"></p>
+        <div class="flex items-center justify-center gap-3">
+          <a href="projects.html" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-xs">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Về danh sách dự án</span>
+          </a>
+          <button type="button" id="btn-page-retry" class="hidden inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-xs">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span>Thử lại</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Khung hiển thị nội dung chính khi tải thành công -->
+      <div id="page-content" class="hidden space-y-6">
+
+        <!-- Thanh điều hướng và nút thao tác -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+          <div>
+            <div class="flex items-center gap-2 text-xs text-slate-400 mb-1.5">
+              <a href="projects.html" class="hover:text-indigo-600 transition inline-flex items-center gap-1 font-semibold text-slate-500">
+                <i class="fa-solid fa-arrow-left text-[10px]"></i>
+                <span>Dự án của tôi</span>
+              </a>
+              <span>/</span>
+              <span id="breadcrumb-project-id" class="font-mono text-slate-400 font-medium">Chi tiết</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+              <h2 id="project-title" class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight"></h2>
+              <div id="project-status-badge"></div>
+            </div>
+          </div>
+
+          <!-- Nhóm các nút hành động (tham số ?id=) -->
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <a id="btn-edit" href="#" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50/50 text-slate-700 text-xs font-bold transition shadow-xs">
+              <i class="fa-solid fa-pen-to-square text-xs"></i>
+              <span>Chỉnh sửa</span>
+            </a>
+            <a id="btn-preview" href="#" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50/50 text-slate-700 text-xs font-bold transition shadow-xs">
+              <i class="fa-solid fa-eye text-xs"></i>
+              <span>Xem trước</span>
+            </a>
+            <a id="btn-deploy" href="#" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-sm">
+              <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
+              <span>Deploy lại</span>
+            </a>
+            <button type="button" id="btn-open-delete-modal" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition">
+              <i class="fa-solid fa-trash-can text-xs"></i>
+              <span>Xóa</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Khung 2 cột: Thông tin chi tiết & Ảnh xem trước -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          <!-- Cột trái (2/3): Thông tin dự án + Liên kết xuất bản -->
+          <div class="lg:col-span-2 space-y-6">
+
+            <!-- Thẻ: Thông tin chiến dịch & Sản phẩm -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
+              <div class="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-100">
+                <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm font-bold">
+                  <i class="fa-solid fa-box-open"></i>
+                </div>
+                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wide">Thông tin chiến dịch &amp; Sản phẩm</h3>
+              </div>
+
+              <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-xs">
+                <div>
+                  <dt class="font-semibold text-slate-400">Tên chiến dịch</dt>
+                  <dd id="info-campaign-name" class="font-bold text-slate-800 mt-1 text-sm break-words">—</dd>
+                </div>
+                <div>
+                  <dt class="font-semibold text-slate-400">Tên sản phẩm</dt>
+                  <dd id="info-product-name" class="font-bold text-slate-800 mt-1 text-sm break-words">—</dd>
+                </div>
+                <div>
+                  <dt class="font-semibold text-slate-400">Giá bán hiển thị</dt>
+                  <dd id="info-price" class="font-bold text-emerald-600 mt-1 text-sm font-mono">—</dd>
+                </div>
+                <div>
+                  <dt class="font-semibold text-slate-400">Tông màu chủ đạo</dt>
+                  <dd id="info-color-theme" class="mt-1 flex items-center gap-2 font-mono font-semibold text-slate-700">—</dd>
+                </div>
+                <div class="sm:col-span-2 pt-2 border-t border-slate-100">
+                  <dt class="font-semibold text-slate-400 mb-1">Mô tả sản phẩm</dt>
+                  <dd id="info-description" class="text-slate-700 text-xs leading-relaxed whitespace-pre-wrap bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">—</dd>
+                </div>
+              </dl>
+            </div>
+
+            <!-- Thẻ: Liên kết trực tuyến (GitHub Pages & Repository) -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
+              <div class="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-100">
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm font-bold">
+                  <i class="fa-solid fa-link"></i>
+                </div>
+                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wide">Liên kết trực tuyến</h3>
+              </div>
+
+              <div class="space-y-4 text-xs">
+                <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="font-bold text-slate-700 flex items-center gap-2">
+                      <i class="fa-solid fa-globe text-emerald-500"></i>
+                      <span>Trang Landing Page (GitHub Pages)</span>
+                    </div>
+                    <div id="link-github-pages" class="mt-1 text-xs break-all"></div>
+                  </div>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="font-bold text-slate-700 flex items-center gap-2">
+                      <i class="fa-brands fa-github text-slate-800"></i>
+                      <span>Kho mã nguồn (GitHub Repository)</span>
+                    </div>
+                    <div id="link-repo-url" class="mt-1 text-xs break-all"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Cột phải (1/3): Ảnh đại diện & Thời gian hệ thống -->
+          <div class="space-y-6">
+
+            <!-- Thẻ: Ảnh sản phẩm -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
+              <div class="flex items-center gap-2.5 pb-4 mb-4 border-b border-slate-100">
+                <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm font-bold">
+                  <i class="fa-solid fa-image"></i>
+                </div>
+                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wide">Ảnh sản phẩm</h3>
+              </div>
+
+              <div id="image-container" class="w-full aspect-video rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center">
+                <!-- Nội dung ảnh tiêm qua JS -->
+              </div>
+              <div id="image-url-text" class="mt-2.5 text-[11px] text-slate-400 font-mono break-all line-clamp-2"></div>
+            </div>
+
+            <!-- Thẻ: Thông tin thời gian & ID -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
+              <div class="flex items-center gap-2.5 pb-4 mb-4 border-b border-slate-100">
+                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-sm font-bold">
+                  <i class="fa-solid fa-clock"></i>
+                </div>
+                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wide">Thời gian &amp; Hệ thống</h3>
+              </div>
+
+              <dl class="space-y-3.5 text-xs">
+                <div class="flex items-center justify-between">
+                  <dt class="text-slate-400 font-semibold">Mã định danh (ID)</dt>
+                  <dd id="info-id" class="font-mono font-bold text-slate-800">—</dd>
+                </div>
+                <div class="flex items-center justify-between">
+                  <dt class="text-slate-400 font-semibold">Ngày tạo</dt>
+                  <dd id="info-created-at" class="font-semibold text-slate-700">—</dd>
+                </div>
+                <div class="flex items-center justify-between">
+                  <dt class="text-slate-400 font-semibold">Cập nhật lần cuối</dt>
+                  <dd id="info-updated-at" class="font-semibold text-slate-700">—</dd>
+                </div>
+              </dl>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Khối Lịch sử triển khai (Deployments) -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-slate-900">Lịch sử xuất bản &amp; Triển khai</h3>
+                <p class="text-xs text-slate-400">Danh sách các lần deploy lên GitHub Pages của chiến dịch này</p>
+              </div>
+            </div>
+            <button type="button" id="btn-refresh-deployments" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold transition self-start sm:self-auto">
+              <i class="fa-solid fa-rotate-right text-[11px]"></i>
+              <span>Làm mới</span>
+            </button>
+          </div>
+
+          <!-- Vùng hiển thị bảng deployments -->
+          <div id="deployments-container">
+            <!-- Nội dung do JS render -->
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Modal xác nhận xóa chiến dịch -->
+  <div id="delete-modal" class="fixed inset-0 z-[90] hidden items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full p-6 animate-scaleIn">
+      <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl mb-4">
+        <i class="fa-solid fa-trash-can"></i>
+      </div>
+      <h3 id="delete-modal-title" class="text-lg font-bold text-slate-900 mb-2">Xóa chiến dịch này?</h3>
+      <p class="text-xs text-slate-600 mb-6 leading-relaxed">
+        Chiến dịch <span id="delete-modal-campaign-name" class="font-bold text-slate-800"></span> sẽ bị xóa vĩnh viễn khỏi danh sách quản lý. Repository GitHub tương ứng (nếu có) cũng sẽ được yêu cầu xóa. Hành động này không thể hoàn tác.
+      </p>
+      <div class="flex items-center justify-end gap-3">
+        <button type="button" id="btn-cancel-delete" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">Hủy bỏ</button>
+        <button type="button" id="btn-confirm-delete" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 disabled:cursor-not-allowed shadow-sm transition">
+          <i id="delete-spinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+          <i id="delete-icon" class="fa-solid fa-trash-can"></i>
+          <span id="delete-btn-text">Xóa vĩnh viễn</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/layout.js"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    const state = {
+      projectId: null,
+      project: null,
+      deleting: false,
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    // -- Hàm escape phòng chống XSS --
+    function escapeHtml(value) {
+      const div = document.createElement("div");
+      div.appendChild(document.createTextNode(value === null || value === undefined ? "" : String(value)));
+      return div.innerHTML;
+    }
+
+    // -- Kiểm tra URL có bắt đầu bằng http:// hoặc https:// không --
+    function isValidHttpUrl(str) {
+      if (!str) return false;
+      const s = String(str).trim();
+      return /^https?:\/\//i.test(s);
+    }
+
+    // -- Định dạng ngày chuẩn: dd/mm/yyyy HH:mm --
+    function formatDate(value) {
+      if (!value) return "—";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "—";
+      const dd = String(date.getDate()).padStart(2, "0");
+      const mm = String(date.getMonth() + 1).padStart(2, "0");
+      const yyyy = date.getFullYear();
+      const hh = String(date.getHours()).padStart(2, "0");
+      const min = String(date.getMinutes()).padStart(2, "0");
+      return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+    }
+
+    // -- Định dạng giá tiền VNĐ --
+    function formatPrice(value) {
+      if (value === null || value === undefined || value === "") return "Chưa đặt giá";
+      const num = Number(value);
+      if (Number.isNaN(num)) return escapeHtml(String(value));
+      return new Intl.NumberFormat("vi-VN").format(num) + " đ";
+    }
+
+    // -- Định dạng thời lượng (giây hoặc phút) --
+    function formatDuration(seconds) {
+      if (seconds === null || seconds === undefined || Number.isNaN(Number(seconds))) {
+        return "—";
+      }
+      const sec = Math.max(0, Math.floor(Number(seconds)));
+      if (sec < 60) return `${sec} giây`;
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return s > 0 ? `${m} phút ${s} giây` : `${m} phút`;
+    }
+
+    // -- Bảng ánh xạ trạng thái dự án --
+    const PROJECT_STATUS_MAP = {
+      draft: { label: "Nháp", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", icon: "fa-pen-ruler" },
+      deploying: { label: "Đang deploy", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", icon: "fa-cloud-arrow-up" },
+      published: { label: "Đã xuất bản", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", icon: "fa-globe" },
+      failed: { label: "Lỗi", bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200", icon: "fa-triangle-exclamation" },
+    };
+
+    function projectStatusBadge(status) {
+      const config = PROJECT_STATUS_MAP[status] || {
+        label: status || "—",
+        bg: "bg-slate-50",
+        text: "text-slate-600",
+        border: "border-slate-200",
+        icon: "fa-circle-info",
+      };
+      return `<span class="inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full font-semibold ${config.bg} ${config.text} border ${config.border}">
+        <i class="fa-solid ${config.icon} text-[11px]"></i>${escapeHtml(config.label)}
+      </span>`;
+    }
+
+    // -- Bảng ánh xạ trạng thái deploy theo view_status --
+    const DEPLOY_STATUS_MAP = {
+      active: { label: "Đang hoạt động", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", icon: "fa-circle-check" },
+      superseded: { label: "Đã thay thế", bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-200", icon: "fa-clock-rotate-left" },
+      failed: { label: "Thất bại", bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200", icon: "fa-circle-xmark" },
+      processing: { label: "Đang xử lý", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", icon: "fa-spinner fa-spin" },
+    };
+
+    function deployStatusBadge(viewStatus) {
+      const config = DEPLOY_STATUS_MAP[viewStatus] || {
+        label: viewStatus || "—",
+        bg: "bg-slate-50",
+        text: "text-slate-600",
+        border: "border-slate-200",
+        icon: "fa-circle-info",
+      };
+      return `<span class="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-0.5 rounded-full font-semibold ${config.bg} ${config.text} border ${config.border}">
+        <i class="fa-solid ${config.icon} text-[10px]"></i>${escapeHtml(config.label)}
+      </span>`;
+    }
+
+    // -- Xử lý URL ảnh --
+    function resolveImageUrl(url) {
+      if (!url) return "";
+      const trimmed = String(url).trim();
+      if (trimmed.startsWith("/static/")) {
+        const base = window.API_BASE_URL || "";
+        return `${base}${trimmed}`;
+      }
+      return trimmed;
+    }
+
+    // -- Hiển thị lỗi toàn trang --
+    function showPageError(title, message, isRetryable = false) {
+      $("page-loading")?.classList.add("hidden");
+      $("page-content")?.classList.add("hidden");
+
+      const errBox = $("page-error");
+      if (!errBox) return;
+
+      const titleEl = $("page-error-title");
+      const msgEl = $("page-error-message");
+      const retryBtn = $("btn-page-retry");
+
+      if (titleEl) titleEl.textContent = title;
+      if (msgEl) msgEl.textContent = message;
+      if (retryBtn) {
+        retryBtn.classList.toggle("hidden", !isRetryable);
+        if (isRetryable) {
+          retryBtn.onclick = () => loadProjectDetail();
+        }
+      }
+
+      errBox.classList.remove("hidden");
+    }
+
+    // -- Hiển thị dữ liệu chi tiết chiến dịch --
+    function renderProject(project) {
+      state.project = project;
+
+      // Tiêu đề & Trạng thái
+      const displayName = project.campaign_name || project.product_name || `Chiến dịch #${project.id}`;
+      $("project-title").textContent = displayName;
+      $("breadcrumb-project-id").textContent = `#${project.id}`;
+      $("project-status-badge").innerHTML = projectStatusBadge(project.status);
+
+      // Cập nhật URL các nút thao tác luôn kèm ?id=
+      $("btn-edit").href = `edit-project.html?id=${encodeURIComponent(project.id)}`;
+      $("btn-preview").href = `preview.html?id=${encodeURIComponent(project.id)}`;
+      $("btn-deploy").href = `deploy.html?id=${encodeURIComponent(project.id)}`;
+
+      // Thông tin chi tiết
+      $("info-campaign-name").textContent = project.campaign_name || "—";
+      $("info-product-name").textContent = project.product_name || "—";
+      $("info-price").textContent = formatPrice(project.price);
+
+      // Tông màu
+      const colorContainer = $("info-color-theme");
+      if (project.color_theme) {
+        const cleanColor = String(project.color_theme).trim();
+        colorContainer.innerHTML = `
+          <span class="w-4 h-4 rounded-md border border-slate-300 shadow-2xs inline-block shrink-0" style="background-color: ${escapeHtml(cleanColor)}"></span>
+          <span>${escapeHtml(cleanColor)}</span>
+        `;
+      } else {
+        colorContainer.textContent = "Chưa chọn";
+      }
+
+      // Mô tả sản phẩm
+      $("info-description").textContent = project.product_description || "Chưa có mô tả.";
+
+      // Link live: GitHub Pages
+      const ghPagesContainer = $("link-github-pages");
+      if (isValidHttpUrl(project.github_pages_url)) {
+        ghPagesContainer.innerHTML = `
+          <a href="${escapeHtml(project.github_pages_url)}" target="_blank" rel="noopener" class="text-indigo-600 hover:text-indigo-700 hover:underline font-mono inline-flex items-center gap-1.5 font-medium">
+            <span>${escapeHtml(project.github_pages_url)}</span>
+            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] shrink-0"></i>
+          </a>
+        `;
+      } else {
+        ghPagesContainer.innerHTML = '<span class="text-slate-400">Chưa xuất bản</span>';
+      }
+
+      // Link live: GitHub Repository
+      const repoContainer = $("link-repo-url");
+      if (isValidHttpUrl(project.repo_url)) {
+        repoContainer.innerHTML = `
+          <a href="${escapeHtml(project.repo_url)}" target="_blank" rel="noopener" class="text-indigo-600 hover:text-indigo-700 hover:underline font-mono inline-flex items-center gap-1.5 font-medium">
+            <span>${escapeHtml(project.repo_url)}</span>
+            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] shrink-0"></i>
+          </a>
+        `;
+      } else {
+        repoContainer.innerHTML = '<span class="text-slate-400">Chưa xuất bản</span>';
+      }
+
+      // Ảnh sản phẩm
+      const imgContainer = $("image-container");
+      const imgUrlText = $("image-url-text");
+      const resolvedImg = resolveImageUrl(project.image_url);
+
+      if (resolvedImg && (isValidHttpUrl(resolvedImg) || resolvedImg.startsWith("/static/"))) {
+        imgContainer.innerHTML = `
+          <img src="${escapeHtml(resolvedImg)}" alt="${escapeHtml(displayName)}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\\'p-4 text-center text-slate-400 text-xs\\'><i class=\\'fa-solid fa-image-slash text-2xl mb-1 text-slate-300 block\\'></i>Không thể tải ảnh</div>'">
+        `;
+        imgUrlText.textContent = project.image_url;
+      } else {
+        imgContainer.innerHTML = `
+          <div class="p-4 text-center text-slate-400 text-xs">
+            <i class="fa-regular fa-image text-3xl mb-1.5 text-slate-300 block"></i>
+            <span>Chưa có ảnh sản phẩm</span>
+          </div>
+        `;
+        imgUrlText.textContent = "";
+      }
+
+      // Thời gian & Hệ thống
+      $("info-id").textContent = project.id;
+      $("info-created-at").textContent = formatDate(project.created_at);
+      $("info-updated-at").textContent = formatDate(project.updated_at);
+
+      // Hiển thị khung nội dung chính
+      $("page-loading")?.classList.add("hidden");
+      $("page-error")?.classList.add("hidden");
+      $("page-content")?.classList.remove("hidden");
+    }
+
+    // -- Tải và hiển thị lịch sử deploy --
+    async function loadDeployments() {
+      const container = $("deployments-container");
+      if (!container) return;
+
+      container.innerHTML = `
+        <div class="p-8 text-center text-slate-400">
+          <i class="fa-solid fa-spinner fa-spin text-xl text-indigo-400 mb-2"></i>
+          <p class="text-xs font-semibold">Đang tải lịch sử xuất bản...</p>
+        </div>
+      `;
+
+      try {
+        const response = await window.apiRequest(`/deployments?project_id=${encodeURIComponent(state.projectId)}&page=1&page_size=20`);
+        const items = response?.data?.items || [];
+        renderDeploymentsTable(items);
+      } catch (err) {
+        console.error("Lỗi tải lịch sử deploy:", err);
+        container.innerHTML = `
+          <div class="p-8 text-center">
+            <div class="w-10 h-10 mx-auto rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center text-base mb-2">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <p class="text-xs font-bold text-rose-700">Không thể tải lịch sử triển khai</p>
+            <p class="text-[11px] text-slate-400 mt-1 max-w-md mx-auto">${escapeHtml(err.message || "Đã xảy ra lỗi kết nối.")}</p>
+            <button type="button" id="btn-retry-deployments" class="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold transition">
+              <i class="fa-solid fa-rotate-right text-[10px]"></i>
+              <span>Thử lại</span>
+            </button>
+          </div>
+        `;
+        $("btn-retry-deployments")?.addEventListener("click", loadDeployments);
+      }
+    }
+
+    // -- Render bảng lịch sử deploy --
+    function renderDeploymentsTable(items) {
+      const container = $("deployments-container");
+      if (!container) return;
+
+      if (!Array.isArray(items) || items.length === 0) {
+        container.innerHTML = `
+          <div class="p-10 text-center">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center text-xl mb-2.5">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <p class="text-xs font-bold text-slate-700">Chưa có lần deploy nào</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Bấm nút "Deploy lại" để xuất bản trang này lên GitHub Pages.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const rows = items.map((item) => {
+        // Commit SHA (rút gọn 7 ký tự, bỏ qua nếu là pending)
+        let commitHtml = '<span class="text-slate-400">—</span>';
+        const rawSha = String(item.commit_sha || "").trim();
+        if (rawSha && rawSha.toLowerCase() !== "pending") {
+          const shortSha = rawSha.length > 7 ? rawSha.slice(0, 7) : rawSha;
+          commitHtml = `<code class="font-mono text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">${escapeHtml(shortSha)}</code>`;
+        }
+
+        // Link trang trực tiếp (kiểm tra http/https)
+        let pageUrlHtml = '<span class="text-slate-400 text-xs">—</span>';
+        if (isValidHttpUrl(item.page_url)) {
+          pageUrlHtml = `
+            <a href="${escapeHtml(item.page_url)}" target="_blank" rel="noopener" class="text-indigo-600 hover:text-indigo-700 hover:underline font-mono text-xs inline-flex items-center gap-1 max-w-[200px] truncate">
+              <span class="truncate">${escapeHtml(item.page_url.replace(/^https?:\/\//, ""))}</span>
+              <i class="fa-solid fa-arrow-up-right-from-square text-[9px] shrink-0"></i>
+            </a>
+          `;
+        }
+
+        // Thông điệp lỗi nếu có
+        let errorHtml = '<span class="text-slate-400 text-xs">—</span>';
+        if (item.error_message) {
+          errorHtml = `<span class="text-xs text-rose-600 font-medium break-words">${escapeHtml(item.error_message)}</span>`;
+        }
+
+        return `
+          <tr class="hover:bg-slate-50/70 transition-colors">
+            <td class="py-3 px-4 font-medium text-slate-700 whitespace-nowrap">${escapeHtml(formatDate(item.start_time))}</td>
+            <td class="py-3 px-4 whitespace-nowrap">${deployStatusBadge(item.view_status)}</td>
+            <td class="py-3 px-4 text-slate-600 whitespace-nowrap">${escapeHtml(formatDuration(item.duration_seconds))}</td>
+            <td class="py-3 px-4 whitespace-nowrap">${commitHtml}</td>
+            <td class="py-3 px-4">${pageUrlHtml}</td>
+            <td class="py-3 px-4 max-w-xs">${errorHtml}</td>
+          </tr>
+        `;
+      }).join("");
+
+      container.innerHTML = `
+        <div class="overflow-x-auto custom-scrollbar">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50/70 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                <th class="py-3 px-4">Thời gian bắt đầu</th>
+                <th class="py-3 px-4">Trạng thái</th>
+                <th class="py-3 px-4">Thời lượng</th>
+                <th class="py-3 px-4">Commit SHA</th>
+                <th class="py-3 px-4">GitHub Pages</th>
+                <th class="py-3 px-4">Ghi chú / Lỗi</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">${rows}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // -- Tải chi tiết chiến dịch từ Backend --
+    async function loadProjectDetail() {
+      $("page-loading")?.classList.remove("hidden");
+      $("page-error")?.classList.add("hidden");
+      $("page-content")?.classList.add("hidden");
+
+      try {
+        const response = await window.apiRequest(`/projects/${encodeURIComponent(state.projectId)}`);
+        const project = response?.data;
+        if (!project || typeof project !== "object") {
+          throw new Error("Không tìm thấy dữ liệu chiến dịch.");
+        }
+        renderProject(project);
+
+        // Tải lịch sử deploy độc lập
+        loadDeployments();
+      } catch (err) {
+        console.error("Lỗi tải chi tiết chiến dịch:", err);
+        const rawMsg = (err.message || "").toLowerCase();
+        const isNotFoundOrForbidden =
+          rawMsg.includes("404") ||
+          rawMsg.includes("403") ||
+          rawMsg.includes("không tồn tại") ||
+          rawMsg.includes("khong ton tai") ||
+          rawMsg.includes("không có quyền") ||
+          rawMsg.includes("khong co quyen") ||
+          rawMsg.includes("not found") ||
+          rawMsg.includes("forbidden");
+
+        if (isNotFoundOrForbidden) {
+          showPageError(
+            "Không tìm thấy hoặc bạn không có quyền xem chiến dịch này",
+            "Chiến dịch có thể đã bị xóa hoặc tài khoản của bạn không được phân quyền để truy cập.",
+            false
+          );
+        } else {
+          showPageError(
+            "Lỗi kết nối máy chủ",
+            err.message || "Không thể kết nối đến máy chủ FastAPI. Vui lòng thử lại sau.",
+            true
+          );
+        }
+      }
+    }
+
+    // -- Modal xóa chiến dịch --
+    function openDeleteModal() {
+      if (!state.project) return;
+      const nameEl = $("delete-modal-campaign-name");
+      if (nameEl) {
+        nameEl.textContent = state.project.campaign_name || state.project.product_name || `Chiến dịch #${state.project.id}`;
+      }
+      $("delete-modal")?.classList.remove("hidden");
+      $("delete-modal")?.classList.add("flex");
+    }
+
+    function closeDeleteModal() {
+      if (state.deleting) return;
+      $("delete-modal")?.classList.add("hidden");
+      $("delete-modal")?.classList.remove("flex");
+    }
+
+    function setDeleting(deleting) {
+      state.deleting = deleting;
+      const button = $("btn-confirm-delete");
+      const cancelBtn = $("btn-cancel-delete");
+      const spinner = $("delete-spinner");
+      const icon = $("delete-icon");
+      const label = $("delete-btn-text");
+
+      if (button) button.disabled = deleting;
+      if (cancelBtn) cancelBtn.disabled = deleting;
+      spinner?.classList.toggle("hidden", !deleting);
+      icon?.classList.toggle("hidden", deleting);
+      if (label) label.textContent = deleting ? "Đang xóa..." : "Xóa vĩnh viễn";
+    }
+
+    async function confirmDelete() {
+      if (!state.project || state.deleting) return;
+      setDeleting(true);
+
+      try {
+        const response = await window.apiRequest(`/projects/${encodeURIComponent(state.project.id)}`, {
+          method: "DELETE",
+        });
+
+        const warnings = response?.warnings || [];
+        if (warnings.length > 0) {
+          warnings.forEach((w) => {
+            console.warn("Cảnh báo:", w);
+            window.showToast?.(w, "warning", "Cảnh báo");
+          });
+        }
+
+        window.showToast?.(
+          response?.message || "Đã xóa landing page thành công.",
+          "success",
+          "Đã xóa chiến dịch"
+        );
+
+        setDeleting(false);
+        closeDeleteModal();
+
+        // Chuyển về danh sách dự án
+        setTimeout(() => {
+          window.location.href = "projects.html";
+        }, warnings.length > 0 ? 1200 : 500);
+      } catch (err) {
+        console.error("Lỗi xóa chiến dịch:", err);
+        window.showToast?.(err.message || "Không thể xóa chiến dịch.", "error", "Xóa thất bại");
+        setDeleting(false);
+      }
+    }
+
+    // -- Khởi tạo trang --
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Xác thực người dùng
+      if (typeof window.requireAuth === "function") {
+        await window.requireAuth();
+      }
+
+      // Đọc và kiểm tra ID từ URL (?id=)
+      const urlParams = new URLSearchParams(window.location.search);
+      const rawId = urlParams.get("id");
+
+      if (!rawId || !/^\d+$/.test(rawId.trim())) {
+        showPageError(
+          "Mã chiến dịch không hợp lệ",
+          "Đường dẫn thiếu tham số mã chiến dịch (?id=) hoặc mã không phải là số hợp lệ.",
+          false
+        );
+        return;
+      }
+
+      state.projectId = parseInt(rawId.trim(), 10);
+
+      // Gắn sự kiện nút modal xóa
+      $("btn-open-delete-modal")?.addEventListener("click", openDeleteModal);
+      $("btn-cancel-delete")?.addEventListener("click", closeDeleteModal);
+      $("btn-confirm-delete")?.addEventListener("click", confirmDelete);
+      $("btn-refresh-deployments")?.addEventListener("click", loadDeployments);
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeDeleteModal();
+      });
+
+      // Tải chi tiết
+      loadProjectDetail();
+    });
+  })();
+  </script>
+</body>
+</html>

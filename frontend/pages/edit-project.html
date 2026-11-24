@@ -63,6 +63,10 @@
                 <i class="fa-solid fa-arrow-up-right-from-square"></i>
                 <span>Mở website</span>
               </a>
+              <a id="btn-deploy-project" href="#" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-950/30 transition">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span>Xuất bản</span>
+              </a>
               <a id="btn-version-history" href="#" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-bold transition">
                 <i class="fa-solid fa-clock-rotate-left"></i>
                 <span>Lịch sử phiên bản</span>
@@ -220,23 +224,37 @@
               <div class="space-y-3">
                 <div class="relative">
                   <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#1877F2]">
-                    <i class="fa-brands fa-facebook"></i>
+                    <i class="fa-brands fa-facebook-messenger"></i>
                   </span>
-                  <input type="url" id="facebook-url" maxlength="500" placeholder="https://facebook.com/ten-trang"
+                  <input type="text" id="messenger-link" maxlength="500" placeholder="https://m.me/ten-trang hoặc tên người dùng"
                     class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800 placeholder-slate-400"/>
                 </div>
                 <div class="relative">
                   <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-900">
                     <i class="fa-brands fa-tiktok"></i>
                   </span>
-                  <input type="url" id="tiktok-url" maxlength="500" placeholder="https://tiktok.com/@ten-tai-khoan"
+                  <input type="text" id="tiktok-shop-link" maxlength="500" placeholder="https://shop.tiktok.com/@ten-tai-khoan"
+                    class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800 placeholder-slate-400"/>
+                </div>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#0068FF]">
+                    <i class="fa-solid fa-comment-dots"></i>
+                  </span>
+                  <input type="text" id="zalo-link" maxlength="500" placeholder="https://zalo.me/0987654321 hoặc số điện thoại"
                     class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800 placeholder-slate-400"/>
                 </div>
                 <div class="relative">
                   <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#E1306C]">
                     <i class="fa-brands fa-instagram"></i>
                   </span>
-                  <input type="url" id="instagram-url" maxlength="500" placeholder="https://instagram.com/ten-tai-khoan"
+                  <input type="text" id="instagram-link" maxlength="500" placeholder="https://instagram.com/ten-tai-khoan"
+                    class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800 placeholder-slate-400"/>
+                </div>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-amber-600">
+                    <i class="fa-solid fa-phone"></i>
+                  </span>
+                  <input type="text" id="hotline-input" maxlength="50" placeholder="1900 6868"
                     class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800 placeholder-slate-400"/>
                 </div>
               </div>

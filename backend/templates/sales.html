@@ -3,7 +3,7 @@
 <html class="scroll-smooth" lang="vi" style="--primary-color: {{data.primary_color}};"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>{{data.brand_name}} | Trang Bán Hàng Trực Tuyến Chính Hãng</title>
+{% include "partials/seo_meta.html" %}
 <!-- Google Fonts: Plus Jakarta Sans & Inter -->
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -141,9 +141,9 @@
     }
   </style>
 </head>
-<body class="bg-background text-on-surface font-body-md text-body-md antialiased selection:bg-brand-100 selection:text-brand-700 min-h-screen flex flex-col">
+<body class="bg-background text-on-surface font-body-md text-body-md antialiased selection:bg-brand-100 selection:text-brand-700 min-h-screen flex flex-col overflow-x-hidden">
 <!-- Top Announcement Bar (Dynamic Primary Color Gradient) -->
-<div class="bg-gradient-to-r from-brand-700 via-brand-600 to-brand-700 text-white font-label-sm text-label-sm py-2 px-margin text-center flex items-center justify-center gap-space-sm shadow-sm relative z-50">
+<div class="bg-gradient-to-r from-brand-700 via-brand-600 to-brand-700 text-white font-label-sm text-label-sm py-2 px-4 sm:px-6 lg:px-8 text-center flex items-center justify-center gap-space-sm shadow-sm relative z-50">
 <span class="inline-flex items-center gap-1 font-label-md text-label-md">
 <span class="material-symbols-outlined text-[16px] text-amber-300">bolt</span>
       Ưu Đãi Đặc Biệt: Giảm tới {{data.discount_percent}} hôm nay
@@ -154,7 +154,7 @@
 </div>
 <!-- Shared TopNavBar Component -->
 <header class="bg-surface-container-lowest border-b border-brand-100 docked full-width top-0 sticky z-50 shadow-sm">
-<div class="flex justify-between items-center w-full px-margin max-w-7xl mx-auto h-16">
+<div class="flex justify-between items-center w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto h-16">
 <!-- Brand & Verified Badge -->
 <div class="flex items-center gap-3">
 <a class="font-headline-md text-headline-md font-bold text-brand-600 tracking-tight flex items-center gap-1.5" href="#">
@@ -205,7 +205,7 @@
 </header>
 <main class="flex-grow">
 <!-- Hero Section: Desktop 2-Column Responsive Layout -->
-<section class="max-w-7xl mx-auto px-margin py-space-xl lg:py-16">
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-space-xl lg:py-16">
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-center">
 <!-- Left Column: Copy, Badge, CTA & Trust -->
 <div class="lg:col-span-7 flex flex-col items-start gap-5">
@@ -218,10 +218,10 @@
 <span>{{data.hero_badge}}</span>
 </div>
 <!-- Headline & Subheadline -->
-<h1 class="font-display text-display text-stone-900 tracking-tight">
+<h1 class="font-display text-2xl sm:text-4xl lg:text-display text-stone-900 tracking-tight break-words">
             {{data.headline}}
           </h1>
-<p class="font-body-lg text-body-lg text-stone-600 max-w-2xl">
+<p class="font-body-lg text-body-lg text-stone-600 max-w-2xl break-words">
             {{data.subheadline}}
           </p>
 <!-- Social Proof Stars & Sold Counter -->
@@ -255,7 +255,7 @@
 </a>
 </div>
 <!-- Mini Guarantee Badges -->
-<div class="grid grid-cols-3 gap-3 pt-4 w-full border-t border-brand-100">
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 pt-4 w-full border-t border-brand-100">
 <div class="flex items-center gap-2 text-xs font-medium text-stone-600">
 <span class="material-symbols-outlined text-brand-600 text-[20px]" data-icon="check_circle">check_circle</span>
 <span>100% Chính Hãng</span>
@@ -319,7 +319,7 @@
 </section>
 <!-- Flash Sale Urgency Section (Subtle Warm Primary Container) -->
 <section class="bg-brand-50/60 py-10 border-y border-brand-100" id="flash-sale">
-<div class="max-w-7xl mx-auto px-margin">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 <div class="bg-white rounded-xl border border-brand-200 p-6 lg:p-8 shadow-sm">
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
 <!-- Sale Title & Badge -->
@@ -337,25 +337,25 @@
               </p>
 </div>
 <!-- Countdown Timer Blocks (Dynamic Primary Theme) -->
-<div class="lg:col-span-5 flex items-center justify-center lg:justify-start gap-3">
-<div class="flex flex-col items-center bg-brand-50/70 rounded-lg p-3 min-w-[70px] border border-brand-200">
-<span class="font-display-mobile text-display-mobile font-bold text-brand-600 leading-none" id="timer-hours">02</span>
-<span class="font-label-sm text-label-sm text-stone-500 uppercase mt-1">Giờ</span>
+<div class="lg:col-span-5 flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-3">
+<div class="flex flex-col items-center bg-brand-50/70 rounded-lg p-2.5 sm:p-3 min-w-[50px] sm:min-w-[70px] border border-brand-200">
+<span class="font-display-mobile text-xl sm:text-display-mobile font-bold text-brand-600 leading-none" id="timer-hours">02</span>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-stone-500 uppercase mt-1">Giờ</span>
 </div>
-<span class="font-bold text-2xl text-brand-400">:</span>
-<div class="flex flex-col items-center bg-brand-50/70 rounded-lg p-3 min-w-[70px] border border-brand-200">
-<span class="font-display-mobile text-display-mobile font-bold text-brand-600 leading-none" id="timer-minutes">43</span>
-<span class="font-label-sm text-label-sm text-stone-500 uppercase mt-1">Phút</span>
+<span class="font-bold text-lg sm:text-2xl text-brand-400">:</span>
+<div class="flex flex-col items-center bg-brand-50/70 rounded-lg p-2.5 sm:p-3 min-w-[50px] sm:min-w-[70px] border border-brand-200">
+<span class="font-display-mobile text-xl sm:text-display-mobile font-bold text-brand-600 leading-none" id="timer-minutes">43</span>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-stone-500 uppercase mt-1">Phút</span>
 </div>
-<span class="font-bold text-2xl text-brand-400">:</span>
-<div class="flex flex-col items-center bg-brand-50/70 rounded-lg p-3 min-w-[70px] border border-brand-200">
-<span class="font-display-mobile text-display-mobile font-bold text-brand-600 leading-none" id="timer-seconds">19</span>
-<span class="font-label-sm text-label-sm text-stone-500 uppercase mt-1">Giây</span>
+<span class="font-bold text-lg sm:text-2xl text-brand-400">:</span>
+<div class="flex flex-col items-center bg-brand-50/70 rounded-lg p-2.5 sm:p-3 min-w-[50px] sm:min-w-[70px] border border-brand-200">
+<span class="font-display-mobile text-xl sm:text-display-mobile font-bold text-brand-600 leading-none" id="timer-seconds">19</span>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-stone-500 uppercase mt-1">Giây</span>
 </div>
-<span class="font-bold text-2xl text-brand-400">:</span>
-<div class="flex flex-col items-center bg-brand-50/70 rounded-lg p-3 min-w-[70px] border border-brand-200">
-<span class="font-display-mobile text-display-mobile font-bold text-brand-700 leading-none" id="timer-millis">88</span>
-<span class="font-label-sm text-label-sm text-stone-500 uppercase mt-1">Mili-giây</span>
+<span class="font-bold text-lg sm:text-2xl text-brand-400">:</span>
+<div class="flex flex-col items-center bg-brand-50/70 rounded-lg p-2.5 sm:p-3 min-w-[50px] sm:min-w-[70px] border border-brand-200">
+<span class="font-display-mobile text-xl sm:text-display-mobile font-bold text-brand-700 leading-none" id="timer-millis">88</span>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-stone-500 uppercase mt-1">Mili-giây</span>
 </div>
 </div>
 <!-- Inventory Urgency Progress Bar -->
@@ -380,12 +380,12 @@
 </div>
 </section>
 <!-- Value Proposition & Features Grid (4-Column Bento Layout) -->
-<section class="max-w-7xl mx-auto px-margin py-space-xl" id="perks">
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-space-xl" id="perks">
 <div class="text-center max-w-3xl mx-auto mb-12">
 <span class="font-label-sm text-label-sm uppercase tracking-wider text-brand-700 font-bold bg-brand-100 px-3 py-1 rounded-full border border-brand-200">
           Quyền Lợi &amp; Bảo Chứng
         </span>
-<h2 class="font-headline-lg text-headline-lg font-bold text-stone-900 mt-3">
+<h2 class="font-headline-lg text-xl sm:text-2xl lg:text-headline-lg font-bold text-stone-900 mt-3 break-words">
           Cam Kết Chất Lượng Độc Quyền
         </h2>
 <p class="font-body-md text-body-md text-stone-600 mt-2">
@@ -465,12 +465,12 @@
 </section>
 <!-- Conversion & Quick Order Form Section -->
 <section class="bg-brand-50/50 py-space-xl border-t border-brand-100" id="order-now">
-<div class="max-w-7xl mx-auto px-margin">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 <div class="text-center max-w-2xl mx-auto mb-10">
 <span class="font-label-sm text-label-sm uppercase tracking-wider text-brand-700 font-bold bg-brand-100 px-3 py-1 rounded-full border border-brand-200">
             Đặt Hàng Nhanh - Không Cần Đăng Ký
           </span>
-<h2 class="font-headline-lg text-headline-lg font-bold text-stone-900 mt-2">
+<h2 class="font-headline-lg text-xl sm:text-2xl lg:text-headline-lg font-bold text-stone-900 mt-2 break-words">
             Đăng Ký Nhận Giá Ưu Đãi Hôm Nay
           </h2>
 <p class="font-body-md text-body-md text-stone-600">
@@ -515,7 +515,7 @@
                   </span>
 </div>
 <div class="text-right">
-<span class="font-headline-lg text-headline-lg font-extrabold text-brand-600">{{data.sale_price}}</span>
+<span class="font-headline-lg text-xl sm:text-2xl lg:text-headline-lg font-extrabold text-brand-600 whitespace-nowrap">{{data.sale_price}}</span>
 </div>
 </div>
 </div>
@@ -548,7 +548,7 @@
 <!-- Color/Variant Selector -->
 <div>
 <label class="block font-label-md text-label-md text-stone-900 mb-2">Chọn phiên bản / màu sắc:</label>
-<div class="grid grid-cols-3 gap-3">
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
 <label class="relative flex items-center p-3 rounded-lg border-2 border-brand-600 bg-brand-50/40 cursor-pointer">
 <input checked="" class="text-brand-600 focus:ring-brand-600 h-4 w-4 mr-2" name="variant" type="radio"/>
 <span class="text-xs font-semibold text-stone-900">Ruby Red (Bán chạy)</span>
@@ -637,13 +637,13 @@
 </div>
 </section>
 <!-- Social Proof & Customer Reviews -->
-<section class="max-w-7xl mx-auto px-margin py-space-xl" id="reviews">
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-space-xl" id="reviews">
 <div class="flex flex-col md:flex-row md:items-end justify-between mb-10">
 <div>
 <span class="font-label-sm text-label-sm uppercase tracking-wider text-brand-700 font-bold bg-brand-100 px-3 py-1 rounded-full border border-brand-200">
             Khách Hàng Thực Tế
           </span>
-<h2 class="font-headline-lg text-headline-lg font-bold text-stone-900 mt-3">
+<h2 class="font-headline-lg text-xl sm:text-2xl lg:text-headline-lg font-bold text-stone-900 mt-3 break-words">
             Hơn 12,000+ Khách Hàng Đã Tin Dùng
           </h2>
 <p class="font-body-md text-body-md text-stone-600 mt-1">
@@ -772,7 +772,7 @@
 </main>
 <!-- Shared Footer Component -->
 <footer class="bg-white full-width border-t border-brand-100">
-<div class="w-full max-w-7xl mx-auto px-margin py-space-xl flex flex-col md:flex-row justify-between items-center gap-space-md">
+<div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-space-xl flex flex-col md:flex-row justify-between items-center gap-space-md">
 <!-- Brand & Copyright -->
 <div class="flex flex-col sm:flex-row items-center gap-3">
 <span class="font-headline-sm text-headline-sm font-bold text-brand-600">

@@ -286,11 +286,39 @@ def _safe_hotline(value: Any) -> str:
     digits = re.sub(r"\D", "", text)
     return text if 7 <= len(digits) <= 15 else ""
 
+
+def _clean_str(value: Any) -> str:
+    """Loại bỏ ký tự xuống dòng, tab, khoảng trắng thừa."""
+    if value is None:
+        return ""
+    text = str(value)
+    text = re.sub(r"[\r\n\t]+", " ", text)
+    text = re.sub(r"\s{2,}", " ", text)
+    return text.strip()
+
+
+def _clean_description(text: Any, max_len: int = 160) -> str:
+    """Làm sạch description và cắt tại ranh giới từ tối đa max_len ký tự."""
+    cleaned = _clean_str(text)
+    if not cleaned:
+        return ""
+    if len(cleaned) <= max_len:
+        return cleaned
+
+    cutoff = max_len - 3
+    truncated = cleaned[:cutoff]
+    last_space = truncated.rfind(" ")
+    if last_space > 0:
+        truncated = truncated[:last_space]
+    return truncated.rstrip() + "..."
+
+
 def build_template_data(project: dict) -> dict[str, Any]:
     """Chuẩn hoá dữ liệu project thành bộ biến cho template."""
     raw = _parse_raw_json(project.get("raw_json_data"))
 
     brand_name = _first(
+        project.get("brand_name"),
         project.get("product_name"),
         raw.get("brand_name"),
         raw.get("product_name"),
@@ -320,6 +348,69 @@ def build_template_data(project: dict) -> dict[str, Any]:
     )
 
     features = _normalize_features(raw.get("features"))
+
+    # --- 1. SEO Title ---
+    # Thứ tự ưu tiên: raw.seo_title -> campaign_name -> product_name -> kết hợp brand_name -> brand_name -> "Landing Page"
+    raw_seo_title = _clean_str(raw.get("seo_title"))
+    if raw_seo_title:
+        seo_title = raw_seo_title
+    else:
+        cand_name = _clean_str(
+            _first(project.get("campaign_name"), raw.get("campaign_name"))
+        ) or _clean_str(
+            _first(project.get("product_name"), raw.get("product_name"))
+        )
+        b_name = _clean_str(brand_name)
+        if cand_name:
+            if b_name and b_name.lower() not in cand_name.lower():
+                seo_title = f"{cand_name} - {b_name}"
+            else:
+                seo_title = cand_name
+        elif b_name:
+            seo_title = b_name
+        else:
+            seo_title = "Landing Page"
+
+    # --- 2. SEO Description ---
+    # Thứ tự ưu tiên: raw.seo_description -> project.product_description -> raw.product_description -> raw.description -> fallback
+    raw_seo_desc = _first(
+        raw.get("seo_description"),
+        project.get("product_description"),
+        raw.get("product_description"),
+        raw.get("description"),
+    )
+    if not _clean_str(raw_seo_desc):
+        target_name = _clean_str(
+            _first(
+                project.get("product_name"),
+                raw.get("product_name"),
+                project.get("campaign_name"),
+                raw.get("campaign_name"),
+            )
+        )
+        b_name = _clean_str(brand_name)
+        if target_name and b_name and b_name.lower() not in target_name.lower():
+            raw_seo_desc = f"{target_name} - {b_name}. Khám phá sản phẩm chất lượng cao cùng ưu đãi hấp dẫn ngay hôm nay."
+        elif target_name:
+            raw_seo_desc = f"{target_name} - Khám phá sản phẩm chất lượng cao cùng ưu đãi hấp dẫn ngay hôm nay."
+        elif b_name:
+            raw_seo_desc = f"{b_name} - Khám phá sản phẩm chất lượng cao cùng ưu đãi hấp dẫn ngay hôm nay."
+        else:
+            raw_seo_desc = "Khám phá các sản phẩm và dịch vụ chất lượng cao cùng nhiều ưu đãi hấp dẫn ngay hôm nay."
+
+    seo_description = _clean_description(raw_seo_desc, 160)
+
+    # --- 3. Open Graph Image ---
+    # Thứ tự: project.image_url -> raw.image_url -> raw.hero_image_url
+    og_image = _safe_image_url(
+        _first(project.get("image_url"), raw.get("image_url"), raw.get("hero_image_url"))
+    )
+
+    # --- 4. Open Graph URL ---
+    # URL HTTP/HTTPS tuyệt đối hợp lệ từ github_pages_url
+    og_url = _safe_http_url(
+        _first(project.get("github_pages_url"), raw.get("github_pages_url"))
+    )
 
     safe_fb = _safe_http_url(_first(project.get("facebook_url"), raw.get("facebook_url"), raw.get("social_facebook")))
     safe_tt = _safe_http_url(_first(project.get("tiktok_url"), raw.get("tiktok_url"), raw.get("social_tiktok")))
@@ -356,6 +447,10 @@ def build_template_data(project: dict) -> dict[str, Any]:
             "Những giá trị khác biệt chỉ có tại sản phẩm lần này.",
         ),
         "feature_items": features,
+        "seo_title": seo_title,
+        "seo_description": seo_description,
+        "og_image": og_image,
+        "og_url": og_url,
         "social_facebook": safe_fb,
         "facebook_url": safe_fb,
         "social_tiktok": safe_tt or safe_tt_shop,
@@ -422,8 +517,7 @@ FALLBACK_TEMPLATE = """<!DOCTYPE html>
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>{{ data.headline }} - {{ data.brand_name }}</title>
-  <meta name="description" content="{{ data.subheadline }}"/>
+  {% include "partials/seo_meta.html" %}
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -670,11 +764,11 @@ def render_landing_page(project: dict, template_path: Optional[str] = None) -> s
     if template_name:
         try:
             template = _ENV.get_template(template_name)
-            return template.render(data=data, cta=data.get("cta"), title=data["brand_name"])
+            return template.render(data=data, cta=data.get("cta"), title=data.get("seo_title", data["brand_name"]))
         except Exception:  # pragma: no cover - template do người dùng cung cấp
             logger.exception("Khong the render template '%s', dung template mac dinh", template_name)
 
-    return _fallback_template().render(data=data, cta=data.get("cta"))
+    return _fallback_template().render(data=data, cta=data.get("cta"), title=data.get("seo_title", data["brand_name"]))
 
 from services.cta_service import build_cta_context
 

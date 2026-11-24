@@ -192,9 +192,10 @@
   }
 
   /**
-   * Nút Deploy: tích hợp với luồng deploy hiện có của dự án.
+   * Nút Deploy: chuyển sang trang deploy.html để chạy đúng luồng
+   * POST /projects/{id}/deploy kèm tiến trình và xử lý lỗi thật.
    */
-  async function handleDeploy() {
+  function handleDeploy() {
     if (!state.projectId || state.isGenerating || state.isDeploying) return;
 
     if (!state.currentHtml) {
@@ -207,31 +208,8 @@
     }
 
     state.isDeploying = true;
-    hideError();
     setDeployLoadingState(true);
-
-    try {
-      const deployRes = await apiRequest(`/projects/${state.projectId}/deploy`, {
-        method: 'POST',
-      });
-
-      window.showToast?.(
-        deployRes?.message || 'Đang chuyển sang trang triển khai & xuất bản...',
-        'success',
-        'Sẵn sàng Deploy'
-      );
-
-      setTimeout(() => {
-        window.location.href = `deployments.html?project_id=${encodeURIComponent(state.projectId)}`;
-      }, 450);
-    } catch (error) {
-      console.error('Lỗi điều hướng Deploy:', error);
-      const errMsg = error.message || 'Không thể kết nối tới luồng Deploy.';
-      showError(errMsg);
-      window.showToast?.(errMsg, 'error', 'Lỗi Deploy');
-      state.isDeploying = false;
-      setDeployLoadingState(false);
-    }
+    window.location.href = `deploy.html?id=${encodeURIComponent(state.projectId)}`;
   }
 
   // ── Render & UI Helpers ───────────────────────────────────────────

@@ -13,7 +13,8 @@
 (function () {
   'use strict';
 
-  const apiBaseUrl = window.API_BASE_URL || 'http://127.0.0.1:8000';
+  // "" là giá trị hợp lệ khi frontend được FastAPI phục vụ cùng origin.
+  const apiBaseUrl = typeof window.API_BASE_URL === 'string' ? window.API_BASE_URL : 'http://127.0.0.1:8000';
   let rawTemplates = [];
   let currentSearchQuery = '';
   let currentSort = 'popular';

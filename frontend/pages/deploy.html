@@ -42,7 +42,7 @@
         </div>
         <span id="countdown-badge" class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 mb-3">
           <i class="fa-regular fa-clock"></i>
-          <span>Thời gian ước tính còn lại: <strong id="countdown-timer">25</strong> giây</span>
+          <span>Đã xử lý: <strong id="countdown-timer">0</strong> giây</span>
         </span>
         <h1 id="deploy-title" class="text-2xl font-extrabold text-slate-900">Đang xuất bản Landing Page của bạn...</h1>
         <p id="deploy-subtitle" class="text-sm text-slate-500 mt-1.5 max-w-md">
@@ -135,6 +135,9 @@
 
         <div class="flex flex-wrap items-center justify-end gap-3">
           <a href="projects.html" class="px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">Về danh sách dự án</a>
+          <a id="view-deployments-btn" href="deployments.html" class="hidden px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">
+            <i class="fa-solid fa-clock-rotate-left mr-1.5"></i>Lịch sử xuất bản
+          </a>
           <a id="back-edit-btn" href="edit-project.html" class="px-4 py-2.5 rounded-xl border border-indigo-200 bg-indigo-50/60 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition">Chỉnh sửa dự án</a>
           <button id="retry-btn" type="button" class="hidden px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition">
             <i class="fa-solid fa-rotate-right mr-1.5"></i>Thử deploy lại
@@ -148,13 +151,7 @@
   </main>
 
   <footer class="text-center py-4 text-xs text-slate-400">AI Auto Landing Page Publisher &bull; Nhóm 6</footer>
+  <script src="../js/api.js"></script>
   <script src="../js/deploy.js"></script>
-  <script>
-    const pid = new URLSearchParams(window.location.search).get("project_id") || new URLSearchParams(window.location.search).get("id");
-    if (pid) {
-      const editBtn = document.getElementById("back-edit-btn");
-      if (editBtn) editBtn.href = `edit-project.html?id=${encodeURIComponent(pid)}`;
-    }
-  </script>
 </body>
 </html>

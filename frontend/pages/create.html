@@ -390,7 +390,7 @@
                   <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                       <div class="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-ping"></div>
-                      <span class="text-xs font-bold text-indigo-300">FastAPI AI Engine đang xử lý...</span>
+                      <span id="progress-label" class="text-xs font-bold text-indigo-300">FastAPI AI Engine đang xử lý...</span>
                     </div>
                     <span id="loading-timer" class="font-mono text-xs text-slate-400">00:04</span>
                   </div>
@@ -426,7 +426,7 @@
                       <i class="fa-solid fa-circle-check text-emerald-600"></i>
                       <span>Sinh Landing Page thành công!</span>
                     </div>
-                    <span class="text-[11px] font-mono text-emerald-700 font-semibold">14.2s • 84.5 KB</span>
+                    <span id="generation-result-meta" class="text-[11px] font-mono text-emerald-700 font-semibold">—</span>
                   </div>
 
                   <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white">
@@ -436,48 +436,56 @@
                         <div class="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
                         <div class="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
                       </div>
-                      <span class="text-[10px] font-mono text-slate-500">preview.landingai.vn/coldbrew-daklak</span>
-                      <a href="deployments.html" class="text-xs text-indigo-600 hover:text-indigo-800">
+                      <span id="preview-url-label" class="text-[10px] font-mono text-slate-500">preview://project/index.html</span>
+                      <a id="preview-open-link" href="#" target="_blank" rel="noopener noreferrer" class="text-xs text-indigo-600 hover:text-indigo-800" title="Mở bản xem trước">
                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
                       </a>
                     </div>
-                    
-                    <div class="p-4 space-y-3 bg-gradient-to-b from-indigo-50/50 to-white">
-                      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-                        <span class="text-xs font-bold text-slate-900" id="preview-mini-title">Cold Brew Đắk Lắk</span>
-                        <span class="text-[10px] px-2 py-0.5 rounded bg-indigo-600 text-white font-bold">Đặt Ngay</span>
-                      </div>
-                      <div class="text-center py-4 space-y-1.5">
-                        <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">Đậm Vị Nguyên Bản</span>
-                        <h5 class="text-sm font-black text-slate-900 leading-snug">Cà Phê Cold Brew Ủ Lạnh 24h Đậm Đà Khó Quên</h5>
-                        <p class="text-[11px] text-slate-500 max-w-xs mx-auto">100% hạt Robusta thượng hạng từ vườn Đắk Lắk, không hương liệu, giữ trọn năng lượng tỉnh táo.</p>
-                      </div>
-                      <div class="grid grid-cols-3 gap-2 text-center pt-2">
-                        <div class="p-2 rounded-lg bg-white border border-slate-100 shadow-xs">
-                          <span class="block text-xs font-bold text-indigo-600">24 Giờ</span>
-                          <span class="text-[9px] text-slate-400">Ủ lạnh</span>
-                        </div>
-                        <div class="p-2 rounded-lg bg-white border border-slate-100 shadow-xs">
-                          <span class="block text-xs font-bold text-indigo-600">0 Đường</span>
-                          <span class="text-[9px] text-slate-400">Tự nhiên</span>
-                        </div>
-                        <div class="p-2 rounded-lg bg-white border border-slate-100 shadow-xs">
-                          <span class="block text-xs font-bold text-indigo-600">Giao 2H</span>
-                          <span class="text-[9px] text-slate-400">Nội thành</span>
-                        </div>
-                      </div>
-                    </div>
+
+                    <iframe
+                      id="generated-preview-frame"
+                      title="Bản xem trước Landing Page vừa sinh"
+                      class="hidden w-full h-64 bg-white"
+                      sandbox="allow-scripts allow-same-origin allow-popups"
+                    ></iframe>
                   </div>
 
-                  <div class="grid grid-cols-2 gap-2 pt-1">
-                    <a href="projects.html" class="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
-                      <i class="fa-solid fa-pen-to-square"></i>
-                      <span>Vào chỉnh sửa mã</span>
+                  <div class="grid grid-cols-3 gap-2 pt-1">
+                    <a id="btn-preview-generated" href="preview.html" class="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition border border-indigo-200">
+                      <i class="fa-solid fa-eye"></i>
+                      <span>Xem trước</span>
                     </a>
-                    <button type="button" onclick="publishNow()" class="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm">
+                    <a id="btn-edit-generated" href="edit-project.html" class="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                      <i class="fa-solid fa-pen-to-square"></i>
+                      <span>Chỉnh sửa</span>
+                    </a>
+                    <button type="button" onclick="publishNow()" class="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm">
                       <i class="fa-solid fa-cloud-arrow-up"></i>
-                      <span>Xuất bản ngay</span>
+                      <span>Xuất bản</span>
                     </button>
+                  </div>
+                </div>
+
+                <!-- Error State -->
+                <div id="state-error" class="hidden py-6 px-4 rounded-xl bg-rose-50 border border-rose-200 space-y-3">
+                  <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                      <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div class="min-w-0">
+                      <h4 class="text-sm font-bold text-rose-900">Không thể hoàn tất quá trình sinh nội dung</h4>
+                      <p id="create-error-message" class="text-xs text-rose-700 mt-1 leading-relaxed">Vui lòng thử lại.</p>
+                    </div>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" id="btn-retry-generate" onclick="retryGeneration()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition">
+                      <i class="fa-solid fa-rotate-right"></i>
+                      <span>Thử lại sinh nội dung</span>
+                    </button>
+                    <a href="projects.html" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-rose-200 text-rose-700 hover:bg-rose-100 text-xs font-bold transition">
+                      <i class="fa-solid fa-folder-open"></i>
+                      <span>Danh sách dự án</span>
+                    </a>
                   </div>
                 </div>
 
@@ -491,7 +499,7 @@
                 <span>Mẹo cho thành viên Nhóm 6</span>
               </div>
               <ul class="text-xs text-slate-600 space-y-2 list-disc list-inside leading-relaxed">
-                <li>Khi tích hợp API FastAPI: gọi trực tiếp qua <code class="bg-white px-1 py-0.5 rounded border border-indigo-200 text-indigo-700 font-mono">POST /api/v1/generate</code> với header Bearer Token.</li>
+                <li>Luồng tạo trang thật: <code class="bg-white px-1 py-0.5 rounded border border-indigo-200 text-indigo-700 font-mono">POST /projects</code> rồi <code class="bg-white px-1 py-0.5 rounded border border-indigo-200 text-indigo-700 font-mono">POST /projects/{id}/generate</code>, mọi request đều tự gắn Bearer Token qua <code class="bg-white px-1 py-0.5 rounded border border-indigo-200 text-indigo-700 font-mono">api.js</code>.</li>
                 <li>Hệ thống toast thông báo đã sẵn sàng, hãy gọi <code class="bg-white px-1 py-0.5 rounded border border-indigo-200 text-indigo-700 font-mono">window.showToast(msg, 'success')</code> trong callback.</li>
                 <li>Trang này kế thừa đầy đủ <code class="bg-white px-1 py-0.5 rounded border border-indigo-200 text-indigo-700 font-mono">js/layout.js</code> giúp tự động kiểm tra Auth Guard khi tải trang.</li>
               </ul>
@@ -559,131 +567,342 @@
       if (document.getElementById('zalo-link')) document.getElementById('zalo-link').value = '';
       if (document.getElementById('instagram-link')) document.getElementById('instagram-link').value = '';
       if (document.getElementById('hotline-input')) document.getElementById('hotline-input').value = '';
-      document.getElementById('state-idle').classList.remove('hidden');
-      document.getElementById('state-loading').classList.add('hidden');
-      document.getElementById('state-success').classList.add('hidden');
-      document.getElementById('generation-badge').textContent = 'Sẵn sàng';
-      document.getElementById('generation-badge').className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600';
+
+      clearGenerationTimers();
+      generationState.createdProjectId = null;
+      generationState.renderedHtml = '';
+      generationState.generating = false;
+
+      setCreateState('idle');
+      setGenerationBadge('Sẵn sàng', 'bg-slate-100 text-slate-600');
+      setFormBusy(false);
+      updateProgress(25, 'Đang xử lý...');
+      markStep(1, 'done', '[1/4] Phân tích prompt & lập dàn ý kiến trúc');
+      markStep(2, 'active', '[2/4] Tạo nội dung quảng cáo & thông điệp CTA...');
+      markStep(3, 'pending', '[3/4] Biên dịch layout Tailwind CSS & HTML5');
+      markStep(4, 'pending', '[4/4] Kiểm tra chuẩn SEO, mobile & lưu database');
+
+      const frame = document.getElementById('generated-preview-frame');
+      if (frame) {
+        frame.srcdoc = '';
+        frame.classList.add('hidden');
+      }
+      const meta = document.getElementById('generation-result-meta');
+      if (meta) meta.textContent = '—';
+
       // Reset template selection
       if (typeof window.clearSelectedTemplate === 'function') {
         window.clearSelectedTemplate();
       }
     }
 
-    async function handleGenerate() {
-      const templateIdInput = document.getElementById('selected-template-id');
-      const templateId = templateIdInput ? templateIdInput.value.trim() : '';
+    // ─────────────────────────────────────────────────────────────
+    // Luồng tích hợp thật: POST /projects -> POST /projects/{id}/generate
+    // ─────────────────────────────────────────────────────────────
+    const generationState = {
+      createdProjectId: null,
+      renderedHtml: '',
+      generating: false,
+      startedAt: 0,
+      progressTimer: null,
+      step3Timer: null,
+      step4Timer: null,
+    };
 
-      if (!templateId) {
-        window.showToast?.('Vui lòng chọn một mẫu giao diện trước khi tạo!', 'warning', 'Chưa chọn mẫu');
-        const gridEl = document.getElementById('create-templates-grid');
-        if (gridEl) gridEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return;
+    function setGenerationBadge(text, className) {
+      const badge = document.getElementById('generation-badge');
+      if (!badge) return;
+      badge.textContent = text;
+      badge.className = `text-[11px] font-semibold px-2 py-0.5 rounded-full ${className}`;
+    }
+
+    function setCreateState(state) {
+      ['state-idle', 'state-loading', 'state-success', 'state-error'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('hidden', id !== `state-${state}`);
+      });
+    }
+
+    function updateProgress(percent, label) {
+      const progressBar = document.getElementById('ai-progress-bar');
+      if (progressBar) progressBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+      if (label) {
+        const labelEl = document.getElementById('progress-label');
+        if (labelEl) labelEl.textContent = label;
       }
+    }
 
+    function markStep(stepNumber, status, text) {
+      const step = document.getElementById(`step-${stepNumber}`);
+      if (!step) return;
+
+      const styles = {
+        pending: {
+          className: 'flex items-center gap-2 text-slate-500',
+          icon: '<i class="fa-regular fa-circle text-[10px]"></i>',
+        },
+        active: {
+          className: 'flex items-center gap-2 text-indigo-400 animate-pulse',
+          icon: '<i class="fa-solid fa-spinner fa-spin text-[10px]"></i>',
+        },
+        done: {
+          className: 'flex items-center gap-2 text-emerald-400',
+          icon: '<i class="fa-solid fa-check text-[10px]"></i>',
+        },
+        error: {
+          className: 'flex items-center gap-2 text-rose-400',
+          icon: '<i class="fa-solid fa-xmark text-[10px]"></i>',
+        },
+      };
+
+      const config = styles[status] || styles.pending;
+      step.className = config.className;
+      step.innerHTML = `${config.icon}<span>${text}</span>`;
+    }
+
+    function clearGenerationTimers() {
+      clearInterval(generationState.progressTimer);
+      clearTimeout(generationState.step3Timer);
+      clearTimeout(generationState.step4Timer);
+      generationState.progressTimer = null;
+      generationState.step3Timer = null;
+      generationState.step4Timer = null;
+    }
+
+    function setFormBusy(busy) {
+      const btn = document.getElementById('btn-submit-generate');
+      if (!btn) return;
+      btn.disabled = busy;
+      btn.classList.toggle('opacity-75', busy);
+      btn.classList.toggle('cursor-not-allowed', busy);
+      btn.innerHTML = busy
+        ? '<i class="fa-solid fa-spinner fa-spin"></i><span>AI đang xử lý...</span>'
+        : '<i class="fa-solid fa-wand-magic-sparkles"></i><span>Tạo Landing Page Bằng AI</span>';
+    }
+
+    function extractHtmlFromResponse(response) {
+      if (!response || typeof response !== 'object') return '';
+      const html =
+        response.rendered_html ||
+        response.html ||
+        response.data?.rendered_html ||
+        response.data?.html ||
+        '';
+      return typeof html === 'string' && html.trim() ? html : '';
+    }
+
+    function collectCreatePayload(templateId) {
+      const themeHexMap = { indigo: '#4f46e5', emerald: '#10b981', amber: '#f59e0b', dark: '#0f172a' };
+      const selectedTheme = document.querySelector('input[name="color_theme"]:checked');
+      const themeHex = themeHexMap[selectedTheme ? selectedTheme.value : 'indigo'] || '#4f46e5';
       const projectName = document.getElementById('project-name').value.trim();
       const prompt = promptInput.value.trim();
 
-      if (!projectName) {
-        window.showToast?.('Vui lòng nhập Tên dự án hoặc Thương hiệu', 'warning');
-        document.getElementById('project-name').focus();
+      return {
+        template_id: parseInt(templateId, 10),
+        campaign_name: projectName,
+        product_name: projectName,
+        product_description: prompt,
+        color_theme: themeHex,
+        messenger_link: document.getElementById('messenger-link')?.value.trim() || null,
+        tiktok_shop_link: document.getElementById('tiktok-shop-link')?.value.trim() || null,
+        zalo_link: document.getElementById('zalo-link')?.value.trim() || null,
+        instagram_link: document.getElementById('instagram-link')?.value.trim() || null,
+        hotline: document.getElementById('hotline-input')?.value.trim() || null,
+      };
+    }
+
+    function startVisualProgress(startStep = 2) {
+      clearGenerationTimers();
+      let progress = 20;
+      updateProgress(progress, 'AI đang xử lý nội dung...');
+
+      generationState.progressTimer = setInterval(() => {
+        progress = Math.min(90, progress + Math.max(1, (90 - progress) * 0.08));
+        updateProgress(Math.round(progress));
+      }, 650);
+
+      if (startStep <= 2) {
+        generationState.step3Timer = setTimeout(() => {
+          markStep(2, 'done', '[2/4] Đã tạo xong nội dung marketing & thông điệp CTA');
+          markStep(3, 'active', '[3/4] Đang lắp ráp giao diện Tailwind CSS...');
+        }, 1600);
+
+        generationState.step4Timer = setTimeout(() => {
+          markStep(3, 'done', '[3/4] Giao diện Tailwind CSS đã sẵn sàng');
+          markStep(4, 'active', '[4/4] Đang đóng gói dự án và lưu cơ sở dữ liệu...');
+        }, 3200);
+      } else {
+        generationState.step3Timer = setTimeout(() => {
+          markStep(3, 'active', '[3/4] Đang lắp ráp giao diện Tailwind CSS...');
+        }, 1600);
+        generationState.step4Timer = setTimeout(() => {
+          markStep(4, 'active', '[4/4] Đang render HTML hoàn chỉnh...');
+        }, 3200);
+      }
+    }
+
+    function showGeneratedResult(projectId, html, projectName) {
+      const frame = document.getElementById('generated-preview-frame');
+      if (frame) {
+        frame.srcdoc = html;
+        frame.classList.remove('hidden');
+      }
+
+      const safeName = projectName || 'Landing Page';
+      const previewUrl = `preview.html?id=${encodeURIComponent(projectId)}`;
+      const editUrl = `edit-project.html?id=${encodeURIComponent(projectId)}`;
+      const previewLink = document.getElementById('btn-preview-generated');
+      const editLink = document.getElementById('btn-edit-generated');
+      const openLink = document.getElementById('preview-open-link');
+      if (previewLink) previewLink.href = previewUrl;
+      if (editLink) editLink.href = editUrl;
+      if (openLink) openLink.href = previewUrl;
+
+      const urlLabel = document.getElementById('preview-url-label');
+      if (urlLabel) urlLabel.textContent = `preview://project-${projectId}/index.html`;
+
+      const elapsed = ((Date.now() - generationState.startedAt) / 1000).toFixed(1);
+      const sizeKb = (new Blob([html]).size / 1024).toFixed(1);
+      const meta = document.getElementById('generation-result-meta');
+      if (meta) meta.textContent = `${elapsed}s • ${sizeKb} KB`;
+
+      setGenerationBadge('Đã sinh thành công', 'bg-emerald-100 text-emerald-700');
+      setCreateState('success');
+      window.showToast?.(
+        `Landing Page "${safeName}" đã được sinh nội dung và lưu vào cơ sở dữ liệu!`,
+        'success',
+        'Hoàn tất sinh mã'
+      );
+    }
+
+    async function runGeneration(existingProjectId = null) {
+      if (generationState.generating) return;
+
+      const templateIdInput = document.getElementById('selected-template-id');
+      const templateId = templateIdInput ? templateIdInput.value.trim() : '';
+      const projectName = document.getElementById('project-name').value.trim();
+
+      if (!existingProjectId && !templateId) {
+        window.showToast?.('Vui lòng chọn một mẫu giao diện trước khi tạo!', 'warning', 'Chưa chọn mẫu');
+        document.getElementById('create-templates-grid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
-      if (!prompt) {
+      if (!existingProjectId && !projectName) {
+        window.showToast?.('Vui lòng nhập Tên dự án hoặc Thương hiệu', 'warning');
+        document.getElementById('project-name')?.focus();
+        return;
+      }
+      if (!existingProjectId && !promptInput.value.trim()) {
         window.showToast?.('Vui lòng nhập mô tả ý tưởng vào ô AI Prompt', 'warning');
         promptInput.focus();
         return;
       }
 
-      const stateIdle = document.getElementById('state-idle');
-      const stateLoading = document.getElementById('state-loading');
-      const stateSuccess = document.getElementById('state-success');
-      const badge = document.getElementById('generation-badge');
-      const btn = document.getElementById('btn-submit-generate');
-      const progressBar = document.getElementById('ai-progress-bar');
-      const step2 = document.getElementById('step-2');
-      const step3 = document.getElementById('step-3');
-      const step4 = document.getElementById('step-4');
+      generationState.generating = true;
+      generationState.renderedHtml = '';
+      generationState.startedAt = Date.now();
+      if (!existingProjectId) generationState.createdProjectId = null;
 
-      stateIdle.classList.add('hidden');
-      stateSuccess.classList.add('hidden');
-      stateLoading.classList.remove('hidden');
+      setCreateState('loading');
+      setFormBusy(true);
+      setGenerationBadge('Đang sinh mã AI...', 'bg-indigo-100 text-indigo-700 animate-pulse');
+      markStep(1, existingProjectId ? 'done' : 'active', '[1/4] Phân tích prompt & lập dàn ý kiến trúc');
+      markStep(2, existingProjectId ? 'active' : 'pending', '[2/4] Tạo nội dung quảng cáo & thông điệp CTA...');
+      markStep(3, 'pending', '[3/4] Biên dịch layout Tailwind CSS & HTML5');
+      markStep(4, 'pending', '[4/4] Kiểm tra chuẩn SEO, mobile & lưu database');
+      startVisualProgress(existingProjectId ? 3 : 2);
 
-      badge.textContent = 'Đang sinh mã AI...';
-      badge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 animate-pulse';
-      btn.disabled = true;
-      btn.classList.add('opacity-75', 'cursor-not-allowed');
+      try {
+        let projectId = existingProjectId;
 
-      window.showToast?.('Bắt đầu gửi lệnh tới FastAPI & Gemini Pro...', 'info', 'Đang xử lý');
-      progressBar.style.width = '25%';
-      
-      setTimeout(() => {
-        progressBar.style.width = '55%';
-        step2.className = 'flex items-center gap-2 text-emerald-400';
-        step2.innerHTML = '<i class="fa-solid fa-check text-[10px]"></i><span>[2/4] Đã tạo xong nội dung marketing & thông điệp CTA</span>';
-        step3.className = 'flex items-center gap-2 text-indigo-400 animate-pulse';
-        step3.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-[10px]"></i><span>[3/4] Đang lắp ráp giao diện Tailwind CSS...</span>';
-      }, 1200);
-
-      setTimeout(() => {
-        progressBar.style.width = '85%';
-        step3.className = 'flex items-center gap-2 text-emerald-400';
-        step3.innerHTML = '<i class="fa-solid fa-check text-[10px]"></i><span>[3/4] Giao diện Tailwind CSS đã sẵn sàng</span>';
-        step4.className = 'flex items-center gap-2 text-indigo-400 animate-pulse';
-        step4.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-[10px]"></i><span>[4/4] Đang đóng gói dự án và lưu Database...</span>';
-      }, 2500);
-
-      setTimeout(() => {
-        progressBar.style.width = '100%';
-        step4.className = 'flex items-center gap-2 text-emerald-400';
-        step4.innerHTML = '<i class="fa-solid fa-check text-[10px]"></i><span>[4/4] Hoàn tất và sẵn sàng xuất bản!</span>';
-
-        stateLoading.classList.add('hidden');
-        stateSuccess.classList.remove('hidden');
-        
-        badge.textContent = 'Đã sinh thành công';
-        badge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700';
-        
-        btn.disabled = false;
-        btn.classList.remove('opacity-75', 'cursor-not-allowed');
-
-        document.getElementById('preview-mini-title').textContent = projectName;
-
-        // Lưu chiến dịch vào backend nếu có token
-        if (typeof window.apiRequest === 'function' && window.getToken && window.getToken()) {
-          const themeHexMap = { indigo: '#4f46e5', emerald: '#10b981', amber: '#f59e0b', dark: '#0f172a' };
-          const selectedTheme = document.querySelector('input[name="color_theme"]:checked');
-          const themeHex = themeHexMap[selectedTheme ? selectedTheme.value : 'indigo'] || '#4f46e5';
-          window.apiRequest('/projects', {
+        if (!projectId) {
+          window.showToast?.('Đang tạo dự án trên FastAPI...', 'info', 'Bước 1/2');
+          const createRes = await apiRequest('/projects', {
             method: 'POST',
-            body: JSON.stringify({
-              template_id: parseInt(templateId, 10),
-              campaign_name: projectName,
-              product_name: projectName,
-              product_description: prompt,
-              color_theme: themeHex,
-              messenger_link: document.getElementById('messenger-link')?.value.trim() || null,
-              tiktok_shop_link: document.getElementById('tiktok-shop-link')?.value.trim() || null,
-              zalo_link: document.getElementById('zalo-link')?.value.trim() || null,
-              instagram_link: document.getElementById('instagram-link')?.value.trim() || null,
-              hotline: document.getElementById('hotline-input')?.value.trim() || null
-            })
-          }).then(res => {
-            console.log('Đã lưu chiến dịch vào Database:', res);
-          }).catch(err => {
-            console.warn('Lỗi lưu chiến dịch API:', err);
+            body: JSON.stringify(collectCreatePayload(templateId)),
           });
+          const project = createRes?.data;
+          if (!project || !project.id) {
+            throw new Error('Backend không trả về ID dự án sau khi tạo.');
+          }
+          projectId = project.id;
+          generationState.createdProjectId = projectId;
+          markStep(1, 'done', '[1/4] Đã lưu dự án & cấu hình chiến dịch');
+          markStep(2, 'active', '[2/4] Gemini đang viết nội dung quảng cáo & CTA...');
+          updateProgress(35, 'AI đang phân tích dữ liệu dự án...');
+          window.showToast?.(`Đã tạo dự án #${projectId}, đang gọi Gemini sinh nội dung...`, 'info', 'Bước 2/2');
+        } else {
+          updateProgress(35, 'AI đang sinh lại nội dung...');
         }
 
-        window.showToast?.(`Landing Page "${projectName}" đã được tạo thành công với Template #${templateId}!`, 'success', 'Hoàn tất sinh mã');
-      }, 3600);
+        const genRes = await apiRequest(`/projects/${projectId}/generate`, {
+          method: 'POST',
+        });
+        const html = extractHtmlFromResponse(genRes);
+        if (!html) {
+          throw new Error('API sinh nội dung không trả về rendered_html hợp lệ.');
+        }
+
+        clearGenerationTimers();
+        markStep(1, 'done', '[1/4] Đã phân tích prompt & cấu hình dự án');
+        markStep(2, 'done', '[2/4] Đã tạo nội dung marketing & thông điệp CTA');
+        markStep(3, 'done', '[3/4] Giao diện Tailwind CSS đã sẵn sàng');
+        markStep(4, 'done', '[4/4] Đã render HTML và lưu cơ sở dữ liệu');
+        updateProgress(100, 'Hoàn tất 100%');
+
+        generationState.renderedHtml = html;
+        try {
+          sessionStorage.setItem('last_generated_project_id', String(projectId));
+        } catch (e) {}
+
+        showGeneratedResult(projectId, html, projectName || genRes?.data?.product_name);
+      } catch (error) {
+        clearGenerationTimers();
+        console.error('Lỗi sinh Landing Page:', error);
+
+        const failedStep = generationState.createdProjectId ? 2 : 1;
+        markStep(failedStep, 'error', `[${failedStep}/4] Bước này gặp lỗi, quá trình đã dừng.`);
+        updateProgress(Math.max(20, Math.round(Number((document.getElementById('ai-progress-bar')?.style.width || '20%').replace('%', ''))) ), 'Quá trình sinh nội dung bị gián đoạn');
+        setGenerationBadge('Sinh nội dung thất bại', 'bg-rose-100 text-rose-700');
+        setCreateState('error');
+
+        const messageEl = document.getElementById('create-error-message');
+        if (messageEl) {
+          messageEl.textContent =
+            error.message ||
+            'Không thể sinh nội dung từ AI. Vui lòng kiểm tra GEMINI_API_KEY và thử lại.';
+        }
+        window.showToast?.(
+          error.message || 'Không thể sinh nội dung Landing Page.',
+          'error',
+          'Lỗi sinh nội dung'
+        );
+      } finally {
+        generationState.generating = false;
+        clearGenerationTimers();
+        setFormBusy(false);
+      }
+    }
+
+    async function handleGenerate() {
+      await runGeneration(null);
+    }
+
+    async function retryGeneration() {
+      if (generationState.createdProjectId) {
+        await runGeneration(generationState.createdProjectId);
+      } else {
+        await runGeneration(null);
+      }
     }
 
     function publishNow() {
-      window.showToast?.('Đang triển khai lên máy chủ Cloud và CDN...', 'info');
-      setTimeout(() => {
-        window.showToast?.('Xuất bản thành công! Trang đã online tại subdomain riêng.', 'success');
-      }, 1200);
+      if (!generationState.createdProjectId) {
+        window.showToast?.('Chưa có dự án nào được tạo. Vui lòng sinh nội dung trước.', 'warning', 'Chưa có dự án');
+        return;
+      }
+      window.location.href = `deploy.html?id=${encodeURIComponent(generationState.createdProjectId)}`;
     }
   </script>
 
