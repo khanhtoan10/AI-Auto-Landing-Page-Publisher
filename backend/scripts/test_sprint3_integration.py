@@ -264,6 +264,8 @@ def run() -> None:
         original_create_repo = projects_api.create_github_repo
         original_push_assets = projects_api.push_landing_page_assets
         original_enable_pages = projects_api.enable_github_pages
+        original_wait_built = projects_api.wait_for_github_pages_built
+        original_get_build_status = projects_api.get_github_pages_build_status
         try:
             projects_api.github_service.push_landing_page_commit = lambda **kwargs: "abc123def456"
             projects_api.create_version = lambda **kwargs: {"id": 999, "version_number": 1}
@@ -273,6 +275,16 @@ def run() -> None:
             }
             projects_api.push_landing_page_assets = lambda **kwargs: {"commit_sha": "abc123def456"}
             projects_api.enable_github_pages = lambda owner, repo_name: f"https://{owner}.github.io/{repo_name}"
+            projects_api.wait_for_github_pages_built = lambda owner, repo_name, **kwargs: {
+                "status": "built",
+                "html_url": f"https://{owner}.github.io/{repo_name}",
+                "error": None,
+            }
+            projects_api.get_github_pages_build_status = lambda owner, repo_name, **kwargs: {
+                "status": "built",
+                "html_url": f"https://{owner}.github.io/{repo_name}",
+                "error": None,
+            }
 
             update_res = client.put(
                 f"/projects/{new_id}",
@@ -331,7 +343,8 @@ def run() -> None:
             projects_api.create_github_repo = original_create_repo
             projects_api.push_landing_page_assets = original_push_assets
             projects_api.enable_github_pages = original_enable_pages
-
+            projects_api.wait_for_github_pages_built = original_wait_built
+            projects_api.get_github_pages_build_status = original_get_build_status
         delete_res = client.delete(f"/projects/{new_id}")
         check("DELETE /projects/{id}", delete_res.status_code == 200, f"HTTP {delete_res.status_code}")
         deleted_detail = client.get(f"/projects/{new_id}")
@@ -342,7 +355,6 @@ def run() -> None:
     print("=" * 70)
     print("TẤT CẢ KIỂM THỬ SPRINT 3 ĐÃ PASS")
     print("=" * 70)
-
 
 if __name__ == "__main__":
     run()

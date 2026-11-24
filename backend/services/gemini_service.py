@@ -17,7 +17,11 @@ from core.config import settings  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.8-flash"
+GEMINI_FALLBACK_MODELS = [
+    "gemini-3.8-flash",
+    "gemini-3.5-flash-lite",
+]
 GEMINI_API_URL = (
     f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 )
@@ -190,7 +194,8 @@ def _extract_text_from_gemini_response(response_payload: dict[str, Any]) -> str:
 
 def generate_landing_page_json(user_prompt: str, timeout: int = 60) -> dict[str, Any]:
     """
-    Gửi prompt tới Gemini API, nhận kết quả và trả về dict JSON đã được kiểm tra hợp lệ.
+    Gửi prompt tới Gemini API (tự động fallback qua các model dự phòng khi gặp 503/429/404),
+    nhận kết quả và trả về dict JSON đã được kiểm tra hợp lệ.
 
     Args:
         user_prompt: Mô tả sản phẩm hoặc yêu cầu nội dung landing page.
@@ -215,36 +220,70 @@ def generate_landing_page_json(user_prompt: str, timeout: int = 60) -> dict[str,
     }
 
     encoded_body = json.dumps(request_body).encode("utf-8")
-    req = request.Request(
-        url=GEMINI_API_URL,
-        data=encoded_body,
-        headers={
-            "Content-Type": "application/json",
-            "x-goog-api-key": api_key,
-        },
-        method="POST",
-    )
 
-    try:
-        with request.urlopen(req, timeout=timeout) as resp:
-            raw_http_body = resp.read().decode("utf-8")
-    except error.HTTPError as exc:
-        # Không log hoặc đưa API Key vào thông báo lỗi
-        error_detail = ""
+    raw_models = (
+        list(GEMINI_MODEL)
+        if isinstance(GEMINI_MODEL, (list, tuple))
+        else [GEMINI_MODEL]
+    ) + GEMINI_FALLBACK_MODELS
+
+    models_to_try: list[str] = []
+    for m in raw_models:
+        if isinstance(m, str) and m.strip() and m.strip() not in models_to_try:
+            models_to_try.append(m.strip())
+
+    last_error: GeminiConnectionError | None = None
+    raw_http_body = ""
+
+    for model_name in models_to_try:
+        api_url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{model_name}:generateContent"
+        )
+        req = request.Request(
+            url=api_url,
+            data=encoded_body,
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": api_key,
+            },
+            method="POST",
+        )
+
         try:
-            err_json = json.loads(exc.read().decode("utf-8"))
-            error_detail = err_json.get("error", {}).get("message", "")
-        except Exception:
-            error_detail = exc.reason or "HTTP Error"
-        logger.error("Gemini API trả về lỗi HTTP %s: %s", exc.code, error_detail)
-        raise GeminiConnectionError(
-            f"Lỗi kết nối Gemini API (HTTP {exc.code}): {error_detail}"
-        ) from exc
-    except (error.URLError, TimeoutError, OSError) as exc:
-        logger.error("Không thể kết nối tới Gemini API: %s", type(exc).__name__)
-        raise GeminiConnectionError(
-            f"Không thể kết nối tới Gemini API: {exc}"
-        ) from exc
+            with request.urlopen(req, timeout=timeout) as resp:
+                raw_http_body = resp.read().decode("utf-8")
+                last_error = None
+                break
+        except error.HTTPError as exc:
+            error_detail = ""
+            try:
+                err_json = json.loads(exc.read().decode("utf-8"))
+                error_detail = err_json.get("error", {}).get("message", "")
+            except Exception:
+                error_detail = exc.reason or "HTTP Error"
+
+            logger.warning(
+                "Gemini model '%s' trả về HTTP %s: %s",
+                model_name,
+                exc.code,
+                error_detail,
+            )
+            last_error = GeminiConnectionError(
+                f"Lỗi kết nối Gemini API (HTTP {exc.code}): {error_detail}"
+            )
+            # Nếu quá tải (503), hết quota (429) hoặc model ngừng hỗ trợ (404) -> thử model tiếp theo
+            if exc.code in (404, 429, 503):
+                continue
+            raise last_error from exc
+        except (error.URLError, TimeoutError, OSError) as exc:
+            logger.error("Không thể kết nối tới Gemini API: %s", type(exc).__name__)
+            raise GeminiConnectionError(
+                f"Không thể kết nối tới Gemini API: {exc}"
+            ) from exc
+
+    if last_error is not None:
+        raise last_error
 
     if not raw_http_body.strip():
         raise GeminiResponseError("Gemini API trả về phản hồi HTTP rỗng")
