@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Trang tiến trình xuất bản Landing Page.
  *
  * Luồng thật:
@@ -235,8 +235,23 @@
 
     const title = $("deploy-title");
     if (title) title.textContent = "Không thể xuất bản Landing Page";
+
+    // Phân loại lỗi GitHub để hiển thị hướng dẫn thân thiện
     const errorText = $("error-message-text");
-    if (errorText) errorText.textContent = message;
+    const lowerMsg = (message || "").toLowerCase();
+
+    let friendlyHint = "";
+    if (lowerMsg.includes("rate limit") || lowerMsg.includes("giới hạn tốc độ")) {
+      friendlyHint = '<p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-2 flex items-start gap-2"><i class="fa-solid fa-clock mt-0.5 shrink-0"></i><span>GitHub API đang bị giới hạn tốc độ. Vui lòng chờ vài phút rồi thử lại.</span></p>';
+    } else if (lowerMsg.includes("đã tồn tại") || lowerMsg.includes("already exists") || lowerMsg.includes("trùng")) {
+      friendlyHint = '<p class="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mt-2 flex items-start gap-2"><i class="fa-solid fa-copy mt-0.5 shrink-0"></i><span>Tên repo đã tồn tại trên GitHub. Hãy đổi tên chiến dịch rồi deploy lại.</span></p>';
+    } else if (lowerMsg.includes("token") || lowerMsg.includes("hết hạn") || lowerMsg.includes("không hợp lệ")) {
+      friendlyHint = '<p class="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 mt-2 flex items-start gap-2"><i class="fa-solid fa-key mt-0.5 shrink-0"></i><span>GitHub Token không hợp lệ hoặc đã hết hạn. Vui lòng cập nhật GITHUB_TOKEN trong file .env của backend.</span></p>';
+    }
+
+    if (errorText) {
+      errorText.innerHTML = `<span>${message || ""}</span>${friendlyHint}`;
+    }
 
     showResultPanels({ success: false, error: true });
     window.showToast?.(message, "error", "Deploy thất bại");

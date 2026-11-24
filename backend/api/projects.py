@@ -800,6 +800,7 @@ def deploy_project(
                 "status": "Success",
             },
         }
+
     except GitHubAuthError as exc:
         db.rollback()
         db.execute(
@@ -817,7 +818,12 @@ def deploy_project(
             {"id": project["id"]},
         )
         db.commit()
-        raise HTTPException(status_code=401, detail=str(exc))
+        # Dùng 503 thay vì 401 để frontend không nhầm với JWT hết hạn → không redirect login
+        raise HTTPException(
+            status_code=503,
+            detail=str(exc),
+            headers={"X-GitHub-Error": "auth"},
+        )
     except GitHubRateLimitError as exc:
         db.rollback()
         db.execute(
@@ -857,7 +863,10 @@ def deploy_project(
             {"id": project["id"]},
         )
         db.commit()
-        raise HTTPException(status_code=409, detail=str(exc))
+        raise HTTPException(
+            status_code=409,
+            detail=str(exc),
+        )
     except Exception as exc:
         db.rollback()
         db.execute(
