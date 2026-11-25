@@ -266,10 +266,49 @@
     }
   }
 
+  function setupBackendConfigModal() {
+    const btnOpen = $("btn-config-backend");
+    const modal = $("backend-config-modal");
+    const inputUrl = $("input-backend-url");
+    const btnCancel = $("btn-cancel-config");
+    const btnReset = $("btn-reset-config");
+    const btnSave = $("btn-save-config");
+
+    if (!btnOpen || !modal) return;
+
+    btnOpen.addEventListener("click", () => {
+      if (inputUrl) {
+        inputUrl.value = window.getApiBaseUrl?.() || "";
+      }
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    });
+
+    const closeModal = () => {
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    };
+
+    btnCancel?.addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    btnReset?.addEventListener("click", () => {
+      window.resetApiBaseUrl?.();
+    });
+
+    btnSave?.addEventListener("click", () => {
+      const val = inputUrl ? inputUrl.value.trim() : "";
+      window.setApiBaseUrl?.(val);
+    });
+  }
+
   window.loadDashboardData = loadDashboard;
 
   document.addEventListener("DOMContentLoaded", () => {
     loadDashboard();
     loadHealth();
+    setupBackendConfigModal();
   });
 })();
