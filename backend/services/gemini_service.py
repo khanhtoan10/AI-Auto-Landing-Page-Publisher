@@ -175,7 +175,6 @@ def validate_landing_page_json(raw_text: str) -> dict[str, Any]:
 
     cleaned_text = str(raw_text).strip()
 
-    # Từ chối nếu phản hồi chứa markdown code block theo đúng ràng buộc prompt
     if cleaned_text.startswith("```") or "```json" in cleaned_text.lower():
         raise GeminiResponseError(
             "Phản hồi từ Gemini chứa định dạng Markdown/code block không hợp lệ"
@@ -189,14 +188,12 @@ def validate_landing_page_json(raw_text: str) -> dict[str, Any]:
     if not isinstance(parsed_data, dict):
         raise GeminiResponseError("Dữ liệu JSON từ Gemini phải là một JSON object")
 
-    # Kiểm tra thiếu trường bắt buộc
     missing_fields = [field for field in REQUIRED_FIELDS if field not in parsed_data]
     if missing_fields:
         raise GeminiResponseError(
             f"JSON từ Gemini thiếu các trường bắt buộc: {', '.join(missing_fields)}"
         )
 
-    # Kiểm tra kiểu dữ liệu từng trường
     for field, expected_type in REQUIRED_FIELDS.items():
         value = parsed_data[field]
         if not isinstance(value, expected_type):
@@ -205,12 +202,10 @@ def validate_landing_page_json(raw_text: str) -> dict[str, Any]:
                 f"nhận được {type(value).__name__}"
             )
 
-    # Kiểm tra giá trị rỗng cho các trường chuỗi
     for str_field in ("headline", "subheadline", "cta_text", "primary_color"):
         if not parsed_data[str_field].strip():
             raise GeminiResponseError(f"Trường '{str_field}' không được để chuỗi rỗng")
 
-    # Kiểm tra mảng features không rỗng và mọi phần tử đều là string không rỗng
     features = parsed_data["features"]
     if not features:
         raise GeminiResponseError("Trường 'features' không được là danh sách rỗng")
@@ -221,7 +216,6 @@ def validate_landing_page_json(raw_text: str) -> dict[str, Any]:
                 f"Phần tử thứ {index} trong 'features' phải là chuỗi không rỗng"
             )
 
-    # Kiểm tra định dạng mã màu hex cho primary_color (đồng bộ chuẩn #RRGGBB của project schema)
     primary_color = parsed_data["primary_color"].strip()
     if not HEX_COLOR_PATTERN.fullmatch(primary_color):
         raise GeminiResponseError(
