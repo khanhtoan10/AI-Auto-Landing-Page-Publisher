@@ -338,12 +338,21 @@ def generate_project_content(
         )
 
     if generation.status != STATUS_SUCCESS or generation.response_json is None:
+        error_code = getattr(generation, "_error_code", None) or "GEMINI_ERROR"
+        status_map = {
+            "GEMINI_QUOTA_EXCEEDED": status.HTTP_429_TOO_MANY_REQUESTS,
+            "GEMINI_TIMEOUT": status.HTTP_504_GATEWAY_TIMEOUT,
+            "GEMINI_CONFIG_ERROR": status.HTTP_503_SERVICE_UNAVAILABLE,
+            "GEMINI_INVALID_RESPONSE": status.HTTP_502_BAD_GATEWAY,
+        }
+        http_status = status_map.get(error_code, status.HTTP_502_BAD_GATEWAY)
+        friendly_message = (
+            generation.error_message
+            or "Không thể tạo nội dung lúc này. Vui lòng thử lại sau."
+        )
         raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=_error_detail(
-                "GEMINI_ERROR",
-                "Không thể sinh nội dung từ Gemini API. Vui lòng thử lại sau.",
-            ),
+            status_code=http_status,
+            detail=_error_detail(error_code, friendly_message),
         )
 
     refreshed_row = _fetch_project(db, project["id"])
