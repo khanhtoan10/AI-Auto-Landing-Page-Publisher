@@ -19,7 +19,7 @@
   }
 
   function resolveApiBaseUrl() {
-    // 1. Kiểm tra query parameter: ?api=... hoặc ?backend=... (tiện lợi khi chấm demo hoặc đổi môi trường)
+    // 1. Kiểm tra query parameter: ?api=... hoặc ?backend=...
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const queryApi = urlParams.get("api") || urlParams.get("backend");
@@ -37,19 +37,13 @@
     } catch (_) {}
 
     // 3. Biến toàn cục từ config.js hoặc inline script
-    const explicit = normalizeBaseUrl(window.API_BASE_URL || window.__API_BASE_URL__ || window.__DEFAULT_BACKEND_URL__);
+    const explicit = normalizeBaseUrl(
+      window.API_BASE_URL || window.__API_BASE_URL__ || window.__DEFAULT_BACKEND_URL__
+    );
     if (explicit && explicit !== "auto") return explicit;
 
-    const { protocol, hostname, port } = window.location;
-
-    // Mở trực tiếp file HTML -> luôn trỏ về backend local.
-    if (protocol === "file:") return "http://127.0.0.1:8000";
-
-    // Frontend được FastAPI (port 8000) phục vụ -> dùng đúng origin hiện tại.
-    if (port === "8000") return "";
-
-    // Chạy Live Server / Vite / Python http.server ở máy local.
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
+    const { hostname } = window.location;
+    if (hostname === "127.0.0.1" || hostname === "localhost") {
       return "http://127.0.0.1:8000";
     }
 

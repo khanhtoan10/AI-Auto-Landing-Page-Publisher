@@ -29,6 +29,10 @@
       "destination": "https://ai-landing-page-backend-demo.onrender.com/versions/:path*"
     },
     {
+      "source": "/static/:path*",
+      "destination": "https://ai-landing-page-backend-demo.onrender.com/static/:path*"
+    },
+    {
       "source": "/",
       "destination": "/frontend/index.html"
     },
