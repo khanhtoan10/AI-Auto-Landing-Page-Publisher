@@ -14,6 +14,22 @@ def hash_password(password: str) -> str:
     return hashed.decode("utf-8")
 
 
+def ensure_index(cursor, table: str, index_name: str, columns: str):
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM information_schema.STATISTICS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = %s
+          AND INDEX_NAME = %s;
+        """,
+        (table, index_name),
+    )
+    if cursor.fetchone()[0] == 0:
+        cursor.execute(f"ALTER TABLE {table} ADD INDEX {index_name} ({columns});")
+        print(f"Added index '{index_name}' to '{table}'.")
+
+
 def init_database():
     print(f"Connecting to MySQL database: {settings.DB_NAME}...")
     connection = pymysql.connect(
@@ -253,6 +269,163 @@ def init_database():
             """
             cursor.execute(create_generations_table_query)
             print("Table 'generations' created or already exists.")
+
+            # 10. Siết NOT NULL cho deployments
+            cursor.execute("UPDATE deployments SET status = 'Pending' WHERE status IS NULL;")
+            cursor.execute("UPDATE deployments SET start_time = NOW() WHERE start_time IS NULL;")
+            cursor.execute(
+                "ALTER TABLE deployments MODIFY status VARCHAR(50) NOT NULL DEFAULT 'Pending';"
+            )
+            cursor.execute(
+                "ALTER TABLE deployments MODIFY start_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;"
+            )
+
+            # 11. Đảm bảo các index cần thiết
+            ensure_index(cursor, "projects", "idx_projects_user_status_updated", "user_id, status, updated_at")
+            ensure_index(cursor, "deployments", "idx_deployments_project_start", "project_id, start_time")
+            print("Constraints and indexes reviewed.")
+
+            # 12. Seed dữ liệu mẫu demo
+            cursor.execute(
+                "SELECT id, email FROM users WHERE email IN (%s, %s);",
+                ("member1@example.com", "member2@example.com"),
+            )
+            user_map = {row[1]: row[0] for row in cursor.fetchall()}
+            member1_id = user_map.get("member1@example.com")
+            member2_id = user_map.get("member2@example.com")
+
+            created = 0
+            if member1_id and member2_id:
+                demo_projects = [
+                    {
+                        "user_id": member1_id,
+                        "template_id": 1,
+                        "campaign_name": "Demo Khuyen mai thu dong",
+                        "product_name": "Thoi trang Thu Dong",
+                        "product_description": "Bo suu tap thoi trang thu dong phong cach tre trung va am ap.",
+                        "price": 890000,
+                        "color_theme": "#4F46E5",
+                        "facebook_url": "https://facebook.com/demo.khuyenmai",
+                        "tiktok_url": "https://tiktok.com/@demo.khuyenmai",
+                        "instagram_url": "https://instagram.com/demo.khuyenmai",
+                        "status": "published",
+                    },
+                    {
+                        "user_id": member1_id,
+                        "template_id": 2,
+                        "campaign_name": "Demo Ra mat my pham",
+                        "product_name": "My pham thien nhien",
+                        "product_description": "Bo san pham cham soc da va my pham cao cap chiet xuat thien nhien.",
+                        "price": 450000,
+                        "color_theme": "#10B981",
+                        "facebook_url": None,
+                        "tiktok_url": None,
+                        "instagram_url": None,
+                        "status": "draft",
+                    },
+                    {
+                        "user_id": member1_id,
+                        "template_id": 3,
+                        "campaign_name": "Demo Hoi thao marketing",
+                        "product_name": "Ve tham du hoi thao Marketing",
+                        "product_description": "Chuong trinh hoi thao chuyen sau ve chien luoc marketing va tang truong.",
+                        "price": 0,
+                        "color_theme": "#F59E0B",
+                        "facebook_url": None,
+                        "tiktok_url": None,
+                        "instagram_url": None,
+                        "status": "failed",
+                    },
+                    {
+                        "user_id": member2_id,
+                        "template_id": 1,
+                        "campaign_name": "Demo cua Member Two A",
+                        "product_name": "San pham Demo A",
+                        "product_description": "Mo ta san pham demo A cua Member Two.",
+                        "price": None,
+                        "color_theme": None,
+                        "facebook_url": None,
+                        "tiktok_url": None,
+                        "instagram_url": None,
+                        "status": "draft",
+                    },
+                    {
+                        "user_id": member2_id,
+                        "template_id": 2,
+                        "campaign_name": "Demo cua Member Two B",
+                        "product_name": "San pham Demo B",
+                        "product_description": "Mo ta san pham demo B cua Member Two.",
+                        "price": None,
+                        "color_theme": None,
+                        "facebook_url": None,
+                        "tiktok_url": None,
+                        "instagram_url": None,
+                        "status": "draft",
+                    },
+                ]
+
+                for p in demo_projects:
+                    cursor.execute(
+                        "SELECT id FROM projects WHERE user_id = %s AND campaign_name = %s;",
+                        (p["user_id"], p["campaign_name"]),
+                    )
+                    existing = cursor.fetchone()
+                    if not existing:
+                        cursor.execute(
+                            """
+                            INSERT INTO projects (
+                                user_id, template_id, campaign_name, product_name, product_description,
+                                price, color_theme, facebook_url, tiktok_url, instagram_url, status
+                            )
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                            """,
+                            (
+                                p["user_id"],
+                                p["template_id"],
+                                p["campaign_name"],
+                                p["product_name"],
+                                p["product_description"],
+                                p["price"],
+                                p["color_theme"],
+                                p["facebook_url"],
+                                p["tiktok_url"],
+                                p["instagram_url"],
+                                p["status"],
+                            ),
+                        )
+                        project_id = cursor.lastrowid
+                        created += 1
+                    else:
+                        project_id = existing[0]
+
+                    if p["status"] == "published":
+                        cursor.execute(
+                            "SELECT COUNT(*) FROM deployments WHERE project_id = %s AND commit_sha = %s;",
+                            (project_id, "demo0001"),
+                        )
+                        if cursor.fetchone()[0] == 0:
+                            cursor.execute(
+                                """
+                                INSERT INTO deployments (project_id, commit_sha, status, error_message, start_time, end_time)
+                                VALUES (%s, %s, %s, %s, NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 2 DAY);
+                                """,
+                                (project_id, "demo0001", "Failed", "Mau: loi push len GitHub"),
+                            )
+
+                        cursor.execute(
+                            "SELECT COUNT(*) FROM deployments WHERE project_id = %s AND commit_sha = %s;",
+                            (project_id, "demo0002"),
+                        )
+                        if cursor.fetchone()[0] == 0:
+                            cursor.execute(
+                                """
+                                INSERT INTO deployments (project_id, commit_sha, status, error_message, start_time, end_time)
+                                VALUES (%s, %s, %s, %s, NOW() - INTERVAL 1 DAY, NOW() - INTERVAL 1 DAY);
+                                """,
+                                (project_id, "demo0002", "Success", None),
+                            )
+
+            print(f"Seeded {created} demo projects.")
             print("Database migration & seeding completed successfully!")
 
     except Exception as e:
