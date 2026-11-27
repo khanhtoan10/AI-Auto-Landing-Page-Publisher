@@ -1,4 +1,5 @@
 import time
+import bcrypt
 import pymysql
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from passlib.context import CryptContext
@@ -10,6 +11,31 @@ from schemas.auth import LoginRequest, UserRegisterRequest, UserRegisterResponse
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Xác thực mật khẩu an toàn bằng bcrypt trực tiếp (khắc phục lỗi passlib trên bcrypt 4.x)."""
+    try:
+        return bcrypt.checkpw(
+            str(plain_password).encode("utf-8")[:72],
+            str(hashed_password).encode("utf-8"),
+        )
+    except Exception:
+        try:
+            return pwd_context.verify(str(plain_password)[:72], hashed_password)
+        except Exception:
+            return False
+
+
+def hash_password(password: str) -> str:
+    """Mã hoá mật khẩu an toàn bằng bcrypt trực tiếp."""
+    try:
+        return bcrypt.hashpw(
+            str(password).encode("utf-8")[:72],
+            bcrypt.gensalt(),
+        ).decode("utf-8")
+    except Exception:
+        return pwd_context.hash(str(password)[:72])
 
 # ── Cấu hình chống đăng nhập sai liên tiếp (Brute-force Protection) ──
 MAX_LOGIN_ATTEMPTS = 5
@@ -105,7 +131,7 @@ async def register_user(payload: UserRegisterRequest):
                 )
 
             clean_pwd = str(payload.password)[:72]
-            hashed_pwd = pwd_context.hash(clean_pwd)
+            hashed_pwd = hash_password(clean_pwd)
 
             insert_query = """
             INSERT INTO users (full_name, email, hashed_password)
@@ -140,7 +166,7 @@ async def login(payload: LoginRequest, request: Request):
             user = cursor.fetchone()
 
             clean_pwd = str(payload.password)[:72]
-            if not user or not pwd_context.verify(clean_pwd, user["hashed_password"]):
+            if not user or not verify_password(clean_pwd, user["hashed_password"]):
                 remaining = _record_failed_login(login_keys)
                 if remaining == 0:
                     msg = f"Bạn đã đăng nhập sai quá {MAX_LOGIN_ATTEMPTS} lần. Tài khoản tạm khóa trong 15 phút."

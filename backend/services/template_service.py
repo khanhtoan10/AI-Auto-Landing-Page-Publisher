@@ -44,11 +44,13 @@ def serialize_template(template: Template) -> TemplateItem:
     Ánh xạ cột thumbnail_url từ database sang trường thumbnail theo đúng API contract.
     Loại bỏ các trường nội bộ không cần thiết như file_path và created_at.
     """
+    thumb = template.thumbnail_url or ""
     return TemplateItem(
         id=template.id,
         name=template.name,
         description=template.description,
-        thumbnail=template.thumbnail_url,
+        thumbnail=thumb,
+        thumbnail_url=thumb,
         placeholders=template.placeholders,
     )
 
