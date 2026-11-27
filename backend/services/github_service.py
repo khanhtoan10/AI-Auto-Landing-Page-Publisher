@@ -3,6 +3,7 @@ import hashlib
 import logging
 import os
 import re
+import time
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
@@ -546,3 +547,79 @@ def delete_github_repo(
 
 # Alias ngắn gọn cho các module khác dễ gọi.
 delete_repository = delete_github_repo
+
+
+def get_github_pages_build_status(owner: str, repo_name: str, token: Optional[str] = None) -> dict:
+    """
+    Gọi GitHub API kiểm tra trạng thái build mới nhất của GitHub Pages.
+    Endpoint: GET /repos/{owner}/{repo}/pages/builds/latest
+    """
+    resolved_token = _resolve_token(token)
+    if not resolved_token:
+        return {
+            "status": "built",
+            "html_url": f"https://{owner.lower()}.github.io/{repo_name}/",
+            "error": None,
+        }
+
+    headers = _github_headers(resolved_token)
+
+    pages_res = requests.get(
+        f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/pages",
+        headers=headers,
+        timeout=15,
+    )
+    html_url = f"https://{owner.lower()}.github.io/{repo_name}/"
+    if pages_res.status_code == 200:
+        html_url = pages_res.json().get("html_url") or html_url
+
+    build_res = requests.get(
+        f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/pages/builds/latest",
+        headers=headers,
+        timeout=15,
+    )
+    if build_res.status_code == 404:
+        return {"status": "building", "html_url": html_url, "error": None}
+
+    build_res.raise_for_status()
+    build_data = build_res.json()
+    err_obj = build_data.get("error") or {}
+
+    return {
+        "status": build_data.get("status", "building"),
+        "html_url": html_url,
+        "error": err_obj.get("message") if isinstance(err_obj, dict) else None,
+    }
+
+
+def wait_for_github_pages_built(
+    owner: str,
+    repo_name: str,
+    token: Optional[str] = None,
+    timeout_seconds: int = 45,
+    poll_interval: float = 3.0,
+) -> dict:
+    """
+    Polling GitHub Pages API cho đến khi trạng thái là 'built' hoặc báo lỗi/hết thời gian chờ.
+    """
+    deadline = time.time() + timeout_seconds
+    last_info = {
+        "status": "building",
+        "html_url": f"https://{owner.lower()}.github.io/{repo_name}/",
+        "error": None,
+    }
+
+    while time.time() < deadline:
+        last_info = get_github_pages_build_status(owner=owner, repo_name=repo_name, token=token)
+        status_val = (last_info.get("status") or "").lower()
+
+        if status_val == "built":
+            return last_info
+        if status_val == "errored":
+            raise RuntimeError(
+                f"GitHub Pages build lỗi: {last_info.get('error') or 'Unknown build error'}"
+            )
+
+        time.sleep(poll_interval)
+
+    raise TimeoutError("Hết thời gian chờ GitHub Pages build xong. Vui lòng kiểm tra lại sau.")

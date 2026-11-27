@@ -142,11 +142,19 @@ class TestDeployEndpointHeadersAndFlow(unittest.TestCase):
                         "api.projects.enable_github_pages",
                         return_value="https://khanhtoan10.github.io/lp-1-summer-sale",
                     ):
-                        res = self.client.post("/projects/1/deploy")
+                        with patch(
+                            "api.projects.wait_for_github_pages_built",
+                            return_value={
+                                "status": "built",
+                                "html_url": "https://khanhtoan10.github.io/lp-1-summer-sale/",
+                                "error": None,
+                            },
+                        ):
+                            res = self.client.post("/projects/1/deploy")
         self.assertEqual(res.status_code, 200)
         body = res.json()
         self.assertTrue(body["success"])
-        self.assertEqual(body["data"]["github_pages_url"], "https://khanhtoan10.github.io/lp-1-summer-sale")
+        self.assertEqual(body["data"]["github_pages_url"], "https://khanhtoan10.github.io/lp-1-summer-sale/")
         self.assertEqual(body["data"]["commit_sha"], "abc1234def5678")
 
 
