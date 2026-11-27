@@ -25,6 +25,88 @@ logger = logging.getLogger(__name__)
 PLACEHOLDER_TOKEN = "your_github_personal_access_token_here"
 
 
+class GitHubAuthError(RuntimeError):
+    """Lỗi xác thực GitHub Token (thiếu, không hợp lệ hoặc hết hạn)."""
+
+
+class GitHubRateLimitError(RuntimeError):
+    """Lỗi vượt quá giới hạn tốc độ (rate limit) của GitHub API."""
+
+    def __init__(self, message: str, retry_after: int = 60):
+        super().__init__(message)
+        self.retry_after = retry_after
+
+
+class GitHubRepoDuplicateError(RuntimeError):
+    """Lỗi tên repository đã tồn tại trên tài khoản GitHub."""
+
+
+def _extract_github_error_detail(response: requests.Response) -> str:
+    try:
+        payload = response.json()
+        if isinstance(payload, dict):
+            msg = payload.get("message") or ""
+            errors = payload.get("errors")
+            if isinstance(errors, list) and errors:
+                first_err = errors[0]
+                if isinstance(first_err, dict) and first_err.get("message"):
+                    return f"{msg}: {first_err['message']}" if msg else str(first_err["message"])
+            if msg:
+                return str(msg)
+    except ValueError:
+        pass
+    return (response.text or "").strip()[:300] or f"HTTP {response.status_code}"
+
+
+def _parse_retry_after(response: requests.Response) -> int:
+    retry_after = response.headers.get("Retry-After")
+    if retry_after and str(retry_after).isdigit():
+        return max(1, int(retry_after))
+    reset_at = response.headers.get("X-RateLimit-Reset")
+    if reset_at and str(reset_at).isdigit():
+        import time
+
+        return max(1, int(reset_at) - int(time.time()))
+    return 60
+
+
+def _raise_github_api_error(
+    response: requests.Response,
+    action: str,
+    check_duplicate: bool = False,
+) -> None:
+    """Chuyển lỗi HTTP từ GitHub API thành exception nghiệp vụ thân thiện."""
+    detail = _extract_github_error_detail(response)
+    lower_detail = detail.lower()
+    status_code = response.status_code
+
+    if status_code == 401 or (
+        status_code == 403 and ("bad credentials" in lower_detail or "token" in lower_detail)
+    ):
+        raise GitHubAuthError(
+            "GITHUB_TOKEN không hợp lệ hoặc đã hết hạn. Vui lòng cập nhật lại trong backend/.env."
+        )
+
+    remaining = response.headers.get("X-RateLimit-Remaining")
+    if status_code == 429 or (
+        status_code == 403 and (remaining == "0" or "rate limit" in lower_detail or "abuse" in lower_detail)
+    ):
+        retry_after = _parse_retry_after(response)
+        raise GitHubRateLimitError(
+            f"GitHub API đang bị giới hạn tốc độ (rate limit). Vui lòng thử lại sau {retry_after} giây.",
+            retry_after=retry_after,
+        )
+
+    if check_duplicate and status_code == 422 and (
+        "already exists" in lower_detail or "name already exists" in lower_detail
+    ):
+        raise GitHubRepoDuplicateError(
+            "Tên repository đã tồn tại trên GitHub. Vui lòng đổi tên chiến dịch rồi thử lại."
+        )
+
+    raise RuntimeError(f"{action} thất bại ({status_code}): {detail}")
+
+
 def _resolve_token(token: Optional[str] = None) -> Optional[str]:
     """Trả về token GitHub hợp lệ hoặc None nếu chưa cấu hình."""
     value = token or GITHUB_TOKEN
@@ -42,13 +124,9 @@ def _github_headers(token: str) -> dict:
 
 
 def _get_headers() -> dict:
-    if not GITHUB_TOKEN or GITHUB_TOKEN == "your_github_personal_access_token_here":
-        raise ValueError("GITHUB_TOKEN chưa được cấu hình hợp lệ trong file backend/.env")
-    return {
-        "Authorization": f"Bearer {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+    if not GITHUB_TOKEN or GITHUB_TOKEN == PLACEHOLDER_TOKEN:
+        raise GitHubAuthError("GITHUB_TOKEN chưa được cấu hình hợp lệ trong file backend/.env")
+    return _github_headers(GITHUB_TOKEN)
 
 
 def create_github_repo(
@@ -69,7 +147,10 @@ def create_github_repo(
         "auto_init": True,
     }
 
-    response = requests.post(url, json=payload, headers=headers, timeout=15)
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=15)
+    except requests.RequestException as exc:
+        raise RuntimeError(f"Không kết nối được GitHub API để tạo repository: {exc}") from exc
 
     if response.status_code == 201:
         data = response.json()
@@ -81,8 +162,7 @@ def create_github_repo(
             "default_branch": data.get("default_branch", "main"),
         }
 
-    error_detail = response.json().get("message", response.text)
-    raise RuntimeError(f"Tạo GitHub repo thất bại ({response.status_code}): {error_detail}")
+    _raise_github_api_error(response, "Tạo GitHub repo", check_duplicate=True)
 
 
 def upload_file_to_repo(
@@ -104,19 +184,25 @@ def upload_file_to_repo(
     encoded_content = base64.b64encode(raw_bytes).decode("utf-8")
 
     sha = None
-    check_res = requests.get(url, headers=headers, params={"ref": branch}, timeout=15)
-    if check_res.status_code == 200:
-        sha = check_res.json().get("sha")
+    try:
+        check_res = requests.get(url, headers=headers, params={"ref": branch}, timeout=15)
+        if check_res.status_code == 200:
+            sha = check_res.json().get("sha")
+        elif check_res.status_code != 404:
+            _raise_github_api_error(check_res, f"Kiểm tra file '{file_path}'")
 
-    payload = {
-        "message": commit_message,
-        "content": encoded_content,
-        "branch": branch,
-    }
-    if sha:
-        payload["sha"] = sha
+        payload = {
+            "message": commit_message,
+            "content": encoded_content,
+            "branch": branch,
+        }
+        if sha:
+            payload["sha"] = sha
 
-    response = requests.put(url, json=payload, headers=headers, timeout=20)
+        response = requests.put(url, json=payload, headers=headers, timeout=20)
+    except requests.RequestException as exc:
+        raise RuntimeError(f"Không kết nối được GitHub API khi đẩy file '{file_path}': {exc}") from exc
+
     if response.status_code in (200, 201):
         data = response.json()
         return {
@@ -125,8 +211,7 @@ def upload_file_to_repo(
             "html_url": data.get("content", {}).get("html_url"),
         }
 
-    error_detail = response.json().get("message", response.text)
-    raise RuntimeError(f"Push file '{file_path}' thất bại ({response.status_code}): {error_detail}")
+    _raise_github_api_error(response, f"Push file '{file_path}'")
 
 
 def push_landing_page_assets(
@@ -190,15 +275,17 @@ def enable_github_pages(
         }
     }
 
-    response = requests.post(url, json=payload, headers=headers, timeout=15)
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=15)
+    except requests.RequestException as exc:
+        raise RuntimeError(f"Không kết nối được GitHub API để bật GitHub Pages: {exc}") from exc
 
     # 201: Bật thành công | 409: Pages đã được bật từ trước
     if response.status_code in (201, 409):
         pages_url = f"https://{owner.lower()}.github.io/{repo_name}"
         return pages_url
 
-    error_detail = response.json().get("message", response.text)
-    raise RuntimeError(f"Bật GitHub Pages thất bại ({response.status_code}): {error_detail}")
+    _raise_github_api_error(response, "Bật GitHub Pages")
 
 
 def publish_and_save_project_url(
