@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<html lang="vi" class="h-full bg-slate-50">
+
 <html lang="vi" class="h-full">
 <head>
   <meta charset="UTF-8">
@@ -6,7 +8,8 @@
   <title>Danh sách dự án — AI Auto Landing Page Publisher</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="../css/common.css">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -20,13 +23,17 @@
     };
   </script>
 </head>
+
 <body class="h-full bg-slate-50 text-slate-800 antialiased flex overflow-hidden">
 
   <!-- Overlay làm tối nền khi mở Sidebar trên Mobile -->
-  <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden lg:hidden transition-opacity duration-300"></div>
+  <div id="sidebar-overlay"
+    class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden lg:hidden transition-opacity duration-300"></div>
 
   <!-- Sidebar điều hướng bên trái -->
-  <aside id="app-sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-64 h-full transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shrink-0 bg-white border-r border-slate-200 flex flex-col"></aside>
+  <aside id="app-sidebar"
+    class="fixed lg:static inset-y-0 left-0 z-50 w-64 h-full transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shrink-0 bg-white border-r border-slate-200 flex flex-col">
+  </aside>
 
   <!-- Khung nội dung chính -->
   <div class="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
@@ -37,6 +44,39 @@
     <!-- Main Content Area -->
     <main id="app-content" class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 animate-fadeIn">
 
+      <!-- Hero Welcome Banner -->
+      <div
+        class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 p-6 sm:p-8 text-white shadow-xl shadow-indigo-950/10">
+        <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none">
+        </div>
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div class="space-y-2 max-w-xl">
+            <div
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold border border-indigo-400/30">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
+              <span>AI Page Generator v1.0 • Nhóm 6</span>
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              Danh sách dự án của bạn 👋
+            </h2>
+            <p class="text-slate-300 text-sm leading-relaxed">
+              Quản lý toàn bộ Landing Page đã khởi tạo, xem trước giao diện, chỉnh sửa nội dung hoặc xuất bản lên GitHub
+              Pages.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <a href="create.html"
+              class="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]">
+              <i class="fa-solid fa-bolt"></i>
+              <span>Tạo Landing Page Ngay</span>
+            </a>
+            <button
+              onclick="window.showToast('Hệ thống đang hoạt động với đầy đủ tính năng AI!', 'success', 'Sẵn sàng')"
+              class="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold border border-white/15 backdrop-blur-sm transition">
+              <i class="fa-solid fa-circle-play"></i>
+              <span>Xem hướng dẫn</span>
+            </button>
+          </div>
       <!-- Tiêu đề + Nút tạo mới -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -49,6 +89,229 @@
         </a>
       </div>
 
+      <!-- 4 Thẻ Thống kê nhanh -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        <div
+          class="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:border-indigo-200 hover:shadow-md transition group">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Tổng Dự Án</span>
+            <div
+              class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-folder-open"></i>
+            </div>
+          </div>
+          <div class="mt-4 flex items-baseline gap-2">
+            <span class="text-2xl font-extrabold text-slate-900">12</span>
+            <span
+              class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+              <i class="fa-solid fa-arrow-trend-up"></i> +3 mới
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">2 dự án đang lưu nháp</p>
+        </div>
+
+        <div
+          class="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:border-emerald-200 hover:shadow-md transition group">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Đã Xuất Bản</span>
+            <div
+              class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+          </div>
+          <div class="mt-4 flex items-baseline gap-2">
+            <span class="text-2xl font-extrabold text-slate-900">8</span>
+            <span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">Online</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Tốc độ phản hồi: 99.8%</p>
+        </div>
+
+        <div
+          class="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:border-purple-200 hover:shadow-md transition group">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Số Lần AI Sinh</span>
+            <div
+              class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-microchip"></i>
+            </div>
+          </div>
+          <div class="mt-4 flex items-baseline gap-2">
+            <span class="text-2xl font-extrabold text-slate-900">146</span>
+            <span class="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">Gemini Pro</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Tiết kiệm 84 giờ code</p>
+        </div>
+
+        <div
+          class="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:border-amber-200 hover:shadow-md transition group">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Mẫu Giao Diện</span>
+            <div
+              class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-layer-group"></i>
+            </div>
+          </div>
+          <div class="mt-4 flex items-baseline gap-2">
+            <span class="text-2xl font-extrabold text-slate-900">24</span>
+            <span class="text-[11px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">Đa ngành</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">SaaS, Bất động sản, F&amp;B</p>
+        </div>
+      </div>
+
+      <!-- Danh sách dự án gần đây & Kiểm thử Toast -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-800">Dự án Landing Page gần đây</h3>
+              <p class="text-xs text-slate-400">Các trang được chỉnh sửa hoặc tạo mới trong 7 ngày qua</p>
+            </div>
+            <a href="deployments.html"
+              class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+              <span>Lịch sử xuất bản</span>
+              <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            </a>
+          </div>
+
+          <div class="divide-y divide-slate-100" id="recent-projects-list">
+            <div class="p-4 sm:px-5 flex items-center justify-between hover:bg-slate-50/80 transition">
+              <div class="flex items-center gap-3.5 min-w-0">
+                <div
+                  class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 text-base shrink-0 font-bold">
+                  <i class="fa-solid fa-laptop-code"></i>
+                </div>
+                <div class="truncate">
+                  <h4 class="text-sm font-bold text-slate-800 truncate">SaaS Analytics Landing Page</h4>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-[11px] text-slate-400">Cập nhật 2 giờ trước</span>
+                    <span
+                      class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">Đã
+                      xuất bản</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button onclick="window.showToast('Đang mở bản xem trước...', 'info')"
+                  class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                  title="Xem trước">
+                  <i class="fa-solid fa-eye text-sm"></i>
+                </button>
+                <a href="create.html?id=1"
+                  class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                  title="Chỉnh sửa">
+                  <i class="fa-solid fa-pen-to-square text-sm"></i>
+                </a>
+              </div>
+            </div>
+
+            <div class="p-4 sm:px-5 flex items-center justify-between hover:bg-slate-50/80 transition">
+              <div class="flex items-center gap-3.5 min-w-0">
+                <div
+                  class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 text-base shrink-0 font-bold">
+                  <i class="fa-solid fa-mug-saucer"></i>
+                </div>
+                <div class="truncate">
+                  <h4 class="text-sm font-bold text-slate-800 truncate">Ra Mắt Chuỗi Cà Phê Cold Brew</h4>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-[11px] text-slate-400">Cập nhật hôm qua</span>
+                    <span
+                      class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-amber-600 border border-amber-200">Bản
+                      nháp AI</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button onclick="window.showToast('Đang mở bản xem trước...', 'info')"
+                  class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                  title="Xem trước">
+                  <i class="fa-solid fa-eye text-sm"></i>
+                </button>
+                <a href="create.html?id=2"
+                  class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                  title="Chỉnh sửa">
+                  <i class="fa-solid fa-pen-to-square text-sm"></i>
+                </a>
+              </div>
+            </div>
+
+            <div class="p-4 sm:px-5 flex items-center justify-between hover:bg-slate-50/80 transition">
+              <div class="flex items-center gap-3.5 min-w-0">
+                <div
+                  class="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 text-base shrink-0 font-bold">
+                  <i class="fa-solid fa-dumbbell"></i>
+                </div>
+                <div class="truncate">
+                  <h4 class="text-sm font-bold text-slate-800 truncate">Khóa Học Fitness Online 30 Ngày</h4>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-[11px] text-slate-400">Cập nhật 3 ngày trước</span>
+                    <span
+                      class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">Đã
+                      xuất bản</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button onclick="window.showToast('Đang mở bản xem trước...', 'info')"
+                  class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                  title="Xem trước">
+                  <i class="fa-solid fa-eye text-sm"></i>
+                </button>
+                <a href="create.html?id=3"
+                  class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                  title="Chỉnh sửa">
+                  <i class="fa-solid fa-pen-to-square text-sm"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cột 3: Kiểm thử Toast & Ghi chú -->
+        <div class="space-y-4">
+          <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+            <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-terminal text-indigo-600"></i>
+              <span>Kiểm thử Toast thông báo</span>
+            </h3>
+            <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+              Các nút tiện ích để kiểm tra tính năng Toast thông báo dùng chung của Nhóm 6:
+            </p>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="window.showToast('Dữ liệu đã được lưu an toàn!', 'success')"
+                class="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition">Toast
+                Success</button>
+              <button onclick="window.showToast('Phiên làm việc đã hết hạn hoặc token lỗi!', 'error')"
+                class="px-3 py-2 rounded-xl text-xs font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition">Toast
+                Error</button>
+              <button onclick="window.showToast('Vui lòng kiểm tra cấu hình FastAPI port 8000', 'warning')"
+                class="px-3 py-2 rounded-xl text-xs font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition">Toast
+                Warning</button>
+              <button onclick="window.showToast('Đang cập nhật phiên bản mới...', 'info')"
+                class="px-3 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition">Toast
+                Info</button>
+            </div>
+          </div>
+
+          <div
+            class="bg-gradient-to-br from-indigo-50/80 to-slate-50 rounded-2xl border border-indigo-100 p-5 shadow-xs">
+            <div class="flex items-center gap-2 text-indigo-900 font-bold text-xs uppercase tracking-wider mb-2">
+              <i class="fa-solid fa-lightbulb text-amber-500"></i>
+              <span>Ghi chú cho Nhóm 6</span>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Mỗi thành viên khi tạo trang con mới chỉ cần giữ nguyên 3 thẻ <code
+                class="font-mono text-indigo-700 bg-white px-1.5 py-0.5 rounded border border-indigo-200">#sidebar-overlay</code>,
+              <code
+                class="font-mono text-indigo-700 bg-white px-1.5 py-0.5 rounded border border-indigo-200">#app-sidebar</code>,
+              <code
+                class="font-mono text-indigo-700 bg-white px-1.5 py-0.5 rounded border border-indigo-200">#app-header</code>
+              và nhúng <code
+                class="font-mono text-indigo-700 bg-white px-1.5 py-0.5 rounded border border-indigo-200">../js/layout.js</code>
+              ở cuối trang.
+            </p>
+          </div>
+        </div>
       <!-- Bộ lọc trạng thái -->
       <div class="flex flex-wrap gap-2" id="status-filters">
         <button data-status="" class="filter-btn active px-4 py-2 rounded-xl text-xs font-bold border transition">Tất cả</button>
@@ -104,9 +367,12 @@
     </div>
   </div>
 
+  <script src="../js/config.js"></script>
   <script src="../js/api.js"></script>
   <script src="../js/auth.js"></script>
   <script src="../js/layout.js"></script>
+  <script src="../js/deploy-status-ui.js"></script>
   <script src="../js/projects-page.js"></script>
 </body>
+
 </html>

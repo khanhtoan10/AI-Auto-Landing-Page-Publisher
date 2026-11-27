@@ -12,29 +12,42 @@
 
   const TOKEN_KEY = "lp_access_token";
   const LEGACY_TOKEN_KEY = "access_token";
+  const STORAGE_API_BASE_KEY = "lp_api_base_url";
 
   function normalizeBaseUrl(value) {
     return String(value || "").trim().replace(/\/+$/, "");
   }
 
   function resolveApiBaseUrl() {
-    const explicit = normalizeBaseUrl(window.API_BASE_URL || window.__API_BASE_URL__);
+    // 1. Kiểm tra query parameter: ?api=... hoặc ?backend=...
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryApi = urlParams.get("api") || urlParams.get("backend");
+      if (queryApi) {
+        const clean = normalizeBaseUrl(queryApi);
+        localStorage.setItem(STORAGE_API_BASE_KEY, clean);
+        return clean;
+      }
+    } catch (_) {}
+
+    // 2. Kiểm tra cấu hình tùy chỉnh đã lưu trong localStorage
+    try {
+      const stored = normalizeBaseUrl(localStorage.getItem(STORAGE_API_BASE_KEY));
+      if (stored) return stored;
+    } catch (_) {}
+
+    // 3. Biến toàn cục từ config.js hoặc inline script
+    const explicit = normalizeBaseUrl(
+      window.API_BASE_URL || window.__API_BASE_URL__ || window.__DEFAULT_BACKEND_URL__
+    );
     if (explicit && explicit !== "auto") return explicit;
 
-    const { protocol, hostname, port } = window.location;
-
-    // Mở trực tiếp file HTML -> luôn trỏ về backend local.
-    if (protocol === "file:") return "http://127.0.0.1:8000";
-
-    // Frontend được FastAPI (port 8000) phục vụ -> dùng đúng origin hiện tại.
-    if (port === "8000") return "";
-
-    // Chạy Live Server / Vite / Python http.server ở máy local.
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
+    const { hostname } = window.location;
+    if (hostname === "127.0.0.1" || hostname === "localhost") {
       return "http://127.0.0.1:8000";
     }
 
-    // Production: frontend và backend cùng domain (hoặc reverse proxy).
+    // Production: frontend và backend cùng domain (hoặc reverse proxy vercel.json).
     return "";
   }
 
@@ -126,8 +139,9 @@
   }
 
   function redirectToLogin() {
-    if (window.location.pathname.endsWith("login.html")) return;
-    const prefix = window.location.pathname.includes("/pages/") ? "../" : "";
+    const path = window.location.pathname;
+    if (path.endsWith("login.html") || path.endsWith("/login")) return;
+    const prefix = path.includes("/pages/") ? "../" : "";
     window.location.href = `${prefix}login.html`;
   }
 
@@ -209,4 +223,19 @@
   window.getToken = getToken;
   window.setToken = setToken;
   window.removeToken = removeToken;
+  window.getApiBaseUrl = function () {
+    return API_BASE_URL;
+  };
+  window.setApiBaseUrl = function (newUrl) {
+    if (!newUrl) {
+      localStorage.removeItem(STORAGE_API_BASE_KEY);
+    } else {
+      localStorage.setItem(STORAGE_API_BASE_KEY, normalizeBaseUrl(newUrl));
+    }
+    window.location.reload();
+  };
+  window.resetApiBaseUrl = function () {
+    localStorage.removeItem(STORAGE_API_BASE_KEY);
+    window.location.reload();
+  };
 })();

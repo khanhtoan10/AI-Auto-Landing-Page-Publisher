@@ -1,7 +1,7 @@
 const AUTH_ROOT_PREFIX = window.location.pathname.includes("/pages/") ? "../" : "";
 
-// Nếu đã đăng nhập (có token) mà vẫn mở login.html -> chuyển thẳng sang index.html
-if (window.location.pathname.endsWith("login.html") && getToken()) {
+// Nếu đã đăng nhập (có token) mà vẫn mở login -> chuyển thẳng sang index.html
+if ((window.location.pathname.endsWith("login.html") || window.location.pathname.endsWith("/login")) && getToken()) {
   window.location.href = `${AUTH_ROOT_PREFIX}index.html`;
 }
 

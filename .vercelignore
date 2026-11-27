@@ -1,0 +1,13 @@
+backend/
+docs/
+requirements.txt
+pyproject.toml
+.git/
+.github/
+.vscode/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env*
+!frontend/

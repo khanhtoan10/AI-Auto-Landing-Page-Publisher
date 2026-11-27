@@ -77,7 +77,6 @@ class ProjectCreate(BaseModel):
             if not re.fullmatch(r"#[0-9a-fA-F]{6}", v):
                 raise ValueError("Tông màu phải có dạng mã hex, ví dụ #1A2B3C")
         return v
-        return _validate_color(v)
 
     @field_validator("image_url")
     @classmethod
@@ -91,6 +90,9 @@ class ProjectCreate(BaseModel):
         if parsed.scheme not in ("http", "https") or not parsed.hostname:
             raise ValueError("Đường dẫn ảnh phải bắt đầu bằng http:// hoặc https://")
         return v
+
+    @field_validator("facebook_url", "tiktok_url", "instagram_url")
+    @classmethod
     def valid_url(cls, v, info):
         return _validate_url(v, info.field_name)
 
@@ -212,7 +214,6 @@ class ProjectUpdate(BaseModel):
     @classmethod
     def validate_hotline(cls, v):
         return clean_string(v)
-        return _validate_color(v)
 
     @field_validator(
         "image_url",

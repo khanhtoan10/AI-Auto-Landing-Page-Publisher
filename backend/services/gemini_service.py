@@ -3,6 +3,8 @@
 import json
 import logging
 import re
+import socket
+import time
 from pathlib import Path
 from typing import Any
 from urllib import error, request
@@ -17,10 +19,18 @@ from core.config import settings  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.8-flash"
+GEMINI_FALLBACK_MODELS = [
+    "gemini-3.8-flash",
+    "gemini-3.5-flash-lite",
+]
 GEMINI_API_URL = (
     f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 )
+
+DEFAULT_TIMEOUT_SECONDS = 60
+MAX_RETRIES = 2  # Tối đa 2 lần thử lại (tổng cộng tối đa 3 lần gọi)
+RETRY_BACKOFF_SECONDS = 1.0
 
 REQUIRED_FIELDS: dict[str, type] = {
     "headline": str,
@@ -32,31 +42,96 @@ REQUIRED_FIELDS: dict[str, type] = {
 
 HEX_COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{6}$")
 
+QUOTA_KEYWORDS = (
+    "quota",
+    "rate limit",
+    "rate_limit",
+    "resource_exhausted",
+    "resource has been exhausted",
+    "too many requests",
+    "exceeded your current quota",
+)
+
 
 class GeminiServiceError(Exception):
     """Lỗi chung khi gọi hoặc xử lý dữ liệu từ Gemini API."""
+
+    user_message = "Không thể tạo nội dung lúc này. Vui lòng thử lại sau."
+    error_code = "GEMINI_ERROR"
+    retryable = False
 
 
 class GeminiConfigError(GeminiServiceError):
     """Lỗi thiếu hoặc sai cấu hình GEMINI_API_KEY."""
 
+    user_message = "Dịch vụ AI chưa được cấu hình hợp lệ. Vui lòng liên hệ quản trị viên."
+    error_code = "GEMINI_CONFIG_ERROR"
+    retryable = False
+
+
+class GeminiQuotaError(GeminiServiceError):
+    """Lỗi hết quota hoặc vượt giới hạn request từ Gemini API."""
+
+    user_message = "AI service hiện đã vượt giới hạn sử dụng. Vui lòng thử lại sau."
+    error_code = "GEMINI_QUOTA_EXCEEDED"
+    retryable = False
+
+
+class GeminiTimeoutError(GeminiServiceError):
+    """Lỗi request tới Gemini API bị quá thời gian chờ (timeout)."""
+
+    user_message = "AI đang xử lý quá lâu. Vui lòng thử lại sau."
+    error_code = "GEMINI_TIMEOUT"
+    retryable = True
+
 
 class GeminiConnectionError(GeminiServiceError):
     """Lỗi kết nối mạng hoặc HTTP error từ Gemini API."""
+
+    user_message = "Không thể tạo nội dung lúc này. Vui lòng thử lại sau."
+    error_code = "GEMINI_CONNECTION_ERROR"
+
+    def __init__(self, message: str, *, retryable: bool = False) -> None:
+        super().__init__(message)
+        self.retryable = retryable
 
 
 class GeminiResponseError(GeminiServiceError):
     """Lỗi phản hồi rỗng hoặc JSON không đúng cấu trúc yêu cầu."""
 
+    user_message = "AI trả về dữ liệu không hợp lệ. Vui lòng thử lại."
+    error_code = "GEMINI_INVALID_RESPONSE"
+    retryable = True
+
 
 def _get_api_key() -> str:
     """Lấy GEMINI_API_KEY từ cấu hình dự án và kiểm tra tính hợp lệ."""
     api_key = (settings.GEMINI_API_KEY or "").strip()
-    if not api_key or api_key == "your_gemini_api_key_here":
+    if not api_key or api_key in ("your_gemini_api_key_here", "AIzaSyYourRealApiKeyHere"):
         raise GeminiConfigError(
             "GEMINI_API_KEY chưa được cấu hình hợp lệ trong file backend/.env"
         )
     return api_key
+
+
+def _is_quota_error(status_code: int, error_status: str, error_detail: str) -> bool:
+    """Nhận diện lỗi hết quota / vượt giới hạn request từ phản hồi Gemini API."""
+    if status_code == 429:
+        return True
+    combined = f"{error_status} {error_detail}".lower()
+    if status_code in (403, 429) and any(kw in combined for kw in QUOTA_KEYWORDS):
+        return True
+    return any(kw in combined for kw in QUOTA_KEYWORDS)
+
+
+def _is_timeout_exception(exc: BaseException) -> bool:
+    """Kiểm tra ngoại lệ có phải do timeout mạng / socket / urllib hay không."""
+    if isinstance(exc, (TimeoutError, socket.timeout)):
+        return True
+    reason = getattr(exc, "reason", None)
+    if isinstance(reason, (TimeoutError, socket.timeout)):
+        return True
+    return "timed out" in str(exc).lower() or "timeout" in str(exc).lower()
 
 
 def build_landing_page_prompt(user_prompt: str) -> str:
@@ -100,7 +175,6 @@ def validate_landing_page_json(raw_text: str) -> dict[str, Any]:
 
     cleaned_text = str(raw_text).strip()
 
-    # Từ chối nếu phản hồi chứa markdown code block theo đúng ràng buộc prompt
     if cleaned_text.startswith("```") or "```json" in cleaned_text.lower():
         raise GeminiResponseError(
             "Phản hồi từ Gemini chứa định dạng Markdown/code block không hợp lệ"
@@ -114,14 +188,12 @@ def validate_landing_page_json(raw_text: str) -> dict[str, Any]:
     if not isinstance(parsed_data, dict):
         raise GeminiResponseError("Dữ liệu JSON từ Gemini phải là một JSON object")
 
-    # Kiểm tra thiếu trường bắt buộc
     missing_fields = [field for field in REQUIRED_FIELDS if field not in parsed_data]
     if missing_fields:
         raise GeminiResponseError(
             f"JSON từ Gemini thiếu các trường bắt buộc: {', '.join(missing_fields)}"
         )
 
-    # Kiểm tra kiểu dữ liệu từng trường
     for field, expected_type in REQUIRED_FIELDS.items():
         value = parsed_data[field]
         if not isinstance(value, expected_type):
@@ -130,12 +202,10 @@ def validate_landing_page_json(raw_text: str) -> dict[str, Any]:
                 f"nhận được {type(value).__name__}"
             )
 
-    # Kiểm tra giá trị rỗng cho các trường chuỗi
     for str_field in ("headline", "subheadline", "cta_text", "primary_color"):
         if not parsed_data[str_field].strip():
             raise GeminiResponseError(f"Trường '{str_field}' không được để chuỗi rỗng")
 
-    # Kiểm tra mảng features không rỗng và mọi phần tử đều là string không rỗng
     features = parsed_data["features"]
     if not features:
         raise GeminiResponseError("Trường 'features' không được là danh sách rỗng")
@@ -146,7 +216,6 @@ def validate_landing_page_json(raw_text: str) -> dict[str, Any]:
                 f"Phần tử thứ {index} trong 'features' phải là chuỗi không rỗng"
             )
 
-    # Kiểm tra định dạng mã màu hex cho primary_color (đồng bộ chuẩn #RRGGBB của project schema)
     primary_color = parsed_data["primary_color"].strip()
     if not HEX_COLOR_PATTERN.fullmatch(primary_color):
         raise GeminiResponseError(
@@ -188,17 +257,133 @@ def _extract_text_from_gemini_response(response_payload: dict[str, Any]) -> str:
     return combined_text
 
 
-def generate_landing_page_json(user_prompt: str, timeout: int = 60) -> dict[str, Any]:
-    """
-    Gửi prompt tới Gemini API, nhận kết quả và trả về dict JSON đã được kiểm tra hợp lệ.
+def _get_models_to_try() -> list[str]:
+    """Tổng hợp danh sách model chính và các model dự phòng không trùng lặp."""
+    raw_models = (
+        list(GEMINI_MODEL)
+        if isinstance(GEMINI_MODEL, (list, tuple))
+        else [GEMINI_MODEL]
+    ) + GEMINI_FALLBACK_MODELS
 
-    Args:
-        user_prompt: Mô tả sản phẩm hoặc yêu cầu nội dung landing page.
-        timeout: Thời gian chờ tối đa (giây) khi gọi Gemini API.
+    models: list[str] = []
+    for m in raw_models:
+        if isinstance(m, str) and m.strip() and m.strip() not in models:
+            models.append(m.strip())
+    return models or ["gemini-3.8-flash"]
 
-    Returns:
-        dict chứa 5 trường đã validate: headline, subheadline, features, cta_text, primary_color.
+
+def _call_gemini_once(
+    api_key: str,
+    encoded_body: bytes,
+    timeout: int,
+) -> dict[str, Any]:
+    """Thực hiện 1 lượt gọi HTTP tới Gemini API (hỗ trợ fallback model) và kiểm tra JSON trả về."""
+    models_to_try = _get_models_to_try()
+    last_error: GeminiServiceError | None = None
+    raw_http_body = ""
+
+    for idx, model_name in enumerate(models_to_try):
+        has_next_model = idx < len(models_to_try) - 1
+        api_url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{model_name}:generateContent"
+        )
+        req = request.Request(
+            url=api_url,
+            data=encoded_body,
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": api_key,
+            },
+            method="POST",
+        )
+
+        try:
+            with request.urlopen(req, timeout=timeout) as resp:
+                raw_http_body = resp.read().decode("utf-8")
+                last_error = None
+                break
+        except error.HTTPError as exc:
+            error_detail = ""
+            error_status = ""
+            try:
+                err_json = json.loads(exc.read().decode("utf-8"))
+                err_obj = err_json.get("error", {}) if isinstance(err_json, dict) else {}
+                error_detail = str(err_obj.get("message", ""))
+                error_status = str(err_obj.get("status", ""))
+            except Exception:
+                error_detail = exc.reason or "HTTP Error"
+
+            logger.error(
+                "Gemini API (model '%s') trả về lỗi HTTP %s: %s",
+                model_name,
+                exc.code,
+                error_detail,
+            )
+
+            if _is_quota_error(exc.code, error_status, error_detail):
+                last_error = GeminiQuotaError(
+                    f"Gemini API vượt giới hạn quota (HTTP {exc.code}): {error_detail}"
+                )
+                if has_next_model:
+                    continue
+                raise last_error from exc
+
+            if exc.code in (408, 504):
+                raise GeminiTimeoutError(
+                    f"Gemini API phản hồi quá thời gian chờ (HTTP {exc.code})"
+                ) from exc
+
+            is_transient_5xx = 500 <= exc.code < 600
+            last_error = GeminiConnectionError(
+                f"Lỗi kết nối Gemini API (HTTP {exc.code}): {error_detail}",
+                retryable=is_transient_5xx,
+            )
+            if exc.code in (404, 503) and has_next_model:
+                continue
+            raise last_error from exc
+        except (error.URLError, TimeoutError, socket.timeout, OSError) as exc:
+            if _is_timeout_exception(exc):
+                logger.error("Kết nối tới Gemini API bị timeout sau %ss", timeout)
+                raise GeminiTimeoutError(
+                    f"Kết nối tới Gemini API bị quá thời gian chờ ({timeout}s)"
+                ) from exc
+
+            logger.error("Không thể kết nối tới Gemini API: %s", type(exc).__name__)
+            raise GeminiConnectionError(
+                f"Không thể kết nối tới Gemini API: {exc}",
+                retryable=True,
+            ) from exc
+
+    if last_error is not None:
+        raise last_error
+
+    if not raw_http_body.strip():
+        raise GeminiResponseError("Gemini API trả về phản hồi HTTP rỗng")
+
+    try:
+        api_response_json = json.loads(raw_http_body)
+    except json.JSONDecodeError as exc:
+        raise GeminiResponseError("Không thể đọc dữ liệu phản hồi từ Gemini API") from exc
+
+    generated_text = _extract_text_from_gemini_response(api_response_json)
+    return validate_landing_page_json(generated_text)
+
+
+def generate_landing_page_json(
+    user_prompt: str,
+    timeout: int = DEFAULT_TIMEOUT_SECONDS,
+    max_retries: int = MAX_RETRIES,
+) -> dict[str, Any]:
     """
+    Gửi prompt tới Gemini API với cơ chế retry có giới hạn cho các lỗi tạm thời
+    (timeout, JSON sai cấu trúc, lỗi mạng/5xx) và trả về dict JSON đã kiểm tra hợp lệ.
+    """
+    if timeout is None or timeout <= 0:
+        raise ValueError("Thời gian chờ timeout phải lớn hơn 0 giây")
+    if max_retries is None or max_retries < 0:
+        raise ValueError("Số lần thử lại max_retries không được âm")
+
     api_key = _get_api_key()
     prompt_text = build_landing_page_prompt(user_prompt)
 
@@ -213,46 +398,38 @@ def generate_landing_page_json(user_prompt: str, timeout: int = 60) -> dict[str,
             "temperature": 0.7,
         },
     }
-
     encoded_body = json.dumps(request_body).encode("utf-8")
-    req = request.Request(
-        url=GEMINI_API_URL,
-        data=encoded_body,
-        headers={
-            "Content-Type": "application/json",
-            "x-goog-api-key": api_key,
-        },
-        method="POST",
-    )
 
-    try:
-        with request.urlopen(req, timeout=timeout) as resp:
-            raw_http_body = resp.read().decode("utf-8")
-    except error.HTTPError as exc:
-        # Không log hoặc đưa API Key vào thông báo lỗi
-        error_detail = ""
+    total_attempts = max_retries + 1
+    last_error: GeminiServiceError | None = None
+
+    for attempt in range(1, total_attempts + 1):
         try:
-            err_json = json.loads(exc.read().decode("utf-8"))
-            error_detail = err_json.get("error", {}).get("message", "")
-        except Exception:
-            error_detail = exc.reason or "HTTP Error"
-        logger.error("Gemini API trả về lỗi HTTP %s: %s", exc.code, error_detail)
-        raise GeminiConnectionError(
-            f"Lỗi kết nối Gemini API (HTTP {exc.code}): {error_detail}"
-        ) from exc
-    except (error.URLError, TimeoutError, OSError) as exc:
-        logger.error("Không thể kết nối tới Gemini API: %s", type(exc).__name__)
-        raise GeminiConnectionError(
-            f"Không thể kết nối tới Gemini API: {exc}"
-        ) from exc
+            return _call_gemini_once(
+                api_key=api_key,
+                encoded_body=encoded_body,
+                timeout=timeout,
+            )
+        except GeminiServiceError as exc:
+            last_error = exc
+            if not exc.retryable or attempt >= total_attempts:
+                if exc.retryable and attempt >= total_attempts and max_retries > 0:
+                    logger.warning(
+                        "Gemini API thất bại sau %s/%s lần thử (lỗi cuối: %s)",
+                        attempt,
+                        total_attempts,
+                        exc.error_code,
+                    )
+                raise
 
-    if not raw_http_body.strip():
-        raise GeminiResponseError("Gemini API trả về phản hồi HTTP rỗng")
+            logger.warning(
+                "Gemini API gặp lỗi tạm thời (%s) ở lần thử %s/%s, đang thử lại...",
+                exc.error_code,
+                attempt,
+                total_attempts,
+            )
+            if RETRY_BACKOFF_SECONDS > 0:
+                time.sleep(RETRY_BACKOFF_SECONDS * attempt)
 
-    try:
-        api_response_json = json.loads(raw_http_body)
-    except json.JSONDecodeError as exc:
-        raise GeminiResponseError("Không thể đọc dữ liệu phản hồi từ Gemini API") from exc
-
-    generated_text = _extract_text_from_gemini_response(api_response_json)
-    return validate_landing_page_json(generated_text)
+    assert last_error is not None
+    raise last_error
