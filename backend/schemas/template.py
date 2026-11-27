@@ -13,8 +13,8 @@ class TemplateItem(BaseModel):
         description="Mô tả Template",
         examples=["Template landing page dành cho doanh nghiệp hiện đại"],
     )
-    thumbnail: str = Field(
-        ...,
+    thumbnail: Optional[str] = Field(
+        default="",
         description="Đường dẫn ảnh đại diện",
         examples=["/uploads/templates/modern-business.png"],
     )
